@@ -11,7 +11,6 @@ import {
   Image,
   Video,
 } from "lucide-react";
-import { IoNotifications } from "react-icons/io5";
 
 // Type definitions
 interface User {
