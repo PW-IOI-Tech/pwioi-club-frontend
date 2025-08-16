@@ -1,0 +1,756 @@
+import { useEffect, useState } from "react";
+import { Plus, Edit3, X, Trash2, GraduationCap } from "lucide-react";
+import profileData from "../Constants/ProfileData";
+
+interface AcademicHistory {
+  degree: string;
+  institution: string;
+  fieldOfStudy: string;
+  grade: number;
+  startDate: string;
+  endDate: string;
+}
+
+// Modal Component
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}
+
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white rounded-sm shadow-2xl border border-gray-400 w-full max-w-lg mx-4">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+          <button
+            onClick={onClose}
+            className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-4">{children}</div>
+      </div>
+    </div>
+  );
+};
+
+// Add Academic History Modal
+interface AddAcademicHistoryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAdd: (education: AcademicHistory) => void;
+}
+
+const AddAcademicHistoryModal: React.FC<AddAcademicHistoryModalProps> = ({
+  isOpen,
+  onClose,
+  onAdd,
+}) => {
+  const [formData, setFormData] = useState<AcademicHistory>({
+    degree: "",
+    institution: "",
+    fieldOfStudy: "",
+    grade: 0,
+    startDate: "",
+    endDate: "",
+  });
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof AcademicHistory, string>>
+  >({});
+
+  const degreeOptions = [
+    "High School Diploma",
+    "Associate Degree",
+    "Bachelor's Degree",
+    "Master's Degree",
+    "Doctoral Degree (PhD)",
+    "Professional Degree",
+    "Certificate Program",
+    "Diploma",
+    "Other",
+  ];
+
+  const handleInputChange = (
+    field: keyof AcademicHistory,
+    value: string | number
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<Record<keyof AcademicHistory, string>> = {};
+
+    if (!formData.degree.trim()) {
+      newErrors.degree = "Degree is required";
+    }
+
+    if (!formData.institution.trim()) {
+      newErrors.institution = "Institution is required";
+    }
+
+    if (!formData.fieldOfStudy.trim()) {
+      newErrors.fieldOfStudy = "Field of study is required";
+    }
+
+    if (!formData.grade || formData.grade <= 0) {
+      newErrors.grade = "Grade is required and must be greater than 0";
+    } else if (formData.grade > 100) {
+      newErrors.grade = "Grade cannot exceed 100%";
+    }
+
+    if (!formData.startDate) {
+      newErrors.startDate = "Start date is required";
+    }
+
+    if (!formData.endDate) {
+      newErrors.endDate = "End date is required";
+    } else if (
+      formData.startDate &&
+      new Date(formData.endDate) < new Date(formData.startDate)
+    ) {
+      newErrors.endDate = "End date must be after start date";
+    }
+
+    // Check if end date is too far in the future (more than 10 years)
+    if (
+      formData.endDate &&
+      new Date(formData.endDate) >
+        new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000)
+    ) {
+      newErrors.endDate = "End date seems too far in the future";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (validateForm()) {
+      onAdd({
+        ...formData,
+        degree: formData.degree.trim(),
+        institution: formData.institution.trim(),
+        fieldOfStudy: formData.fieldOfStudy.trim(),
+        grade: Number(formData.grade),
+      });
+      handleClose();
+    }
+  };
+
+  const handleClose = () => {
+    setFormData({
+      degree: "",
+      institution: "",
+      fieldOfStudy: "",
+      grade: 0,
+      startDate: "",
+      endDate: "",
+    });
+    setErrors({});
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} title="Add Education">
+      <form onSubmit={handleSubmit} className="space-y-4 text-sm">
+        <div>
+          <label className="block text-sm font-semibold text-slate-900 mb-2">
+            Degree *
+          </label>
+          <select
+            value={formData.degree}
+            onChange={(e) => handleInputChange("degree", e.target.value)}
+            className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
+              errors.degree ? "border-red-400" : "border-gray-400"
+            }`}
+          >
+            <option value="">Select a degree</option>
+            {degreeOptions.map((degree) => (
+              <option key={degree} value={degree}>
+                {degree}
+              </option>
+            ))}
+          </select>
+          {errors.degree && (
+            <p className="mt-1 text-sm text-red-600">{errors.degree}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-900 mb-2">
+            Institution *
+          </label>
+          <input
+            type="text"
+            value={formData.institution}
+            onChange={(e) => handleInputChange("institution", e.target.value)}
+            placeholder="e.g., Harvard University, MIT, Stanford"
+            className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
+              errors.institution ? "border-red-400" : "border-gray-400"
+            }`}
+          />
+          {errors.institution && (
+            <p className="mt-1 text-sm text-red-600">{errors.institution}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-900 mb-2">
+            Field of Study *
+          </label>
+          <input
+            type="text"
+            value={formData.fieldOfStudy}
+            onChange={(e) => handleInputChange("fieldOfStudy", e.target.value)}
+            placeholder="e.g., Computer Science, Business Administration"
+            className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
+              errors.fieldOfStudy ? "border-red-400" : "border-gray-400"
+            }`}
+          />
+          {errors.fieldOfStudy && (
+            <p className="mt-1 text-sm text-red-600">{errors.fieldOfStudy}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-900 mb-2">
+            Grade (%) *
+          </label>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="0.1"
+            value={formData.grade || ""}
+            onChange={(e) =>
+              handleInputChange("grade", parseFloat(e.target.value) || 0)
+            }
+            placeholder="e.g., 85.5"
+            className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
+              errors.grade ? "border-red-400" : "border-gray-400"
+            }`}
+          />
+          {errors.grade && (
+            <p className="mt-1 text-sm text-red-600">{errors.grade}</p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">
+              Start Date *
+            </label>
+            <input
+              type="date"
+              value={formData.startDate}
+              onChange={(e) => handleInputChange("startDate", e.target.value)}
+              className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
+                errors.startDate ? "border-red-400" : "border-gray-400"
+              }`}
+            />
+            {errors.startDate && (
+              <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">
+              End Date *
+            </label>
+            <input
+              type="date"
+              value={formData.endDate}
+              onChange={(e) => handleInputChange("endDate", e.target.value)}
+              className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
+                errors.endDate ? "border-red-400" : "border-gray-400"
+              }`}
+            />
+            {errors.endDate && (
+              <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex space-x-3 pt-2">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 transition-all cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
+          >
+            Add Education
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+// Edit Academic History Modal
+interface EditAcademicHistoryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onEdit: (education: AcademicHistory) => void;
+  education: AcademicHistory | null;
+}
+
+const EditAcademicHistoryModal: React.FC<EditAcademicHistoryModalProps> = ({
+  isOpen,
+  onClose,
+  onEdit,
+  education,
+}) => {
+  const [formData, setFormData] = useState<AcademicHistory>({
+    degree: "",
+    institution: "",
+    fieldOfStudy: "",
+    grade: 0,
+    startDate: "",
+    endDate: "",
+  });
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof AcademicHistory, string>>
+  >({});
+
+  const degreeOptions = [
+    "High School Diploma",
+    "Associate Degree",
+    "Bachelor's Degree",
+    "Master's Degree",
+    "Doctoral Degree (PhD)",
+    "Professional Degree",
+    "Certificate Program",
+    "Diploma",
+    "Other",
+  ];
+
+  // Update form data when education changes
+  useEffect(() => {
+    if (education) {
+      setFormData(education);
+    }
+  }, [education]);
+
+  const handleInputChange = (
+    field: keyof AcademicHistory,
+    value: string | number
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<Record<keyof AcademicHistory, string>> = {};
+
+    if (!formData.degree.trim()) {
+      newErrors.degree = "Degree is required";
+    }
+
+    if (!formData.institution.trim()) {
+      newErrors.institution = "Institution is required";
+    }
+
+    if (!formData.fieldOfStudy.trim()) {
+      newErrors.fieldOfStudy = "Field of study is required";
+    }
+
+    if (!formData.grade || formData.grade <= 0) {
+      newErrors.grade = "Grade is required and must be greater than 0";
+    } else if (formData.grade > 100) {
+      newErrors.grade = "Grade cannot exceed 100%";
+    }
+
+    if (!formData.startDate) {
+      newErrors.startDate = "Start date is required";
+    }
+
+    if (!formData.endDate) {
+      newErrors.endDate = "End date is required";
+    } else if (
+      formData.startDate &&
+      new Date(formData.endDate) < new Date(formData.startDate)
+    ) {
+      newErrors.endDate = "End date must be after start date";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (validateForm()) {
+      onEdit({
+        ...formData,
+        degree: formData.degree.trim(),
+        institution: formData.institution.trim(),
+        fieldOfStudy: formData.fieldOfStudy.trim(),
+        grade: Number(formData.grade),
+      });
+      handleClose();
+    }
+  };
+
+  const handleClose = () => {
+    if (education) {
+      setFormData(education);
+    }
+    setErrors({});
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} title="Edit Education">
+      <form onSubmit={handleSubmit} className="space-y-4 text-sm">
+        <div>
+          <label className="block text-sm font-semibold text-slate-900 mb-2">
+            Degree *
+          </label>
+          <select
+            value={formData.degree}
+            onChange={(e) => handleInputChange("degree", e.target.value)}
+            className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
+              errors.degree ? "border-red-400" : "border-gray-400"
+            }`}
+          >
+            <option value="">Select a degree</option>
+            {degreeOptions.map((degree) => (
+              <option key={degree} value={degree}>
+                {degree}
+              </option>
+            ))}
+          </select>
+
+          {errors.degree && (
+            <p className="mt-1 text-sm text-red-600">{errors.degree}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-900 mb-2">
+            Institution *
+          </label>
+          <input
+            type="text"
+            value={formData.institution}
+            onChange={(e) => handleInputChange("institution", e.target.value)}
+            placeholder="e.g., Harvard University, MIT, Stanford"
+            className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
+              errors.institution ? "border-red-400" : "border-gray-400"
+            }`}
+          />
+          {errors.institution && (
+            <p className="mt-1 text-sm text-red-600">{errors.institution}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-900 mb-2">
+            Field of Study *
+          </label>
+          <input
+            type="text"
+            value={formData.fieldOfStudy}
+            onChange={(e) => handleInputChange("fieldOfStudy", e.target.value)}
+            placeholder="e.g., Computer Science, Business Administration"
+            className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
+              errors.fieldOfStudy ? "border-red-400" : "border-gray-400"
+            }`}
+          />
+          {errors.fieldOfStudy && (
+            <p className="mt-1 text-sm text-red-600">{errors.fieldOfStudy}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-900 mb-2">
+            Grade (%) *
+          </label>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="0.1"
+            value={formData.grade || ""}
+            onChange={(e) =>
+              handleInputChange("grade", parseFloat(e.target.value) || 0)
+            }
+            placeholder="e.g., 85.5"
+            className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
+              errors.grade ? "border-red-400" : "border-gray-400"
+            }`}
+          />
+          {errors.grade && (
+            <p className="mt-1 text-sm text-red-600">{errors.grade}</p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">
+              Start Date *
+            </label>
+            <input
+              type="date"
+              value={formData.startDate}
+              onChange={(e) => handleInputChange("startDate", e.target.value)}
+              className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer ${
+                errors.startDate ? "border-red-400" : "border-gray-400"
+              }`}
+            />
+            {errors.startDate && (
+              <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">
+              End Date *
+            </label>
+            <input
+              type="date"
+              value={formData.endDate}
+              onChange={(e) => handleInputChange("endDate", e.target.value)}
+              className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer ${
+                errors.endDate ? "border-red-400" : "border-gray-400"
+              }`}
+            />
+            {errors.endDate && (
+              <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex space-x-3 pt-2">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 transition-all cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
+          >
+            Update Education
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+// Delete Confirmation Modal
+interface DeleteConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  educationTitle?: string;
+}
+
+const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  educationTitle,
+}) => {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Delete Education">
+      <div className="space-y-4">
+        <p className="text-gray-700">
+          Are you sure you want to delete the{" "}
+          <strong>"{educationTitle}"</strong> education record? This action
+          cannot be undone.
+        </p>
+
+        <div className="flex space-x-3 pt-2">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 transition-all cursor-pointer text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 transition-all cursor-pointer text-sm"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+const AcademicHistoryCard: React.FC = () => {
+  const [academicHistory, setAcademicHistory] = useState<AcademicHistory[]>([
+    ...profileData.academicHistory,
+  ]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedEducation, setSelectedEducation] =
+    useState<AcademicHistory | null>(null);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+
+  const handleAddEducation = (newEducation: AcademicHistory) => {
+    setAcademicHistory([...academicHistory, newEducation]);
+  };
+
+  const handleEditEducation = (updatedEducation: AcademicHistory) => {
+    if (editIndex !== null) {
+      const updatedHistory = [...academicHistory];
+      updatedHistory[editIndex] = updatedEducation;
+      setAcademicHistory(updatedHistory);
+      setEditIndex(null);
+      setSelectedEducation(null);
+    }
+  };
+
+  const handleDeleteEducation = () => {
+    if (editIndex !== null) {
+      const updatedHistory = academicHistory.filter((_, i) => i !== editIndex);
+      setAcademicHistory(updatedHistory);
+      setShowDeleteModal(false);
+      setEditIndex(null);
+      setSelectedEducation(null);
+    }
+  };
+
+  const openEditModal = (education: AcademicHistory, index: number) => {
+    setSelectedEducation(education);
+    setEditIndex(index);
+    setShowEditModal(true);
+  };
+
+  const openDeleteModal = (education: AcademicHistory, index: number) => {
+    setSelectedEducation(education);
+    setEditIndex(index);
+    setShowDeleteModal(true);
+  };
+
+  return (
+    <>
+      <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-bold text-gray-900">Academic History</h3>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="space-y-4">
+          {academicHistory.map((edu, index) => (
+            <div
+              key={index}
+              className="flex items-start space-x-4 p-4 transition-all bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 hover:shadow-md hover:border-blue-800"
+            >
+              <div className="h-8 w-8 rounded-full bg-slate-900 p-1 flex items-center justify-center">
+                <GraduationCap className="w-4 h-4 text-white" />
+              </div>
+
+              <div className="flex-1">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 pr-4">
+                    <h4 className="font-bold text-slate-900 mb-1">
+                      {edu.degree}
+                    </h4>
+                    <p className="text-sm text-slate-800">{edu.institution}</p>
+                    <p className="text-sm text-slate-700 font-medium mb-3">
+                      {edu.fieldOfStudy}
+                    </p>
+                    <div className="flex items-center space-x-2 text-xs text-gray-500">
+                      <span className="text-xs rounded-full px-4 py-1 bg-slate-900 text-white w-fit">
+                        Grade: {edu.grade}%
+                      </span>
+                      <span className="text-xs rounded-full px-4 py-1 bg-slate-900 text-white w-fit">
+                        {new Date(edu.startDate).getFullYear()} -{" "}
+                        {new Date(edu.endDate).getFullYear()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => openEditModal(edu, index)}
+                      className="text-blue-600 hover:text-blue-900 p-1 cursor-pointer"
+                      title="Edit education"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => openDeleteModal(edu, index)}
+                      className="text-red-600 hover:text-red-900 p-1 cursor-pointer"
+                      title="Delete education"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-blue-500 hover:bg-blue-50 transition-all group cursor-pointer"
+          >
+            <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-600 mx-auto mb-1" />
+            <span className="text-sm text-gray-600 group-hover:text-blue-600 font-medium">
+              Add Education
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Modals */}
+      <AddAcademicHistoryModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAdd={handleAddEducation}
+      />
+
+      <EditAcademicHistoryModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onEdit={handleEditEducation}
+        education={selectedEducation}
+      />
+
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteEducation}
+        educationTitle={
+          selectedEducation
+            ? `${selectedEducation.degree} at ${selectedEducation.institution}`
+            : undefined
+        }
+      />
+    </>
+  );
+};
+
+export default AcademicHistoryCard;
