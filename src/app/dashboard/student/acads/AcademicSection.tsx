@@ -145,15 +145,6 @@ const batchLeaderboard = [
 const departmentLeaderboard = [
   {
     id: "1",
-    name: "John Doe",
-    email: "john@example.com",
-    enrollmentNumber: "2023BCS001",
-    totalMarks: 450,
-    rank: 3,
-    center: { name: "Delhi Center" },
-  },
-  {
-    id: "2",
     name: "Sarah Connor",
     email: "sarah@example.com",
     enrollmentNumber: "2023BCS101",
@@ -162,13 +153,22 @@ const departmentLeaderboard = [
     center: { name: "Mumbai Center" },
   },
   {
-    id: "3",
+    id: "2",
     name: "Mike Ross",
     email: "mike@example.com",
     enrollmentNumber: "2023BCS102",
     totalMarks: 455,
     rank: 2,
     center: { name: "Bangalore Center" },
+  },
+  {
+    id: "3",
+    name: "John Doe",
+    email: "john@example.com",
+    enrollmentNumber: "2023BCS001",
+    totalMarks: 450,
+    rank: 3,
+    center: { name: "Delhi Center" },
   },
   {
     id: "4",
@@ -992,7 +992,7 @@ export default function AcademicsSection() {
         {isLeaderboardModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+              <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-blue-900 px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-white/20 rounded-sm flex items-center justify-center">
@@ -1009,7 +1009,7 @@ export default function AcademicsSection() {
                   </div>
                   <button
                     onClick={() => setIsLeaderboardModalOpen(false)}
-                    className="p-2 hover:bg-white/20 rounded-sm transition-colors duration-200"
+                    className="p-2 hover:bg-white/20 rounded-sm transition-colors duration-200 cursor-pointer"
                   >
                     <X className="w-5 h-5 text-white" />
                   </button>
