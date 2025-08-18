@@ -76,7 +76,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
 
   const activeSection = getActiveSection();
 
-  // Handle clicks outside mobile menu
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const sidebar = document.getElementById("mobile-sidebar");
@@ -106,7 +105,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMobileMenuOpen, isProfileSidebarOpen]);
 
-  // Handle body scroll when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen || isProfileSidebarOpen) {
       document.body.style.overflow = "hidden";
@@ -121,7 +119,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
 
   const handleLogout = () => {
     console.log("Logout clicked");
-    // Note: localStorage usage removed as per requirements
     router.push("/auth/login/student");
   };
 
@@ -131,7 +128,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      {/* Mobile Menu Button */}
       <button
         id="mobile-menu-button"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -145,7 +141,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
         )}
       </button>
 
-      {/* Mobile Overlay */}
       {(isMobileMenuOpen || isProfileSidebarOpen) && (
         <div
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 transition-all duration-300 cursor-pointer"
@@ -156,14 +151,12 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
         />
       )}
 
-      {/* Desktop Sidebar */}
       <div
         className={`hidden lg:flex sticky top-0 h-screen bg-slate-900 border-r border-slate-700/50 shadow-2xl transition-all duration-300 ease-in-out ${
           isSidebarExpanded ? "w-64" : "w-20"
         }`}
       >
         <div className="flex flex-col w-full">
-          {/* Header with Hamburger and Logo */}
           <div className="p-5 border-b border-slate-700/50 flex items-center space-x-3 bg-slate-800/50">
             <button
               onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
@@ -186,7 +179,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
             )}
           </div>
 
-          {/* Coding Platform Logo */}
           <div className="p-5 border-b border-slate-700/50 bg-slate-800/30">
             <button
               onClick={handleCodingPlatformRedirect}
@@ -210,7 +202,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
             </button>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2 mt-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -248,7 +239,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
             })}
           </nav>
 
-          {/* Profile Button */}
           <div className="p-4 border-t border-slate-700/50 bg-gradient-to-r from-slate-800/30 to-slate-700/20">
             <button
               className={`w-full flex items-center text-slate-300 hover:bg-slate-700/50 hover:text-white hover:scale-105 active:scale-95 py-2.5 px-3 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border border-transparent hover:border-slate-600/30 ${
@@ -281,14 +271,12 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
 
-      {/* Professional Profile Sidebar */}
       <div
         id="profile-sidebar"
         className={`fixed inset-y-0 right-0 z-50 w-80 h-screen bg-white shadow-xl flex flex-col transition-transform duration-400 ease-in-out border-l border-slate-200 overflow-y-auto ${
           isProfileSidebarOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        {/* Profile Header */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-4 text-white relative">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent"></div>
           <div className="relative z-10">
@@ -304,7 +292,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
               </button>
             </div>
 
-            {/* Profile Card */}
             <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-200">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 flex items-center justify-center shadow-lg border border-white/20 hover:shadow-xl transition-all duration-200">
@@ -326,7 +313,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
 
-        {/* Academic Overview */}
         <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-b border-slate-200">
           <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
             Academic Overview
@@ -359,7 +345,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
 
-        {/* Profile Options */}
         <div className="p-4 py-6 bg-gradient-to-b from-white to-slate-50">
           <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
             Quick Actions
@@ -384,7 +369,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
           </nav>
         </div>
 
-        {/* Contact Information */}
         <div className="p-4 py-6 bg-gradient-to-br from-slate-50 to-slate-100 border-t border-slate-200">
           <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
             Contact Information
@@ -405,7 +389,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
 
-        {/* Logout Button */}
         <div className="p-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-red-50">
           <button
             onClick={handleLogout}
@@ -417,14 +400,12 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
 
-      {/* Mobile Sidebar */}
       <div
         id="mobile-sidebar"
         className={`lg:hidden fixed inset-y-0 right-0 z-40 w-72 h-screen bg-slate-900 border-l border-slate-700/50 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        {/* Mobile Header */}
         <div className="p-6 border-b border-slate-700/50 bg-slate-800/50">
           <div className="cursor-pointer hover:opacity-80 transition-opacity duration-200">
             <Image
@@ -436,7 +417,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
 
-        {/* Coding Platform Logo Mobile */}
         <div className="p-5 border-b border-slate-700/50 bg-slate-800/30">
           <button
             onClick={handleCodingPlatformRedirect}
@@ -456,7 +436,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
           </button>
         </div>
 
-        {/* Mobile Navigation */}
         <nav className="flex-1 p-4 space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -483,7 +462,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
           })}
         </nav>
 
-        {/* Mobile Profile Button */}
         <div className="p-4 border-t border-slate-700/50 bg-gradient-to-r from-slate-800/30 to-slate-700/20">
           <button
             className="w-full flex items-center space-x-3 text-slate-300 hover:bg-slate-700/50 hover:text-white hover:scale-105 active:scale-95 py-3.5 px-4 rounded-xl transition-all duration-200 ease-in-out cursor-pointer font-medium border border-transparent hover:border-slate-600/30"
@@ -500,9 +478,8 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out">
-        <div className="p-6 lg:p-8">{children}</div>
+        <div className="p-1 lg:p-8">{children}</div>
       </div>
     </div>
   );
