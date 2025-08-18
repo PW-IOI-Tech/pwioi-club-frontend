@@ -48,7 +48,7 @@ interface MonthlyData {
 
 interface DailyData {
   date: string;
-  status: "present" | "absent" | "late";
+  status: "present" | "absent";
   topic?: string;
 }
 
@@ -98,7 +98,7 @@ const AttendanceTracker: React.FC = () => {
               status: "present",
               topic: "Sorting Algorithms",
             },
-            { date: "2024-03-11", status: "late", topic: "Hash Tables" },
+            { date: "2024-03-11", status: "absent", topic: "Hash Tables" },
             { date: "2024-03-10", status: "present", topic: "AVL Trees" },
             { date: "2024-03-08", status: "present", topic: "B+ Trees" },
             { date: "2024-03-07", status: "absent", topic: "Red-Black Trees" },
@@ -119,7 +119,11 @@ const AttendanceTracker: React.FC = () => {
           dailyData: [
             { date: "2024-03-15", status: "absent", topic: "Normalization" },
             { date: "2024-03-13", status: "present", topic: "SQL Joins" },
-            { date: "2024-03-12", status: "late", topic: "Query Optimization" },
+            {
+              date: "2024-03-12",
+              status: "absent",
+              topic: "Query Optimization",
+            },
             { date: "2024-03-11", status: "present", topic: "Indexing" },
             { date: "2024-03-08", status: "present", topic: "ACID Properties" },
             { date: "2024-03-07", status: "absent", topic: "Transactions" },
@@ -179,7 +183,7 @@ const AttendanceTracker: React.FC = () => {
               status: "absent",
               topic: "Routing Algorithms",
             },
-            { date: "2024-03-11", status: "late", topic: "Network Security" },
+            { date: "2024-03-11", status: "absent", topic: "Network Security" },
             { date: "2024-03-08", status: "absent", topic: "OSI Model" },
             { date: "2024-03-07", status: "present", topic: "HTTP/HTTPS" },
             { date: "2024-03-06", status: "present", topic: "DNS" },
@@ -237,7 +241,7 @@ const AttendanceTracker: React.FC = () => {
             { date: "2023-11-18", status: "present", topic: "Deep Learning" },
             {
               date: "2023-11-16",
-              status: "late",
+              status: "absent",
               topic: "Supervised Learning",
             },
             {
@@ -688,10 +692,10 @@ const AttendanceTracker: React.FC = () => {
 
         {/* Detailed Modal */}
         {selectedCourse && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-sm max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+          <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] border border-slate-900 overflow-hidden shadow-2xl">
               {/* Modal Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-white">
+              <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-blue-900 p-4 text-white">
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-lg font-semibold mb-2">
@@ -711,7 +715,7 @@ const AttendanceTracker: React.FC = () => {
                   </div>
                   <button
                     onClick={() => setSelectedCourse(null)}
-                    className="p-1.5 hover:bg-white/20 rounded-md transition-colors"
+                    className="p-1.5 hover:bg-white/20 rounded-md transition-colors cursor-pointer"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -724,9 +728,9 @@ const AttendanceTracker: React.FC = () => {
                 <div className="flex flex-wrap gap-2 mb-6">
                   <button
                     onClick={() => setModalView("monthly")}
-                    className={`px-4 py-2 rounded-sm text-sm font-medium transition-all ${
+                    className={`px-4 py-2 rounded-sm text-sm font-medium transition-all cursor-pointer ${
                       modalView === "monthly"
-                        ? "bg-blue-600 text-white shadow-lg"
+                        ? "bg-slate-900 text-white shadow-lg"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
@@ -735,9 +739,9 @@ const AttendanceTracker: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setModalView("daily")}
-                    className={`px-4 py-2 rounded-sm text-sm font-medium transition-all ${
+                    className={`px-4 py-2 rounded-sm text-sm font-medium transition-all cursor-pointer ${
                       modalView === "daily"
-                        ? "bg-blue-600 text-white shadow-lg"
+                        ? "bg-slate-900 text-white shadow-lg"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
@@ -747,38 +751,28 @@ const AttendanceTracker: React.FC = () => {
                 </div>
 
                 {/* Course Statistics Summary */}
-                <div className="bg-gray-50 rounded-sm p-4 mb-6 border border-gray-200">
+                <div className="bg-gradient-to-r from-white to-indigo-50 rounded-sm p-4 mb-6 border border-gray-400">
                   <h4 className="text-sm font-semibold text-gray-900 mb-3">
                     Course Statistics
                   </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="text-center">
-                      <p className="text-lg font-bold text-blue-600">
+                      <p className="text-3xl font-bold text-blue-600">
                         {selectedCourse.attendance.toFixed(1)}%
                       </p>
                       <p className="text-xs text-gray-600">Overall</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-lg font-bold text-green-600">
+                      <p className="text-3xl font-bold text-green-600">
                         {selectedCourse.attended}
                       </p>
                       <p className="text-xs text-gray-600">Present</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-lg font-bold text-red-600">
+                      <p className="text-3xl font-bold text-red-600">
                         {selectedCourse.total - selectedCourse.attended}
                       </p>
                       <p className="text-xs text-gray-600">Absent</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-yellow-600">
-                        {
-                          selectedCourse.dailyData.filter(
-                            (d) => d.status === "late"
-                          ).length
-                        }
-                      </p>
-                      <p className="text-xs text-gray-600">Late</p>
                     </div>
                   </div>
                 </div>
@@ -789,7 +783,7 @@ const AttendanceTracker: React.FC = () => {
                     {selectedCourse.monthlyData.map((month, index) => (
                       <div
                         key={index}
-                        className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-sm p-4 border border-gray-200"
+                        className="bg-gradient-to-br from-white to-indigo-50  rounded-sm p-4 border border-gray-400"
                       >
                         <div className="flex justify-between items-center mb-3">
                           <h4 className="font-semibold text-gray-900 text-sm">
@@ -806,13 +800,13 @@ const AttendanceTracker: React.FC = () => {
 
                         <div className="space-y-3">
                           <div className="grid grid-cols-2 gap-3">
-                            <div className="text-center p-2 bg-white rounded-sm">
+                            <div className="text-center p-2 bg-white rounded-sm border border-gray-400">
                               <p className="text-lg font-bold text-green-600">
                                 {month.attended}
                               </p>
                               <p className="text-xs text-gray-600">Attended</p>
                             </div>
-                            <div className="text-center p-2 bg-white rounded-sm">
+                            <div className="text-center p-2 bg-white rounded-sm border border-gray-400">
                               <p className="text-lg font-bold text-gray-900">
                                 {month.total}
                               </p>
@@ -820,7 +814,7 @@ const AttendanceTracker: React.FC = () => {
                             </div>
                           </div>
 
-                          <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="w-full bg-white rounded-full h-2 border border-gray-400">
                             <div
                               className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(
                                 month.percentage
@@ -862,7 +856,6 @@ const AttendanceTracker: React.FC = () => {
                             <option value="all">All Status</option>
                             <option value="present">Present Only</option>
                             <option value="absent">Absent Only</option>
-                            <option value="late">Late Only</option>
                           </select>
                           <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         </div>
@@ -885,7 +878,7 @@ const AttendanceTracker: React.FC = () => {
                         filteredDailyData.map((day, index) => (
                           <div
                             key={index}
-                            className="bg-white rounded-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                            className="bg-white rounded-sm border border-gray-400 p-4"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
@@ -893,8 +886,6 @@ const AttendanceTracker: React.FC = () => {
                                   className={`w-8 h-8 rounded-sm flex items-center justify-center ${
                                     day.status === "present"
                                       ? "bg-green-100"
-                                      : day.status === "late"
-                                      ? "bg-yellow-100"
                                       : "bg-red-100"
                                   }`}
                                 >
@@ -928,8 +919,6 @@ const AttendanceTracker: React.FC = () => {
                                   className={`px-3 py-1 rounded-sm text-xs font-medium ${
                                     day.status === "present"
                                       ? "bg-green-50 text-green-700 border border-green-200"
-                                      : day.status === "late"
-                                      ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
                                       : "bg-red-50 text-red-700 border border-red-200"
                                   }`}
                                 >
@@ -942,47 +931,6 @@ const AttendanceTracker: React.FC = () => {
                         ))
                       )}
                     </div>
-
-                    {/* Daily Summary Stats */}
-                    {filteredDailyData.length > 0 && (
-                      <div className="bg-gray-50 rounded-sm p-4 border border-gray-200 mt-6">
-                        <h4 className="text-sm font-semibold text-gray-900 mb-3">
-                          Filter Summary
-                        </h4>
-                        <div className="grid grid-cols-3 gap-4">
-                          <div className="text-center">
-                            <p className="text-sm font-bold text-green-600">
-                              {
-                                filteredDailyData.filter(
-                                  (d) => d.status === "present"
-                                ).length
-                              }
-                            </p>
-                            <p className="text-xs text-gray-600">Present</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-sm font-bold text-red-600">
-                              {
-                                filteredDailyData.filter(
-                                  (d) => d.status === "absent"
-                                ).length
-                              }
-                            </p>
-                            <p className="text-xs text-gray-600">Absent</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-sm font-bold text-yellow-600">
-                              {
-                                filteredDailyData.filter(
-                                  (d) => d.status === "late"
-                                ).length
-                              }
-                            </p>
-                            <p className="text-xs text-gray-600">Late</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>

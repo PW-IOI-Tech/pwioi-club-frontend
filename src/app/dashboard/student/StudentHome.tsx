@@ -1,18 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Heart,
   MessageCircle,
   Share2,
   Flag,
   X,
-  MoreHorizontal,
   Image,
   Video,
+  Check,
+  User,
 } from "lucide-react";
 
-// Type definitions
 interface User {
   batch: string;
   studentId: string;
@@ -39,22 +39,78 @@ interface Post {
   assignedBy: string | null;
 }
 
-interface Announcement {
-  id: string;
-  author: string;
-  title: string;
-  description: string;
-  timestamp: string;
-}
-
 interface ReportModalState {
   isOpen: boolean;
   postId: string | null;
 }
 
-// Welcome Message Component
 interface WelcomeMessageProps {
   userName: string;
+}
+
+interface CreatePostProps {
+  userInitial: string;
+}
+
+interface PostHeaderProps {
+  post: Post;
+  getRoleBadgeColor: (role: string) => string;
+}
+
+interface Comment {
+  id: string;
+  author: string;
+  content: string;
+  timestamp: string;
+  avatar?: string;
+}
+
+interface Post {
+  id: string;
+  likes: number;
+  comments: number;
+  likedBy?: Array<{ id: string; name: string; avatar?: string }>;
+  topComments?: Comment[];
+  allComments?: Comment[];
+}
+
+interface PostActionsProps {
+  post: Post;
+  likedPosts: Set<string>;
+  onLike: (postId: string) => void;
+  onFlag: (postId: string) => void;
+  onComment?: (postId: string, comment: string) => void;
+  onShare?: (postId: string) => void;
+}
+
+interface PostProps {
+  post: Post;
+  likedPosts: Set<string>;
+  onLike: (postId: string) => void;
+  onFlag: (postId: string) => void;
+  getRoleBadgeColor: (role: string) => string;
+}
+
+interface FeedProps {
+  posts: Post[];
+  likedPosts: Set<string>;
+  onLike: (postId: string) => void;
+  onFlag: (postId: string) => void;
+  getRoleBadgeColor: (role: string) => string;
+}
+
+interface ProfileHeaderProps {
+  user: User;
+}
+
+interface ReportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  reportReason: string;
+  setReportReason: (reason: string) => void;
+  reportDetails: string;
+  setReportDetails: (details: string) => void;
+  onSubmit: () => void;
 }
 
 const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ userName }) => (
@@ -70,67 +126,253 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ userName }) => (
   </div>
 );
 
-// Create Post Component
-interface CreatePostProps {
-  userInitial: string;
-}
-
 interface CreatePostProps {
   userInitial: string;
 }
 
 const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [postText, setPostText] = useState("");
+  const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
+  const [showToast, setShowToast] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleTextAreaClick = () => {
+    setShowModal(true);
+  };
+
+  const handleMediaSelect = (type: "image" | "video") => {
+    if (type === "image") {
+      fileInputRef.current?.click();
+    } else {
+      videoInputRef.current?.click();
+    }
+  };
+
+  const handleFileChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: "image" | "video"
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedMedia(file);
+      setMediaType(type);
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setMediaPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      setShowModal(true);
+    }
+  };
+
+  const handleCancel = () => {
+    setShowModal(false);
+    setPostText("");
+    setSelectedMedia(null);
+    setMediaPreview(null);
+    setMediaType(null);
+  };
+
+  const handlePost = () => {
+    console.log("Posting:", { text: postText, media: selectedMedia });
+    handleCancel();
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+  };
+
+  const handleModalMediaSelect = (type: "image" | "video") => {
+    if (type === "image") {
+      fileInputRef.current?.click();
+    } else {
+      videoInputRef.current?.click();
+    }
+  };
 
   return (
-    <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5">
-      {/* Header */}
-      <div className="flex items-center space-x-3 mb-4">
-        <div className="flex-1">
-          <h3 className="text-gray-900 font-semibold text-xl">
-            Share Something
-          </h3>
-          <p className="text-gray-500 text-xs">What's on your mind?</p>
+    <>
+      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5">
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white font-semibold">
+            {userInitial}
+          </div>
+          <div className="flex-1">
+            <h3 className="text-gray-900 font-semibold text-xl">
+              Share Something
+            </h3>
+            <p className="text-gray-500 text-xs">What's on your mind?</p>
+          </div>
         </div>
-      </div>
 
-      {/* Main Input Area */}
-      <div className="flex flex-col space-y-4">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full bg-gray-50 transition-all duration-200 rounded-sm px-4 py-3 text-left text-gray-600 text-sm border border-gray-400 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent cursor-pointer"
-        >
-          Share your thoughts, projects, or achievements...
-        </button>
-
-        {/* Quick Action Buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          <button className="flex items-center justify-center space-x-2 p-2 text-white bg-slate-900 rounded-sm transition-all duration-200 text-sm font-semibold cursor-pointer">
-            <Image className="w-4 h-4" />
-            <span>Photo</span>
+        <div className="flex flex-col space-y-4">
+          <button
+            onClick={handleTextAreaClick}
+            className="w-full bg-gray-50 transition-all duration-200 rounded-sm px-4 py-3 text-left text-gray-600 text-sm border border-gray-400 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent cursor-pointer"
+          >
+            Share your thoughts, projects, or achievements...
           </button>
-          <button className="flex items-center justify-center space-x-2 p-2 text-white rounded-sm transition-all duration-200 text-sm bg-slate-900 font-semibold cursor-pointer">
-            <Video className="w-4 h-4" />
-            <span>Video</span>
-          </button>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => handleMediaSelect("image")}
+              className="flex items-center justify-center space-x-2 p-2 text-white bg-slate-900 rounded-sm transition-all duration-200 text-sm font-semibold cursor-pointer hover:bg-slate-800"
+            >
+              <Image className="w-4 h-4" />
+              <span>Photo</span>
+            </button>
+            <button
+              onClick={() => handleMediaSelect("video")}
+              className="flex items-center justify-center space-x-2 p-2 text-white rounded-sm transition-all duration-200 text-sm bg-slate-900 font-semibold cursor-pointer hover:bg-slate-800"
+            >
+              <Video className="w-4 h-4" />
+              <span>Video</span>
+            </button>
+          </div>
         </div>
+
+        <div className="mt-4 pt-4 border-t border-gray-300">
+          <div className="flex items-center justify-between text-xs text-gray-600">
+            <span>💡 Tip: Share your daily wins!</span>
+          </div>
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleFileChange(e, "image")}
+          className="hidden"
+        />
+        <input
+          ref={videoInputRef}
+          type="file"
+          accept="video/*"
+          onChange={(e) => handleFileChange(e, "video")}
+          className="hidden"
+        />
       </div>
 
-      {/* Quick Stats/Encouragement */}
-      <div className="mt-4 pt-4 border-t border-gray-300">
-        <div className="flex items-center justify-between text-xs text-gray-600">
-          <span>💡 Tip: Share your daily wins!</span>
+      {showModal && (
+        <div className="fixed inset-0 bg-black/35 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-gray-400">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Create Post
+              </h2>
+              <button
+                onClick={handleCancel}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white font-semibold">
+                  {userInitial}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">You</p>
+                  <p className="text-xs text-gray-500">Public</p>
+                </div>
+              </div>
+
+              <textarea
+                value={postText}
+                onChange={(e) => setPostText(e.target.value)}
+                placeholder="What's on your mind?"
+                className="w-full border-none resize-none placeholder-gray-500 focus:outline-none min-h-[120px]"
+                autoFocus
+              />
+
+              {mediaPreview && (
+                <div className="mt-4 relative">
+                  {mediaType === "image" ? (
+                    <img
+                      src={mediaPreview}
+                      alt="Selected"
+                      className="w-full max-h-96 object-cover rounded-lg"
+                    />
+                  ) : (
+                    <video
+                      src={mediaPreview}
+                      controls
+                      className="w-full max-h-96 rounded-lg"
+                    />
+                  )}
+                  <button
+                    onClick={() => {
+                      setSelectedMedia(null);
+                      setMediaPreview(null);
+                      setMediaType(null);
+                    }}
+                    className="absolute top-2 right-2 bg-black bg-opacity-50 text-white p-1 rounded-full hover:bg-opacity-70 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {!mediaPreview && (
+                <div className="mt-4 mb-3">
+                  <p className="text-sm text-gray-600 mb-2">Add to your post</p>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleModalMediaSelect("image")}
+                      className="flex items-center space-x-2 px-3 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors text-sm cursor-pointer"
+                    >
+                      <Image className="w-4 h-4" />
+                      <span>Photo</span>
+                    </button>
+                    <button
+                      onClick={() => handleModalMediaSelect("video")}
+                      className="flex items-center space-x-2 px-3 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors text-sm cursor-pointer"
+                    >
+                      <Video className="w-4 h-4" />
+                      <span>Video</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t p-4 flex justify-end space-x-3">
+              <button
+                onClick={handleCancel}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePost}
+                disabled={!postText.trim() && !selectedMedia}
+                className="px-6 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
+              >
+                Post
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+
+      {showToast && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="bg-slate-900 text-white test-sm  px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
+            <Check className="w-4 h-4" />
+            <span>Posted Suscessfully!</span>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
-
-// Post Header Component
-interface PostHeaderProps {
-  post: Post;
-  getRoleBadgeColor: (role: string) => string;
-}
 
 const PostHeader: React.FC<PostHeaderProps> = ({ post, getRoleBadgeColor }) => (
   <div className="p-4 pb-3">
@@ -165,72 +407,296 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post, getRoleBadgeColor }) => (
           <p className="text-xs text-gray-500">{post.timestamp}</p>
         </div>
       </div>
-      <button className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors">
-        <MoreHorizontal className="w-5 h-5" />
-      </button>
     </div>
   </div>
 );
-
-// Post Actions Component
-interface PostActionsProps {
-  post: Post;
-  likedPosts: Set<string>;
-  onLike: (postId: string) => void;
-  onFlag: (postId: string) => void;
-}
 
 const PostActions: React.FC<PostActionsProps> = ({
   post,
   likedPosts,
   onLike,
   onFlag,
-}) => (
-  <div className="px-4 py-3 border-t border-gray-100 text-sm">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-6">
-        <button
-          onClick={() => onLike(post.id)}
-          className={`flex items-center space-x-1 px-3 py-2 rounded-sm transition-all hover:bg-gray-50 cursor-pointer ${
-            likedPosts.has(post.id) ? "text-slate-900" : "text-gray-600"
-          }`}
-        >
-          <Heart
-            className={`w-4 h-4 ${
-              likedPosts.has(post.id) ? "fill-current" : ""
-            }`}
-          />
-          <span className="font-medium">
-            {post.likes + (likedPosts.has(post.id) ? 1 : 0)}
-          </span>
-        </button>
-        <button className="flex items-center space-x-1 px-3 py-2 rounded-sm transition-colors hover:bg-gray-50 text-gray-600 cursor-pointer">
-          <MessageCircle className="w-4 h-4" />
-          <span className="font-medium">{post.comments}</span>
-        </button>
-        <button className="flex items-center space-x-1 px-3 py-2 rounded-sm transition-colors hover:bg-gray-50 text-gray-600 cursor-pointer">
-          <Share2 className="w-4 h-4" />
-          <span className="font-medium">Share</span>
-        </button>
-      </div>
-      <button
-        onClick={() => onFlag(post.id)}
-        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-sm transition-colors cursor-pointer"
-      >
-        <Flag className="w-4 h-4" />
-      </button>
-    </div>
-  </div>
-);
+  onComment,
+  onShare,
+}) => {
+  const [showLikesModal, setShowLikesModal] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [comments, setComments] = useState<Comment[]>(post.topComments || []);
+  const [showToast, setShowToast] = useState(false);
 
-// Individual Post Component
-interface PostProps {
-  post: Post;
-  likedPosts: Set<string>;
-  onLike: (postId: string) => void;
-  onFlag: (postId: string) => void;
-  getRoleBadgeColor: (role: string) => string;
-}
+  const isLiked = likedPosts.has(post.id);
+  const totalLikes = post.likes + (isLiked ? 1 : 0);
+
+  const mockLikedBy = post.likedBy || [
+    { id: "1", name: "John Doe", avatar: "👤" },
+    { id: "2", name: "Jane Smith", avatar: "👩" },
+    { id: "3", name: "Mike Johnson", avatar: "👨" },
+    { id: "4", name: "Sarah Wilson", avatar: "👩‍💼" },
+  ];
+
+  const mockTopComments = post.topComments || [
+    {
+      id: "1",
+      author: "Alice Brown",
+      content: "This is really insightful! Thanks for sharing.",
+      timestamp: "2h ago",
+      avatar: "👩‍🦳",
+    },
+    {
+      id: "2",
+      author: "Bob Davis",
+      content: "Great post! I completely agree with your perspective.",
+      timestamp: "4h ago",
+      avatar: "👨‍🦲",
+    },
+  ];
+
+  useEffect(() => setComments(mockTopComments), []);
+
+  const handleCommentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newComment.trim()) {
+      const newCommentObj: Comment = {
+        id: Date.now().toString(),
+        author: "You",
+        content: newComment,
+        timestamp: "Just now",
+        avatar: "👤",
+      };
+
+      setComments([...comments, newCommentObj]);
+      onComment?.(post.id, newComment);
+      setNewComment("");
+    }
+  };
+
+  const handleShare = () => {
+    const postUrl = `${window.location.origin}/post/${post.id}`;
+    navigator.clipboard
+      .writeText(postUrl)
+      .then(() => {
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      })
+      .catch(() => {
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      });
+    onShare?.(post.id);
+  };
+
+  return (
+    <div className="border-t border-gray-100">
+      <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            {totalLikes > 0 && (
+              <button
+                onClick={() => setShowLikesModal(true)}
+                className="underline cursor-pointer"
+              >
+                {totalLikes} {totalLikes === 1 ? "like" : "likes"}
+              </button>
+            )}
+            {post.comments > 0 && (
+              <button
+                onClick={() => setShowCommentsModal(true)}
+                className="underline cursor-pointer"
+              >
+                {post.comments} {post.comments === 1 ? "comment" : "comments"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 py-3 text-xs border-t border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-1 gap-6">
+            <button
+              onClick={() => onLike(post.id)}
+              className={`flex items-center space-x-1 py-2 rounded-md transition-all hover:bg-gray-50 cursor-pointer ${
+                isLiked ? "text-slate-900" : "text-gray-600"
+              }`}
+            >
+              <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
+              <span className="font-medium">Like</span>
+            </button>
+
+            <button
+              onClick={() => setShowCommentsModal(true)}
+              className="flex items-center space-x-1 py-2 rounded-md transition-colors hover:bg-gray-50 text-gray-600 cursor-pointer"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="font-medium">Comment</span>
+            </button>
+
+            <button
+              onClick={() => handleShare()}
+              className="flex items-center space-x-1 py-2 rounded-md transition-colors hover:bg-gray-50 text-gray-600 cursor-pointer"
+            >
+              <Share2 className="w-4 h-4" />
+              <span className="font-medium">Share</span>
+            </button>
+          </div>
+
+          <button
+            onClick={() => onFlag(post.id)}
+            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+            title="Report post"
+          >
+            <Flag className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {comments.length > 0 && (
+        <div className="px-4 py-3 border-t border-gray-50">
+          <div className="space-y-3">
+            {comments.slice(0, 2).map((comment) => (
+              <div key={comment.id} className="flex space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm">
+                    {comment.avatar || "👤"}
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="bg-gray-50 border border-gray-200 rounded-sm px-3 py-2">
+                    <div className="font-medium text-sm text-gray-900">
+                      {comment.author}
+                    </div>
+                    <div className="text-sm text-gray-700">
+                      {comment.content}
+                    </div>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {comment.timestamp}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {comments.length > 2 && (
+              <button
+                onClick={() => setShowCommentsModal(true)}
+                className="text-sm text-slate-900 hover:text-slate-700 font-medium cursor-pointer underline"
+              >
+                View all {comments.length} comments
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showLikesModal && (
+        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 max-h-96 overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold">Likes</h3>
+              <button
+                onClick={() => setShowLikesModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-full cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-80">
+              {mockLikedBy.slice(0, totalLikes).map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center space-x-3 p-4 hover:bg-gray-50"
+                >
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                    {user.avatar || "👤"}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">{user.name}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCommentsModal && (
+        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full mx-4 max-h-96 overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold">Comments</h3>
+              <button
+                onClick={() => setShowCommentsModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-full cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {comments.map((comment) => (
+                <div key={comment.id} className="flex space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm">
+                      {comment.avatar || "👤"}
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                      <div className="font-medium text-sm text-gray-900">
+                        {comment.author}
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        {comment.content}
+                      </div>
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      {comment.timestamp}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-4 border-t border-gray-200">
+              <form onSubmit={handleCommentSubmit} className="flex space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-gray-600" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Write a comment..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={!newComment.trim()}
+                  className="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors ease-in-out duration-200 cursor-pointer"
+                >
+                  Post
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showToast && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="bg-slate-900 text-white test-sm  px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
+            <Check className="w-4 h-4" />
+            <span>Link copied to clipboard!</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Post: React.FC<PostProps> = ({
   post,
@@ -238,43 +704,76 @@ const Post: React.FC<PostProps> = ({
   onLike,
   onFlag,
   getRoleBadgeColor,
-}) => (
-  <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
-    <PostHeader post={post} getRoleBadgeColor={getRoleBadgeColor} />
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
 
-    <div className="px-4 pb-3">
-      <p className="text-gray-800 text-sm leading-tight tracking-normal">
-        {post.content}
-      </p>
-    </div>
+  const contentLines = post.content.split("\n");
+  const shouldTruncate = contentLines.length > 2 || post.content.length > 200;
 
-    {post.media && (
-      <div className="px-4 pb-3">
-        <img
-          src={post.media.url}
-          alt="Post media"
-          className="w-full h-64 object-cover rounded-sm bg-gray-100"
-        />
+  const getTruncatedContent = () => {
+    if (contentLines.length > 2) {
+      return contentLines.slice(0, 2).join("\n");
+    }
+    if (post.content.length > 200) {
+      return post.content.substring(0, 200);
+    }
+    return post.content;
+  };
+
+  const displayContent = isExpanded ? post.content : getTruncatedContent();
+
+  return (
+    <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
+      <PostHeader post={post} getRoleBadgeColor={getRoleBadgeColor} />
+
+      <div className="px-4 py-3">
+        <div className="text-gray-800 text-sm">
+          <pre className="whitespace-pre-wrap font-inherit">
+            {displayContent}
+          </pre>
+
+          {shouldTruncate && !isExpanded && (
+            <>
+              {post.content.length > 200 && contentLines.length <= 2 && "..."}
+              <button
+                onClick={() => setIsExpanded(true)}
+                className="text-blue-600 hover:text-blue-900 font-medium ml-1 cursor-pointer text-xs underline"
+              >
+                more
+              </button>
+            </>
+          )}
+
+          {isExpanded && shouldTruncate && (
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="text-blue-600 hover:text-blue-900 font-medium cursor-pointer block mt-1 text-xs underline"
+            >
+              Show less
+            </button>
+          )}
+        </div>
       </div>
-    )}
 
-    <PostActions
-      post={post}
-      likedPosts={likedPosts}
-      onLike={onLike}
-      onFlag={onFlag}
-    />
-  </div>
-);
+      {post.media && (
+        <div className="px-4 pb-3">
+          <img
+            src={post.media.url}
+            alt="Post media"
+            className="w-full h-64 object-cover rounded-sm bg-gray-100"
+          />
+        </div>
+      )}
 
-// Feed Component
-interface FeedProps {
-  posts: Post[];
-  likedPosts: Set<string>;
-  onLike: (postId: string) => void;
-  onFlag: (postId: string) => void;
-  getRoleBadgeColor: (role: string) => string;
-}
+      <PostActions
+        post={post}
+        likedPosts={likedPosts}
+        onLike={onLike}
+        onFlag={onFlag}
+      />
+    </div>
+  );
+};
 
 const Feed: React.FC<FeedProps> = ({
   posts,
@@ -283,7 +782,7 @@ const Feed: React.FC<FeedProps> = ({
   onFlag,
   getRoleBadgeColor,
 }) => (
-  <div className="space-y-4">
+  <div className="space-y-6">
     {posts.map((post) => (
       <Post
         key={post.id}
@@ -297,14 +796,8 @@ const Feed: React.FC<FeedProps> = ({
   </div>
 );
 
-// Profile Header Component
-interface ProfileHeaderProps {
-  user: User;
-}
-
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user }) => (
   <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5 overflow-hidden">
-    {/* Header Section */}
     <div className="flex items-center space-x-3 mb-3">
       <div className="w-12 h-12 rounded-md bg-slate-900 flex items-center justify-center shadow-lg border border-white/20 transition-all duration-200">
         <span className="text-white font-bold text-lg">{user.initial}</span>
@@ -321,17 +814,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user }) => (
     </div>
   </div>
 );
-
-// Report Modal Component
-interface ReportModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  reportReason: string;
-  setReportReason: (reason: string) => void;
-  reportDetails: string;
-  setReportDetails: (details: string) => void;
-  onSubmit: () => void;
-}
 
 const ReportModal: React.FC<ReportModalProps> = ({
   isOpen,
@@ -421,7 +903,6 @@ const ReportModal: React.FC<ReportModalProps> = ({
   );
 };
 
-// Main Component
 const StudentHome: React.FC = () => {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [reportModal, setReportModal] = useState<ReportModalState>({
@@ -431,7 +912,6 @@ const StudentHome: React.FC = () => {
   const [reportReason, setReportReason] = useState<string>("");
   const [reportDetails, setReportDetails] = useState<string>("");
 
-  // Mock data
   const user: User = {
     name: "Nishchay Bhatia",
     initial: "N",
@@ -461,7 +941,7 @@ const StudentHome: React.FC = () => {
       author: "Alex Chen",
       role: "Student",
       content:
-        "Just completed my first full-stack e-commerce project using React and Node.js! Thanks to everyone who provided feedback during development. The learning journey continues! 🚀",
+        "Just completed my first full-stack e-commerce project using React and Node.js! Thanks to everyone who provided feedback during development. The learning journey continues! 🚀  Lorem ipsum dolor sit amet consectetur adipisicing elit. Maiores omnis eum sed nesciunt nemo molestias dolorem debitis aliquid neque nihil reprehenderit, ex labore enim ullam delectus impedit accusamus vitae tenetur provident inventore. Dicta, minima dolore sapiente fugiat assumenda nisi doloribus consequuntur dolorem consequatur asperiores eveniet iusto! Iste ducimus voluptate in.",
       media: {
         type: "image",
         url: "https://via.placeholder.com/600x300/1e40af/ffffff?text=E-Commerce+Project+Screenshot",
@@ -482,33 +962,6 @@ const StudentHome: React.FC = () => {
       comments: 12,
       timestamp: "6h ago",
       assignedBy: "Academic Committee",
-    },
-  ];
-
-  const announcements: Announcement[] = [
-    {
-      id: "1",
-      author: "Administration",
-      title: "Spring Break Schedule",
-      description:
-        "Campus will be closed from March 15-22. Online resources remain available.",
-      timestamp: "1d ago",
-    },
-    {
-      id: "2",
-      author: "Career Services",
-      title: "Tech Career Fair",
-      description:
-        "Join us April 10th for networking with top tech companies. Registration required.",
-      timestamp: "2d ago",
-    },
-    {
-      id: "3",
-      author: "Library Services",
-      title: "Extended Hours",
-      description:
-        "Library now open 24/7 during finals week. Study rooms available for booking.",
-      timestamp: "3d ago",
     },
   ];
 
@@ -565,7 +1018,6 @@ const StudentHome: React.FC = () => {
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-          {/* Left Column - Main Content (66%) */}
           <div className="lg:col-span-7 space-y-4">
             <WelcomeMessage userName={user.name} />
             <Feed
@@ -577,7 +1029,6 @@ const StudentHome: React.FC = () => {
             />
           </div>
 
-          {/* Right Column - Sidebar (25%) */}
           <div className="lg:col-span-3 space-y-4">
             <ProfileHeader user={user} />
             <CreatePost userInitial={user.initial} />
