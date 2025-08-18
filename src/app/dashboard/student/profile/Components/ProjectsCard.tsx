@@ -278,7 +278,7 @@ const ProjectsCard = () => {
 
           <p className="text-gray-600 mb-6">
             Are you sure you want to delete{" "}
-            <span className="font-semibold">"{projectName}"</span>? This action
+            <span className="font-semibold">&ldquo;{projectName}&ldquo;</span>? This action
             cannot be undone.
           </p>
 

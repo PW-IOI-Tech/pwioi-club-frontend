@@ -1,4 +1,3 @@
-import { Edit3 } from "lucide-react";
 import profileData from "../Constants/ProfileData";
 
 const PersonalDetailsCard = () => (
@@ -9,7 +8,7 @@ const PersonalDetailsCard = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       <div className="p-3 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
         <label className="text-xs font-semibold text-slate-800 uppercase tracking-wide">
-          Father's Name
+          Father&lsquo;s Name
         </label>
         <p className="text-sm font-medium text-slate-900 leading-tight">
           {profileData.personalDetails.fathersName}
@@ -17,7 +16,7 @@ const PersonalDetailsCard = () => (
       </div>
       <div className="p-3 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
         <label className="text-xs font-semibold text-slate-800 uppercase tracking-wide">
-          Mother's Name
+          Mother&lsquo;s Name
         </label>
         <p className="text-sm font-medium text-slate-900 leading-tight">
           {profileData.personalDetails.mothersName}

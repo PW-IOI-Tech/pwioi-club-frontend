@@ -206,7 +206,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
             <h3 className="text-gray-900 font-semibold text-xl">
               Share Something
             </h3>
-            <p className="text-gray-500 text-xs">What's on your mind?</p>
+            <p className="text-gray-500 text-xs">What&lsquo;s on your mind?</p>
           </div>
         </div>
 
@@ -841,7 +841,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
           </div>
 
           <p className="text-gray-600 mb-4">
-            Help us understand what's wrong with this post
+            Help us understand what&lsquo;s wrong with this post
           </p>
 
           <div className="space-y-3 mb-6">
