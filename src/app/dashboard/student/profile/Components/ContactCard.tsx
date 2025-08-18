@@ -1,4 +1,3 @@
-import { Edit3 } from "lucide-react";
 import { FaPhoneAlt } from "react-icons/fa";
 import { IoMdMail } from "react-icons/io";
 import profileData from "../Constants/ProfileData";

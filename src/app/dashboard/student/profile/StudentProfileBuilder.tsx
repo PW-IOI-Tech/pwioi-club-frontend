@@ -1,12 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-import { Edit3, Plus, ExternalLink, Award } from "lucide-react";
-import { VscGithub } from "react-icons/vsc";
-import { IoMdMail } from "react-icons/io";
-import { FaPhoneAlt, FaUser } from "react-icons/fa";
-import { FaLocationDot, FaStar } from "react-icons/fa6";
-import { RiGraduationCapFill } from "react-icons/ri";
+import React from "react";
 import profileData from "./Constants/ProfileData";
 import ProfileHeader from "./Components/ProfileHeader";
 import ContactCard from "./Components/ContactCard";

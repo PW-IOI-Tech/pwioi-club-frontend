@@ -1,4 +1,3 @@
-import { Edit3 } from "lucide-react";
 import { FaUser } from "react-icons/fa";
 import { FaLocationDot } from "react-icons/fa6";
 import profileData from "../Constants/ProfileData";

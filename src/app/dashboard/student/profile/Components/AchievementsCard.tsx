@@ -435,8 +435,8 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
       <div className="space-y-4">
         <p className="text-gray-700">
           Are you sure you want to delete the{" "}
-          <strong>"{achievementTitle}"</strong> achievement? This action cannot
-          be undone.
+          <strong>&ldquo;{achievementTitle}&ldquo;</strong> achievement? This
+          action cannot be undone.
         </p>
 
         <div className="flex space-x-3 pt-2">
