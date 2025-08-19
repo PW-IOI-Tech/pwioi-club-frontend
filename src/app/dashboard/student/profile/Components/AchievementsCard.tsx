@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Edit3, X, Trash2, Star } from "lucide-react";
+import axios from "axios";
 import profileData from "../Constants/ProfileData";
 
 interface Achievement {
+  id?: string;
   title: string;
   description: string;
   organisation: string;
@@ -62,7 +64,6 @@ const AddAchievementModal: React.FC<AddAchievementModalProps> = ({
 
   const handleInputChange = (field: keyof Achievement, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
@@ -71,10 +72,8 @@ const AddAchievementModal: React.FC<AddAchievementModalProps> = ({
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof Achievement, string>> = {};
 
-    if (!formData.title.trim()) {
+    if (!formData.title.trim())
       newErrors.title = "Achievement title is required";
-    }
-
     if (!formData.description.trim()) {
       newErrors.description = "Achievement description is required";
     } else if (formData.description.length < 10) {
@@ -83,11 +82,8 @@ const AddAchievementModal: React.FC<AddAchievementModalProps> = ({
     } else if (formData.description.length > 500) {
       newErrors.description = "Description should not exceed 500 characters";
     }
-
-    if (!formData.organisation.trim()) {
+    if (!formData.organisation.trim())
       newErrors.organisation = "Organisation is required";
-    }
-
     if (!formData.startDate) {
       newErrors.startDate = "Date is required";
     } else if (new Date(formData.startDate) > new Date()) {
@@ -100,7 +96,6 @@ const AddAchievementModal: React.FC<AddAchievementModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (validateForm()) {
       onAdd({
         ...formData,
@@ -151,8 +146,8 @@ const AddAchievementModal: React.FC<AddAchievementModalProps> = ({
           <textarea
             value={formData.description}
             onChange={(e) => handleInputChange("description", e.target.value)}
-            placeholder="Describe your achievement and its impact..."
             rows={4}
+            placeholder="Describe your achievement and its impact..."
             className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-90ring-slate-900 resize-none ${
               errors.description ? "border-red-400" : "border-gray-400"
             }`}
@@ -194,8 +189,8 @@ const AddAchievementModal: React.FC<AddAchievementModalProps> = ({
             type="date"
             value={formData.startDate}
             onChange={(e) => handleInputChange("startDate", e.target.value)}
-            max={new Date().toISOString().split("T")[0]} // Prevent future dates
-            className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-90ring-slate-900 ${
+            max={new Date().toISOString().split("T")[0]}
+            className={`w-full p-3 border rounded-sm focus:ring-2 ${
               errors.startDate ? "border-red-400" : "border-gray-400"
             }`}
           />
@@ -208,13 +203,13 @@ const AddAchievementModal: React.FC<AddAchievementModalProps> = ({
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 transition-all cursor-pointer"
+            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
+            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700"
           >
             Add Achievement
           </button>
@@ -457,11 +452,8 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
     </Modal>
   );
 };
-
 const AchievementsCard: React.FC = () => {
-  const [achievements, setAchievements] = useState<Achievement[]>([
-    ...profileData.achievements,
-  ]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -469,29 +461,114 @@ const AchievementsCard: React.FC = () => {
     useState<Achievement | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
 
-  const handleAddAchievement = (newAchievement: Achievement) => {
-    setAchievements([...achievements, newAchievement]);
-  };
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const studentId = user?.sub;
 
-  const handleEditAchievement = (updatedAchievement: Achievement) => {
-    if (editIndex !== null) {
-      const updatedAchievements = [...achievements];
-      updatedAchievements[editIndex] = updatedAchievement;
-      setAchievements(updatedAchievements);
-      setEditIndex(null);
-      setSelectedAchievement(null);
+  // Fetch Achievements
+  useEffect(() => {
+    if (studentId) {
+      axios
+        .get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/achievements`,
+          { withCredentials: true }
+        )
+        .then((res) => {
+          const fetched = res.data.data.map((a: any) => ({
+            id: a.id,
+            title: a.title,
+            description: a.description,
+            organisation: a.organisation,
+            startDate: a.start_date,
+          }));
+          setAchievements(fetched);
+        })
+        .catch((err) => console.error("Error fetching achievements:", err));
+    }
+  }, [studentId]);
+
+  // Add Achievement
+  const handleAddAchievement = async (newAchievement: Achievement) => {
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/achievements`,
+        {
+          title: newAchievement.title,
+          description: newAchievement.description,
+          organisation: newAchievement.organisation,
+          start_date: newAchievement.startDate,
+        },
+        { withCredentials: true }
+      );
+      const added = res.data.data;
+      setAchievements((prev) => [
+        ...prev,
+        {
+          id: added.id,
+          title: added.title,
+          description: added.description,
+          organisation: added.organisation,
+          startDate: added.start_date,
+        },
+      ]);
+    } catch (err) {
+      console.error("Error adding achievement:", err);
     }
   };
 
-  const handleDeleteAchievement = () => {
-    if (editIndex !== null) {
-      const updatedAchievements = achievements.filter(
-        (_, i) => i !== editIndex
-      );
-      setAchievements(updatedAchievements);
-      setShowDeleteModal(false);
-      setEditIndex(null);
-      setSelectedAchievement(null);
+  // Edit Achievement
+  const handleEditAchievement = async (updatedAchievement: Achievement) => {
+    if (selectedAchievement?.id) {
+      try {
+        const res = await axios.patch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/achievements/${selectedAchievement.id}`,
+          {
+            title: updatedAchievement.title,
+            description: updatedAchievement.description,
+            organisation: updatedAchievement.organisation,
+            start_date: updatedAchievement.startDate,
+          },
+          { withCredentials: true }
+        );
+        const updated = res.data.data;
+        setAchievements((prev) =>
+          prev.map((ach) =>
+            ach.id === updated.id
+              ? {
+                  id: updated.id,
+                  title: updated.title,
+                  description: updated.description,
+                  organisation: updated.organisation,
+                  startDate: updated.start_date,
+                }
+              : ach
+          )
+        );
+        setSelectedAchievement(null);
+        setEditIndex(null);
+      } catch (err) {
+        console.error("Error updating achievement:", err);
+      }
+    }
+  };
+
+  // Delete Achievement
+  const handleDeleteAchievement = async () => {
+    if (selectedAchievement?.id) {
+      try {
+        await axios.delete(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/achievements/${selectedAchievement.id}`,
+          { withCredentials: true }
+        );
+        setAchievements((prev) =>
+          prev.filter((ach) => ach.id !== selectedAchievement.id)
+        );
+        setShowDeleteModal(false);
+        setSelectedAchievement(null);
+        setEditIndex(null);
+      } catch (err) {
+        console.error("Error deleting achievement:", err);
+      }
     }
   };
 
@@ -516,39 +593,38 @@ const AchievementsCard: React.FC = () => {
           onClose={() => setShowAddModal(false)}
           onAdd={handleAddAchievement}
         />
-
         <EditAchievementModal
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
           onEdit={handleEditAchievement}
           achievement={selectedAchievement}
         />
-
         <DeleteConfirmModal
           isOpen={showDeleteModal}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleDeleteAchievement}
           achievementTitle={selectedAchievement?.title}
         />
+
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-bold text-gray-900">Achievements</h3>
           <button
             onClick={() => setShowAddModal(true)}
-            className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm transition-all cursor-pointer"
+            className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm"
           >
             <Plus className="w-4 h-4" />
           </button>
         </div>
+
         <div className="space-y-4">
           {achievements.map((achievement, index) => (
             <div
-              key={index}
-              className="flex items-start space-x-4 p-4 hover:shadow-md hover:border-blue-900 transition-all bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400"
+              key={achievement.id || index}
+              className="flex items-start space-x-4 p-4 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 hover:shadow-md"
             >
-              <div className="h-12 w-12 rounded-full bg-slate-900 p-1 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-full bg-slate-900 flex items-center justify-center">
                 <Star className="w-6 h-6 text-white fill-white" />
               </div>
-
               <div className="flex-1">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 pr-4">
@@ -566,14 +642,14 @@ const AchievementsCard: React.FC = () => {
                   <div className="flex items-center space-x-1">
                     <button
                       onClick={() => openEditModal(achievement, index)}
-                      className="text-blue-600 hover:text-blue-900 p-1 cursor-pointer"
+                      className="text-blue-600 hover:text-blue-900 p-1"
                       title="Edit achievement"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => openDeleteModal(achievement, index)}
-                      className="text-red-600 hover:text-red-900 p-1 cursor-pointer"
+                      className="text-red-600 hover:text-red-900 p-1"
                       title="Delete achievement"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -583,12 +659,13 @@ const AchievementsCard: React.FC = () => {
               </div>
             </div>
           ))}
+
           <button
             onClick={() => setShowAddModal(true)}
-            className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-slate-90ring-slate-900 hover:bg-blue-50 transition-all group cursor-pointer"
+            className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:bg-blue-50"
           >
-            <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-600 mx-auto mb-1" />
-            <span className="text-sm text-gray-600 group-hover:text-blue-600 font-medium">
+            <Plus className="w-5 h-5 text-gray-400 mx-auto mb-1" />
+            <span className="text-sm text-gray-600 font-medium">
               Add Achievement
             </span>
           </button>
