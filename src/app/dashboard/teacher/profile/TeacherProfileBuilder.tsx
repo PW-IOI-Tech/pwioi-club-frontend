@@ -5,6 +5,7 @@ import ContactCard from "./Components/ContactCard";
 import SocialLinksCard from "./Components/SocialLinksCard";
 import Qualifications from "./Components/Qualifications";
 import Experience from "./Components/Experience";
+import About from "./Components/About";
 
 const TeacherProfileBuilder = () => {
   const [contactData, setContactData] = useState<any>(null);
@@ -15,6 +16,7 @@ const TeacherProfileBuilder = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <ProfileHeader />
+            <About />
             <Qualifications />
             <Experience />
           </div>
