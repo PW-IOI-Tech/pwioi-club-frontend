@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect, useRef, Suspense } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { useState, Suspense } from "react";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Image from "next/image";
 

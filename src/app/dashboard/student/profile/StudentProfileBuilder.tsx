@@ -1,7 +1,6 @@
 "use client";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import profileData from "./Constants/ProfileData";
 import ProfileHeader from "./Components/ProfileHeader";
 import ContactCard from "./Components/ContactCard";
 import OtherDetailsCard from "./Components/OtherDetailsCard";
@@ -42,7 +41,6 @@ const StudentProfileDashboard = () => {
 
   if (loading) return <div>Loading...</div>;
 
-
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto">
@@ -58,7 +56,7 @@ const StudentProfileDashboard = () => {
           <div className="space-y-6">
             <SocialLinksCard />
             <DegreePartnerCard />
-             <ContactCard contactData={contactData} />
+            <ContactCard contactData={contactData} />
             <OtherDetailsCard contactData={contactData} />
             <PersonalDetailsCard />
           </div>

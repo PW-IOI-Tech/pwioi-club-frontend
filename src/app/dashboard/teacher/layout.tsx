@@ -15,8 +15,6 @@ import {
   ExternalLink,
   Phone,
   Mail,
-  Award,
-  TrendingUp,
   House,
   Calendar,
   Users,

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit3, X, Trash2, Star } from "lucide-react";
 import axios from "axios";
-import profileData from "../Constants/ProfileData";
 
 interface Achievement {
   id?: string;

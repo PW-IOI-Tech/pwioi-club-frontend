@@ -159,7 +159,7 @@ const SchemaHelpModal: React.FC<SchemaHelpModalProps> = ({
               <div className="bg-gray-50 p-3 rounded-lg">
                 <div className="font-semibold text-gray-800 mb-1">remarks:</div>
                 <div className="text-gray-600">
-                  Additional comments or notes about the student's performance
+                  Additional comments or notes about the student&lsquo;s performance
                   (optional)
                 </div>
               </div>
@@ -254,7 +254,7 @@ const SchemaHelpModal: React.FC<SchemaHelpModalProps> = ({
                     2.
                   </span>
                   <span>
-                    Click "Get Students List" to see enrolled students
+                    Click &ldquo;Get Students List&ldquo; to see enrolled students
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
@@ -262,7 +262,7 @@ const SchemaHelpModal: React.FC<SchemaHelpModalProps> = ({
                     3.
                   </span>
                   <span>
-                    Use "Copy for Excel" to get the template with student data
+                    Use &ldquo;Copy for Excel&ldquo; to get the template with student data
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
@@ -322,7 +322,7 @@ const SchemaHelpModal: React.FC<SchemaHelpModalProps> = ({
                   <span className="text-red-500 font-bold text-lg leading-none">
                     ✗
                   </span>
-                  <span>Enrollment IDs that don't match the students list</span>
+                  <span>Enrollment IDs that don&lsquo;t match the students list</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-500 font-bold text-lg leading-none">

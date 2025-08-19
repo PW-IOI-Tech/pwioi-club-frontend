@@ -102,7 +102,6 @@ export default function UploadSection({
 
   const getBatchOptions = () => {
     if (!school) return [];
-    const currentYear = new Date().getFullYear();
     return [
       { value: `${school}23`, label: `${school}23` },
       { value: `${school}24`, label: `${school}24` },
