@@ -1,8 +1,7 @@
 import { FaPhoneAlt } from "react-icons/fa";
 import { IoMdMail } from "react-icons/io";
-import profileData from "../Constants/ProfileData";
 
-const ContactCard = () => (
+const ContactCard = ({ contactData }: { contactData: any }) => (
   <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-6">
     <div className="flex items-center justify-between mb-2">
       <h3 className="text-lg font-bold text-gray-900">Contact Information</h3>
@@ -17,7 +16,7 @@ const ContactCard = () => (
             Email
           </div>
           <div className="text-sm font-semibold text-slate-900">
-            {profileData.basicInfo.email}
+            {contactData?.email || "NA"}
           </div>
         </div>
       </div>
@@ -30,7 +29,7 @@ const ContactCard = () => (
             Phone
           </div>
           <div className="text-sm font-semibold text-slate-900">
-            {profileData.basicInfo.phone}
+            {contactData?.phone || "NA"}
           </div>
         </div>
       </div>

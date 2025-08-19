@@ -26,12 +26,22 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const pathname = usePathname();
   const router = useRouter();
 
+   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    }
+  }, []);
+
   const userData = {
-    name: "John Doe",
-    email: "john.doe@example.com",
+    name: user?.name || "",
+    email: user?.email || "",
     profilePicture: "/api/placeholder/120/120",
     studentId: "STU2024001",
     course: "Computer Science & Engineering",

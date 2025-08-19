@@ -1,8 +1,18 @@
 import { useEffect, useState } from "react";
 import { Plus, Edit3, X, Trash2, GraduationCap } from "lucide-react";
-import profileData from "../Constants/ProfileData";
+import axios from "axios";
+
+const mapEducationToBackend = (edu: AcademicHistory) => ({
+  degree: edu.degree,
+  institution: edu.institution,
+  field_of_study: edu.fieldOfStudy,
+  grade: edu.grade,
+  start_date: edu.startDate,
+  end_date: edu.endDate,
+});
 
 interface AcademicHistory {
+  id?: string;
   degree: string;
   institution: string;
   fieldOfStudy: string;
@@ -11,7 +21,6 @@ interface AcademicHistory {
   endDate: string;
 }
 
-// Modal Component
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -81,7 +90,6 @@ const AddAcademicHistoryModal: React.FC<AddAcademicHistoryModalProps> = ({
     value: string | number
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
@@ -89,18 +97,11 @@ const AddAcademicHistoryModal: React.FC<AddAcademicHistoryModalProps> = ({
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof AcademicHistory, string>> = {};
-
-    if (!formData.degree.trim()) {
-      newErrors.degree = "Degree is required";
-    }
-
-    if (!formData.institution.trim()) {
+    if (!formData.degree.trim()) newErrors.degree = "Degree is required";
+    if (!formData.institution.trim())
       newErrors.institution = "Institution is required";
-    }
-
-    if (!formData.fieldOfStudy.trim()) {
+    if (!formData.fieldOfStudy.trim())
       newErrors.fieldOfStudy = "Field of study is required";
-    }
 
     if (!formData.grade || formData.grade <= 0) {
       newErrors.grade = "Grade is required and must be greater than 0";
@@ -108,10 +109,7 @@ const AddAcademicHistoryModal: React.FC<AddAcademicHistoryModalProps> = ({
       newErrors.grade = "Grade cannot exceed 100%";
     }
 
-    if (!formData.startDate) {
-      newErrors.startDate = "Start date is required";
-    }
-
+    if (!formData.startDate) newErrors.startDate = "Start date is required";
     if (!formData.endDate) {
       newErrors.endDate = "End date is required";
     } else if (
@@ -121,7 +119,6 @@ const AddAcademicHistoryModal: React.FC<AddAcademicHistoryModalProps> = ({
       newErrors.endDate = "End date must be after start date";
     }
 
-    // Check if end date is too far in the future (more than 10 years)
     if (
       formData.endDate &&
       new Date(formData.endDate) >
@@ -136,7 +133,6 @@ const AddAcademicHistoryModal: React.FC<AddAcademicHistoryModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (validateForm()) {
       onAdd({
         ...formData,
@@ -164,7 +160,7 @@ const AddAcademicHistoryModal: React.FC<AddAcademicHistoryModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Add Education">
-      <form onSubmit={handleSubmit} className="space-y-4 text-sm">
+<form onSubmit={handleSubmit} className="space-y-4 text-sm">
         <div>
           <label className="block text-sm font-semibold text-slate-900 mb-2">
             Degree *
@@ -419,7 +415,6 @@ const EditAcademicHistoryModal: React.FC<EditAcademicHistoryModalProps> = ({
     setErrors({});
     onClose();
   };
-
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Edit Education">
       <form onSubmit={handleSubmit} className="space-y-4 text-sm">
@@ -562,7 +557,7 @@ const EditAcademicHistoryModal: React.FC<EditAcademicHistoryModalProps> = ({
   );
 };
 
-// Delete Confirmation Modal
+// ------------------------- Delete Confirmation Modal -------------------------
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -580,21 +575,20 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title="Delete Education">
       <div className="space-y-4">
         <p className="text-gray-700">
-          Are you sure you want to delete the{" "}
-          <strong>&ldquo;{educationTitle}&ldquo;</strong> education record? This
-          action cannot be undone.
+          Are you sure you want to delete{" "}
+          <strong>&ldquo;{educationTitle}&rdquo;</strong>? This action cannot be
+          undone.
         </p>
-
         <div className="flex space-x-3 pt-2">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 transition-all cursor-pointer text-sm"
+            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 text-sm"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 transition-all cursor-pointer text-sm"
+            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 text-sm"
           >
             Delete
           </button>
@@ -605,9 +599,10 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
 };
 
 const AcademicHistoryCard: React.FC = () => {
-  const [academicHistory, setAcademicHistory] = useState<AcademicHistory[]>([
-    ...profileData.academicHistory,
-  ]);
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const studentId = user?.sub;
+  const [academicHistory, setAcademicHistory] = useState<AcademicHistory[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -615,28 +610,101 @@ const AcademicHistoryCard: React.FC = () => {
     useState<AcademicHistory | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
 
-  const handleAddEducation = (newEducation: AcademicHistory) => {
-    setAcademicHistory([...academicHistory, newEducation]);
-  };
+  const fetchAcademicHistory = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history`,
+        { withCredentials: true }
+      );
+      if (res.data?.data) {
+        const { undergrad, xEducation, xiiEducation } = res.data.data;
 
-  const handleEditEducation = (updatedEducation: AcademicHistory) => {
-    if (editIndex !== null) {
-      const updatedHistory = [...academicHistory];
-      updatedHistory[editIndex] = updatedEducation;
-      setAcademicHistory(updatedHistory);
-      setEditIndex(null);
-      setSelectedEducation(null);
+        const formatted: AcademicHistory[] = [];
+        if (undergrad) {
+          formatted.push({
+            id: undergrad.id,
+            degree: undergrad.degree,
+            institution: undergrad.institution,
+            fieldOfStudy: undergrad.field_of_study,
+            grade: undergrad.grade,
+            startDate: undergrad.start_date,
+            endDate: undergrad.end_date,
+          });
+        }
+        if (xEducation) {
+          formatted.push({
+            id: xEducation.id,
+            degree: xEducation.degree,
+            institution: xEducation.institution,
+            fieldOfStudy: xEducation.field_of_study,
+            grade: xEducation.grade,
+            startDate: xEducation.start_date,
+            endDate: xEducation.end_date,
+          });
+        }
+        if (xiiEducation) {
+          formatted.push({
+            id: xiiEducation.id,
+            degree: xiiEducation.degree,
+            institution: xiiEducation.institution,
+            fieldOfStudy: xiiEducation.field_of_study,
+            grade: xiiEducation.grade,
+            startDate: xiiEducation.start_date,
+            endDate: xiiEducation.end_date,
+          });
+        }
+        setAcademicHistory(formatted);
+      }
+    } catch (error) {
+      console.error("Error fetching academic history", error);
     }
   };
 
-  const handleDeleteEducation = () => {
-    if (editIndex !== null) {
-      const updatedHistory = academicHistory.filter((_, i) => i !== editIndex);
-      setAcademicHistory(updatedHistory);
-      setShowDeleteModal(false);
-      setEditIndex(null);
-      setSelectedEducation(null);
+  useEffect(() => {
+    fetchAcademicHistory();
+  }, [studentId]);
+
+  const handleAddEducation = async (newEducation: AcademicHistory) => {
+  try {
+    await axios.patch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history`,
+      { undergraduate: mapEducationToBackend(newEducation) },
+      { withCredentials: true }
+    );
+    fetchAcademicHistory();
+  } catch (error) {
+    console.error("Error adding education", error);
+  }
+  setShowAddModal(false);
+};
+
+
+  const handleEditEducation = async (updatedEducation: AcademicHistory) => {
+  try {
+    await axios.patch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history`,
+      { undergraduate: mapEducationToBackend(updatedEducation) },
+      { withCredentials: true }
+    );
+    fetchAcademicHistory();
+  } catch (error) {
+    console.error("Error editing education", error);
+  }
+  setShowEditModal(false);
+};
+
+
+  const handleDeleteEducation = async () => {
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history`,
+        { withCredentials: true }
+      );
+      setAcademicHistory([]);
+    } catch (error) {
+      console.error("Error deleting education", error);
     }
+    setShowDeleteModal(false);
   };
 
   const openEditModal = (education: AcademicHistory, index: number) => {
@@ -658,21 +726,21 @@ const AcademicHistoryCard: React.FC = () => {
           <h3 className="text-lg font-bold text-gray-900">Academic History</h3>
           <button
             onClick={() => setShowAddModal(true)}
-            className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm transition-all cursor-pointer"
+            className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm"
           >
             <Plus className="w-4 h-4" />
           </button>
         </div>
+
         <div className="space-y-4">
           {academicHistory.map((edu, index) => (
             <div
               key={index}
-              className="flex items-start space-x-4 p-4 transition-all bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 hover:shadow-md hover:border-blue-800"
+              className="flex items-start space-x-4 p-4 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 hover:shadow-md hover:border-blue-800"
             >
-              <div className="h-8 w-8 rounded-full bg-slate-900 p-1 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-slate-900 flex items-center justify-center">
                 <GraduationCap className="w-4 h-4 text-white" />
               </div>
-
               <div className="flex-1">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 pr-4">
@@ -684,27 +752,25 @@ const AcademicHistoryCard: React.FC = () => {
                       {edu.fieldOfStudy}
                     </p>
                     <div className="flex items-center space-x-2 text-xs text-gray-500">
-                      <span className="text-xs rounded-full px-4 py-1 bg-slate-900 text-white w-fit">
+                      <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
                         Grade: {edu.grade}%
                       </span>
-                      <span className="text-xs rounded-full px-4 py-1 bg-slate-900 text-white w-fit">
+                      <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
                         {new Date(edu.startDate).getFullYear()} -{" "}
                         {new Date(edu.endDate).getFullYear()}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex space-x-2">
                     <button
                       onClick={() => openEditModal(edu, index)}
-                      className="text-blue-600 hover:text-blue-900 p-1 cursor-pointer"
-                      title="Edit education"
+                      className="p-1 text-blue-600 hover:bg-blue-100 rounded-sm"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => openDeleteModal(edu, index)}
-                      className="text-red-600 hover:text-red-900 p-1 cursor-pointer"
-                      title="Delete education"
+                      className="p-1 text-red-600 hover:bg-red-100 rounded-sm"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -713,7 +779,8 @@ const AcademicHistoryCard: React.FC = () => {
               </div>
             </div>
           ))}
-          <button
+          {academicHistory.length === 0 && (
+ <button
             onClick={() => setShowAddModal(true)}
             className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-blue-500 hover:bg-blue-50 transition-all group cursor-pointer"
           >
@@ -721,7 +788,7 @@ const AcademicHistoryCard: React.FC = () => {
             <span className="text-sm text-gray-600 group-hover:text-blue-600 font-medium">
               Add Education
             </span>
-          </button>
+          </button>          )}
         </div>
       </div>
 
@@ -731,14 +798,12 @@ const AcademicHistoryCard: React.FC = () => {
         onClose={() => setShowAddModal(false)}
         onAdd={handleAddEducation}
       />
-
       <EditAcademicHistoryModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         onEdit={handleEditEducation}
         education={selectedEducation}
       />
-
       <DeleteConfirmModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}

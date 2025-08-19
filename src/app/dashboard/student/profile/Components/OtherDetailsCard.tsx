@@ -1,8 +1,7 @@
 import { FaUser } from "react-icons/fa";
 import { FaLocationDot } from "react-icons/fa6";
-import profileData from "../Constants/ProfileData";
 
-const OtherDetailsCard = () => (
+const OtherDetailsCard = ({ contactData }: { contactData: any }) => (
   <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
     <div className="flex items-center justify-between mb-2">
       <h3 className="text-lg font-bold text-gray-900">Other Details</h3>
@@ -17,7 +16,7 @@ const OtherDetailsCard = () => (
             Address
           </div>
           <div className="text-sm font-semibold text-slate-900">
-            {profileData.basicInfo.address}
+            {contactData?.address || "NA"}
           </div>
         </div>
       </div>
@@ -30,7 +29,7 @@ const OtherDetailsCard = () => (
             Gender
           </div>
           <div className="text-sm font-semibold text-slate-900">
-            {profileData.basicInfo.gender}
+            {contactData?.gender || "NA"}
           </div>
         </div>
       </div>

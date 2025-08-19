@@ -11,6 +11,18 @@ interface LoginContentProps {
 function LoginContent({ imgPath }: LoginContentProps) {
   const [isLoading, setIsLoading] = useState(false);
 
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
+
+  const redirectUri = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/student/callback`;
+
+  const handleLogin = () => {
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&response_type=code&scope=openid%20profile%20email&access_type=offline&prompt=consent`;
+
+    window.location.href = authUrl;
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[#fafafa]">
       <ToastContainer
@@ -48,6 +60,7 @@ function LoginContent({ imgPath }: LoginContentProps) {
         <div className="px-10">
           <button
             disabled={isLoading}
+            onClick={handleLogin}
             className="w-full flex items-center justify-center px-4 py-3 border border-black/50 rounded-lg bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer"
           >
             {isLoading ? (
