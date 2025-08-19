@@ -115,11 +115,12 @@ interface ReportModalProps {
 
 const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ userName }) => (
   <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-sm border border-gray-400 p-6 py-8">
-    <h1 className="text-3xl text-white mb-2">
-      Welcome back, <span className="font-bold">{userName}</span>!{" "}
+    <h1 className="text-2xl md:text-3xl text-white mb-2">
+      Welcome back, <br className="block sm:hidden" />
+      <span className="font-bold">{userName}</span>!{" "}
       <span className="">👋</span>
     </h1>
-    <p className="text-gray-300 leading-tight w-3/4">
+    <p className="text-gray-300 leading-tight sm:w-3/4 text-sm">
       Stay connected with your academic community. Share your progress, learn
       from others, and explore new opportunities.
     </p>
@@ -197,7 +198,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
 
   return (
     <>
-      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5">
+      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 px-5 sm:py-5 py-4">
         <div className="flex items-center space-x-3 mb-4">
           <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white font-semibold">
             {userInitial}
@@ -210,7 +211,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
           </div>
         </div>
 
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col sm:space-y-4">
           <button
             onClick={handleTextAreaClick}
             className="w-full bg-gray-50 transition-all duration-200 rounded-sm px-4 py-3 text-left text-gray-600 text-sm border border-gray-400 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent cursor-pointer"
@@ -218,7 +219,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
             Share your thoughts, projects, or achievements...
           </button>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid-cols-2 gap-2 hidden sm:grid">
             <button
               onClick={() => handleMediaSelect("image")}
               className="flex items-center justify-center space-x-2 p-2 text-white bg-slate-900 rounded-sm transition-all duration-200 text-sm font-semibold cursor-pointer hover:bg-slate-800"
@@ -236,7 +237,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-gray-300">
+        <div className="mt-4 pt-4 border-t border-gray-300 hidden sm:block">
           <div className="flex items-center justify-between text-xs text-gray-600">
             <span>💡 Tip: Share your daily wins!</span>
           </div>
@@ -261,7 +262,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
       {showModal && (
         <div className="fixed inset-0 bg-black/35 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-gray-400">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">
                 Create Post
               </h2>
@@ -343,17 +344,17 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
               )}
             </div>
 
-            <div className="border-t p-4 flex justify-end space-x-3">
+            <div className="border-t border-gray-200 p-4 flex justify-end space-x-3">
               <button
                 onClick={handleCancel}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium cursor-pointer"
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-sm sm:rounded-lg hover:bg-gray-100 transition-colors font-medium cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handlePost}
                 disabled={!postText.trim() && !selectedMedia}
-                className="px-6 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
+                className="px-6 py-2 bg-slate-900 text-white rounded-sm sm:rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
               >
                 Post
               </button>
@@ -589,7 +590,7 @@ const PostActions: React.FC<PostActionsProps> = ({
       )}
 
       {showLikesModal && (
-        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm hidden items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 max-h-96 overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold">Likes</h3>
@@ -1020,6 +1021,9 @@ const StudentHome: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
           <div className="lg:col-span-7 space-y-4">
             <WelcomeMessage userName={user.name} />
+            <div className="block sm:hidden">
+              <CreatePost userInitial={user.initial} />
+            </div>
             <Feed
               posts={posts}
               likedPosts={likedPosts}
@@ -1029,7 +1033,7 @@ const StudentHome: React.FC = () => {
             />
           </div>
 
-          <div className="lg:col-span-3 space-y-4">
+          <div className="lg:col-span-3 space-y-4 hidden sm:block">
             <ProfileHeader user={user} />
             <CreatePost userInitial={user.initial} />
           </div>
