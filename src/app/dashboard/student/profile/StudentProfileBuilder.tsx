@@ -1,6 +1,6 @@
 "use client";
-
-import React from "react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import profileData from "./Constants/ProfileData";
 import ProfileHeader from "./Components/ProfileHeader";
 import ContactCard from "./Components/ContactCard";
@@ -14,73 +14,39 @@ import ProjectsCard from "./Components/ProjectsCard";
 import SocialLinksCard from "./Components/SocialLinksCard";
 
 const StudentProfileDashboard = () => {
-  const calculateCompletionPercentage = () => {
-    let completed = 0;
-    let total = 0;
+  const [contactData, setContactData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-    // Basic info (always available)
-    completed += 1;
-    total += 1;
+  useEffect(() => {
+    const fetchContactInfo = async () => {
+      try {
+        const storedUser = localStorage.getItem("user");
+        const student = storedUser ? JSON.parse(storedUser) : null;
+        if (!student) return;
 
-    // Social links
-    total += 1;
-    if (profileData.socialLinks.length >= 2) completed += 1;
-    else if (profileData.socialLinks.length >= 1) completed += 0.5;
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${student.sub}/contact`,
+          { withCredentials: true }
+        );
 
-    // Projects
-    total += 1;
-    if (profileData.projects.length >= 3) completed += 1;
-    else if (profileData.projects.length >= 1) completed += 0.5;
+        setContactData(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch contact info", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Certifications
-    total += 1;
-    if (profileData.certifications.length >= 1) completed += 1;
+    fetchContactInfo();
+  }, []);
 
-    // Achievements
-    total += 1;
-    if (profileData.achievements.length >= 1) completed += 1;
+  if (loading) return <div>Loading...</div>;
 
-    // Personal details
-    total += 1;
-    if (
-      profileData.personalDetails.personalEmail &&
-      profileData.personalDetails.fathersName
-    )
-      completed += 1;
-
-    // Academic history
-    total += 1;
-    if (profileData.academicHistory.length >= 1) completed += 1;
-
-    return Math.round((completed / total) * 100);
-  };
-
-  const completionPercentage = calculateCompletionPercentage();
-
-  const Progress = () => (
-    <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
-      <div className="flex space-x-3 mb-3 flex-col gap-1">
-        <div className="text-sm font-semibold text-gray-700">
-          Profile Completion
-        </div>
-        <div className="text-5xl font-bold text-blue-700">
-          {completionPercentage}%
-        </div>
-      </div>
-      <div className="h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-        <div
-          className="h-full bg-gradient-to-r to-slate-800 via-slate-900 from-blue-900 rounded-full transition-all duration-700 ease-out"
-          style={{ width: `${completionPercentage}%` }}
-        />
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <ProfileHeader />
             <ProjectsCard />
@@ -89,13 +55,11 @@ const StudentProfileDashboard = () => {
             <AcademicHistoryCard />
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
-            <Progress />
             <SocialLinksCard />
             <DegreePartnerCard />
-            <ContactCard />
-            <OtherDetailsCard />
+             <ContactCard contactData={contactData} />
+            <OtherDetailsCard contactData={contactData} />
             <PersonalDetailsCard />
           </div>
         </div>

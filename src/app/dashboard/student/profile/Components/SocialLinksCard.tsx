@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Edit3,
   ExternalLink,
@@ -16,9 +17,9 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import profileData from "../Constants/ProfileData";
 
 interface SocialLink {
+  id: string;
   platform: string;
   link: string;
   icon: any;
@@ -130,10 +131,8 @@ const AddSocialModal: React.FC<AddSocialModalProps> = ({
     if (!url) return false;
 
     if (isCustom || platformName === "Website") {
-      // For custom platforms and websites, just check if it's a valid URL
       return /^https?:\/\/[^\s/$.?#].[^\s]*$/.test(url);
     }
-
     const config = platformConfigs[platformName];
     return config ? config.urlPattern.test(url) : false;
   };
@@ -141,34 +140,22 @@ const AddSocialModal: React.FC<AddSocialModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { platform?: string; link?: string } = {};
-
     const finalPlatform = isCustom ? customPlatform : platform;
 
-    if (!finalPlatform) {
-      newErrors.platform = "Platform is required";
+    if (!finalPlatform) newErrors.platform = "Platform is required";
+    if (!link) newErrors.link = "Link is required";
+    else if (!validateLink(link, finalPlatform)) {
+      newErrors.link = isCustom
+        ? "Please enter a valid URL"
+        : `Please enter a valid ${finalPlatform} URL`;
     }
-
-    if (!link) {
-      newErrors.link = "Link is required";
-    } else if (!validateLink(link, finalPlatform)) {
-      if (isCustom) {
-        newErrors.link = "Please enter a valid URL";
-      } else {
-        newErrors.link = `Please enter a valid ${finalPlatform} URL`;
-      }
-    }
-
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
       const icon = isCustom
         ? Globe
         : platformConfigs[finalPlatform]?.icon || Globe;
-      onAdd({
-        platform: finalPlatform,
-        link,
-        icon,
-      });
+      onAdd({ platform: finalPlatform, link, icon });
       handleClose();
     }
   };
@@ -185,11 +172,8 @@ const AddSocialModal: React.FC<AddSocialModalProps> = ({
   const handlePlatformTypeChange = (custom: boolean) => {
     setIsCustom(custom);
     setErrors({});
-    if (custom) {
-      setPlatform("");
-    } else {
-      setCustomPlatform("");
-    }
+    if (custom) setPlatform("");
+    else setCustomPlatform("");
   };
 
   const getCurrentPlaceholder = (): string => {
@@ -203,6 +187,7 @@ const AddSocialModal: React.FC<AddSocialModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Add Social Link">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Platform selection */}
         <div>
           <label className="block text-sm font-semibold text-slate-900 mb-2">
             Platform
@@ -215,12 +200,8 @@ const AddSocialModal: React.FC<AddSocialModalProps> = ({
                 name="platformType"
                 checked={!isCustom}
                 onChange={() => handlePlatformTypeChange(false)}
-                className="text-blue-600 cursor-pointer"
               />
-              <label
-                htmlFor="predefined"
-                className="text-sm text-gray-700 cursor-pointer"
-              >
+              <label htmlFor="predefined" className="text-sm text-gray-700">
                 Select Platform
               </label>
             </div>
@@ -231,12 +212,8 @@ const AddSocialModal: React.FC<AddSocialModalProps> = ({
                 name="platformType"
                 checked={isCustom}
                 onChange={() => handlePlatformTypeChange(true)}
-                className="text-blue-600 cursor-pointer"
               />
-              <label
-                htmlFor="custom"
-                className="text-sm text-gray-700 cursor-pointer"
-              >
+              <label htmlFor="custom" className="text-sm text-gray-700">
                 Custom Platform
               </label>
             </div>
@@ -263,7 +240,6 @@ const AddSocialModal: React.FC<AddSocialModalProps> = ({
                   </option>
                 ))}
               </select>
-
               <span className="pointer-events-none absolute right-3 top-2/5 text-gray-600">
                 {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </span>
@@ -287,6 +263,7 @@ const AddSocialModal: React.FC<AddSocialModalProps> = ({
           )}
         </div>
 
+        {/* Link input */}
         <div>
           <label className="block text-sm font-semibold text-slate-900 mb-2">
             Link
@@ -308,6 +285,7 @@ const AddSocialModal: React.FC<AddSocialModalProps> = ({
           )}
         </div>
 
+        {/* Action buttons */}
         <div className="flex space-x-3 pt-2">
           <button
             type="button"
@@ -345,41 +323,22 @@ const EditSocialModal: React.FC<EditSocialModalProps> = ({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (socialLink) {
-      setLink(socialLink.link);
-    }
+    if (socialLink) setLink(socialLink.link);
   }, [socialLink]);
 
   const validateLink = (url: string): boolean => {
-    if (!url) return false;
-
-    if (!socialLink) return false;
-
+    if (!url || !socialLink) return false;
     const config = platformConfigs[socialLink.platform];
-    if (config) {
-      return config.urlPattern.test(url);
-    }
-
-    return /^https?:\/\/[^\s/$.?#].[^\s]*$/.test(url);
+    return config
+      ? config.urlPattern.test(url)
+      : /^https?:\/\/[^\s]+$/.test(url);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!link) {
-      setError("Link is required");
-      return;
-    }
-
-    if (!validateLink(link)) {
-      if (socialLink && platformConfigs[socialLink.platform]) {
-        setError(`Please enter a valid ${socialLink.platform} URL`);
-      } else {
-        setError("Please enter a valid URL");
-      }
-      return;
-    }
-
+    if (!link) return setError("Link is required");
+    if (!validateLink(link))
+      return setError(`Please enter a valid ${socialLink?.platform} URL`);
     onEdit(link);
     handleClose();
   };
@@ -388,13 +347,6 @@ const EditSocialModal: React.FC<EditSocialModalProps> = ({
     setLink(socialLink?.link || "");
     setError("");
     onClose();
-  };
-
-  const getPlaceholder = (): string => {
-    if (socialLink && platformConfigs[socialLink.platform]) {
-      return platformConfigs[socialLink.platform].placeholder;
-    }
-    return "https://example.com";
   };
 
   return (
@@ -415,26 +367,18 @@ const EditSocialModal: React.FC<EditSocialModalProps> = ({
               setLink(e.target.value);
               setError("");
             }}
-            placeholder={getPlaceholder()}
-            className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 text-sm ${
+            placeholder="https://example.com"
+            className={`w-full p-3 border rounded-sm ${
               error ? "border-red-400" : "border-gray-400"
             }`}
           />
           {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
         </div>
-
         <div className="flex space-x-3 pt-2">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 transition-all cursor-pointer text-sm"
-          >
+          <button type="button" onClick={handleClose} className="flex-1 border">
             Cancel
           </button>
-          <button
-            type="submit"
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer text-sm duration-200 ease-in-out"
-          >
+          <button type="submit" className="flex-1 bg-slate-900 text-white">
             Update Link
           </button>
         </div>
@@ -455,70 +399,118 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   onClose,
   onConfirm,
   platformName,
-}) => {
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Delete Social Link">
-      <div className="space-y-4">
-        <p className="text-gray-700">
-          Are you sure you want to delete the {platformName} link? This action
-          cannot be undone.
-        </p>
-
-        <div className="flex space-x-3 pt-2">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 transition-all cursor-pointer text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 transition-all cursor-pointer tex-sm"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    </Modal>
-  );
-};
+}) => (
+  <Modal isOpen={isOpen} onClose={onClose} title="Delete Social Link">
+    <p>Are you sure you want to delete the {platformName} link?</p>
+    <div className="flex space-x-3 pt-2">
+      <button onClick={onClose} className="flex-1 border">
+        Cancel
+      </button>
+      <button
+        onClick={onConfirm}
+        className="flex-1 bg-red-600 text-white rounded-sm"
+      >
+        Delete
+      </button>
+    </div>
+  </Modal>
+);
 
 const SocialLinksCard: React.FC = () => {
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([
-    ...profileData.socialLinks,
-  ]);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedSocial, setSelectedSocial] = useState<SocialLink | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
 
-  const handleAddSocial = (newSocial: NewSocialLink) => {
-    const socialToAdd: SocialLink = {
-      platform: newSocial.platform,
-      link: newSocial.link,
-      icon: newSocial.icon,
-    };
-    setSocialLinks([...socialLinks, socialToAdd]);
-  };
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const studentId = user?.sub;
 
-  const handleEditSocial = (newLink: string) => {
-    if (editIndex !== null) {
-      const updatedLinks = [...socialLinks];
-      updatedLinks[editIndex] = { ...updatedLinks[editIndex], link: newLink };
-      setSocialLinks(updatedLinks);
-      setEditIndex(null);
-      setSelectedSocial(null);
+  const api = axios.create({
+    baseURL: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile`,
+    withCredentials: true,
+  });
+
+  // Get all socials
+  useEffect(() => {
+    api
+      .get(`/${studentId}/social-links`)
+      .then((res) => {
+        if (res.data.success) {
+          const mapped = res.data.data.map((s: any) => ({
+            id: s.id,
+            platform: s.platform,
+            link: s.link,
+            icon: platformConfigs[s.platform]?.icon || Globe,
+          }));
+          setSocialLinks(mapped);
+        }
+      })
+      .catch((err) => console.error(err));
+  }, []);
+
+  // Add social
+  const handleAddSocial = async (newSocial: NewSocialLink) => {
+    try {
+      const res = await api.post(`/${studentId}/social-links`, {
+        platform: newSocial.platform,
+        link: newSocial.link,
+      });
+
+      if (res.data.success) {
+        setSocialLinks([
+          ...socialLinks,
+          {
+            id: res.data.data.id,
+            platform: res.data.data.platform,
+            link: res.data.data.link,
+            icon: newSocial.icon,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const handleDeleteSocial = () => {
-    if (editIndex !== null) {
-      const updatedLinks = socialLinks.filter((_, i) => i !== editIndex);
-      setSocialLinks(updatedLinks);
+  // Edit social
+  const handleEditSocial = async (newLink: string) => {
+    if (!selectedSocial) return;
+    try {
+      const res = await api.patch(
+        `/${studentId}/social-links/${selectedSocial.id}`,
+        { link: newLink }
+      );
+
+      if (res.data.success) {
+        setSocialLinks((prev) =>
+          prev.map((s) =>
+            s.id === selectedSocial.id ? { ...s, link: newLink } : s
+          )
+        );
+      }
+      setShowEditModal(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Delete social
+  const handleDeleteSocial = async () => {
+    if (!selectedSocial) return;
+    try {
+      const res = await api.delete(
+        `/${studentId}/social-links/${selectedSocial.id}`
+      );
+
+      if (res.data.success) {
+        setSocialLinks((prev) => prev.filter((s) => s.id !== selectedSocial.id));
+      }
       setShowDeleteModal(false);
-      setEditIndex(null);
-      setSelectedSocial(null);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -539,90 +531,86 @@ const SocialLinksCard: React.FC = () => {
   };
 
   return (
-    <>
-      <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
-        <AddSocialModal
-          isOpen={showAddModal}
-          onClose={() => setShowAddModal(false)}
-          onAdd={handleAddSocial}
-        />
-
-        <EditSocialModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onEdit={handleEditSocial}
-          socialLink={selectedSocial}
-        />
-
-        <DeleteConfirmModal
-          isOpen={showDeleteModal}
-          onClose={() => setShowDeleteModal(false)}
-          onConfirm={handleDeleteSocial}
-          platformName={selectedSocial?.platform}
-        />
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-bold text-gray-900">Social Links</h3>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="space-y-2">
-          {socialLinks.map((social, index) => {
-            const IconComponent = social.icon;
-            return (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 rounded-full bg-slate-900 p-1 flex items-center justify-center">
-                    <IconComponent className="text-white w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-semibold text-slate-900">
-                    {social.platform}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => handleExternalLinkClick(social.link)}
-                    className="text-blue-600 hover:text-blue-900 p-1 cursor-pointer"
-                    title="Open link"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => openEditModal(social, index)}
-                    className="text-blue-600 hover:text-blue-900 p-1 cursor-pointer"
-                    title="Edit link"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => openDeleteModal(social, index)}
-                    className="text-red-600 hover:text-red-900 p-1 cursor-pointer"
-                    title="Delete link"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-blue-500 hover:bg-blue-50 transition-all group cursor-pointer mt-1"
-          >
-            <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-600 mx-auto" />
-            <span className="text-sm text-gray-600 group-hover:text-blue-600 font-medium">
-              Add Social Link
-            </span>
-          </button>
-        </div>
+    <div className="bg-gray-50 rounded-sm shadow-lg border p-6">
+      <AddSocialModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAdd={handleAddSocial}
+      />
+      <EditSocialModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onEdit={handleEditSocial}
+        socialLink={selectedSocial}
+      />
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteSocial}
+        platformName={selectedSocial?.platform}
+      />
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-lg font-bold text-gray-900">Social Links</h3>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm transition-all cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
       </div>
-    </>
+      <div className="space-y-2">
+        {socialLinks.map((social, index) => {
+          const IconComponent = social.icon;
+          return (
+            <div
+              key={index}
+              className="flex items-center justify-between p-3 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="h-8 w-8 rounded-full bg-slate-900 p-1 flex items-center justify-center">
+                  <IconComponent className="text-white w-4 h-4" />
+                </div>
+                <span className="text-sm font-semibold text-slate-900">
+                  {social.platform}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handleExternalLinkClick(social.link)}
+                  className="text-blue-600 hover:text-blue-900 p-1 cursor-pointer"
+                  title="Open link"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => openEditModal(social, index)}
+                  className="text-blue-600 hover:text-blue-900 p-1 cursor-pointer"
+                  title="Edit link"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => openDeleteModal(social, index)}
+                  className="text-red-600 hover:text-red-900 p-1 cursor-pointer"
+                  title="Delete link"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-blue-500 hover:bg-blue-50 transition-all group cursor-pointer mt-1"
+        >
+          <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-600 mx-auto" />
+          <span className="text-sm text-gray-600 group-hover:text-blue-600 font-medium">
+            Add Social Link
+          </span>
+        </button>
+      </div>
+    </div>
   );
 };
 

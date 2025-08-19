@@ -1,8 +1,12 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { Plus, Award, ExternalLink, Edit3, X, Trash2 } from "lucide-react";
+import axios from "axios";
 import profileData from "../Constants/ProfileData";
 
 interface Certification {
+  id?: string;
   name: string;
   organisation: string;
   startDate: string;
@@ -64,45 +68,12 @@ const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
 
   const handleInputChange = (field: keyof Certification, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof Certification, string>> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Certification name is required";
-    }
-
-    if (!formData.organisation.trim()) {
-      newErrors.organisation = "Organisation is required";
-    }
-
-    if (!formData.startDate) {
-      newErrors.startDate = "Start date is required";
-    }
-
-    if (!formData.endDate) {
-      newErrors.endDate = "End date is required";
-    } else if (
-      formData.startDate &&
-      new Date(formData.endDate) < new Date(formData.startDate)
-    ) {
-      newErrors.endDate = "End date must be after start date";
-    }
-
-    if (formData.link && !isValidUrl(formData.link)) {
-      newErrors.link = "Please enter a valid URL";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const isValidUrl = (url: string): boolean => {
+  const isValidUrl = (url: string) => {
     try {
       new URL(url);
       return true;
@@ -111,12 +82,55 @@ const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateForm = (): boolean => {
+    const newErrors: Partial<Record<keyof Certification, string>> = {};
 
-    if (validateForm()) {
-      onAdd(formData);
+    if (!formData.name.trim())
+      newErrors.name = "Certification name is required";
+    if (!formData.organisation.trim())
+      newErrors.organisation = "Organisation is required";
+    if (!formData.startDate) newErrors.startDate = "Start date is required";
+    if (!formData.endDate) newErrors.endDate = "End date is required";
+    else if (
+      formData.startDate &&
+      new Date(formData.endDate) < new Date(formData.startDate)
+    )
+      newErrors.endDate = "End date must be after start date";
+    if (formData.link && !isValidUrl(formData.link))
+      newErrors.link = "Please enter a valid URL";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    try {
+      const storedUser = localStorage.getItem("user");
+      const user = storedUser ? JSON.parse(storedUser) : null;
+      const studentId = user?.sub;
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/certifications`,
+        {
+          name: formData.name,
+          organisation: formData.organisation,
+          start_date: formData.startDate,
+          end_date: formData.endDate,
+          link: formData.link,
+        },
+        { withCredentials: true }
+      );
+
+      onAdd({
+        ...formData,
+        id: response.data.data.id,
+      });
       handleClose();
+    } catch (err) {
+      console.error("Failed to create certification", err);
     }
   };
 
@@ -152,7 +166,6 @@ const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
             <p className="mt-1 text-sm text-red-600">{errors.name}</p>
           )}
         </div>
-
         <div>
           <label className="block text-sm font-semibold text-slate-900 mb-2">
             Organisation *
@@ -170,7 +183,6 @@ const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
             <p className="mt-1 text-sm text-red-600">{errors.organisation}</p>
           )}
         </div>
-
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
@@ -188,7 +200,6 @@ const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
               <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
             )}
           </div>
-
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               End Date *
@@ -206,7 +217,6 @@ const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
             )}
           </div>
         </div>
-
         <div>
           <label className="block text-sm font-semibold text-slate-900 mb-2">
             Certification Link
@@ -224,7 +234,6 @@ const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
             <p className="mt-1 text-sm text-red-600">{errors.link}</p>
           )}
         </div>
-
         <div className="flex space-x-3 pt-2">
           <button
             type="button"
@@ -270,54 +279,16 @@ const EditCertificationModal: React.FC<EditCertificationModalProps> = ({
     Partial<Record<keyof Certification, string>>
   >({});
 
-  // Update form data when certification changes
   useEffect(() => {
-    if (certification) {
-      setFormData(certification);
-    }
+    if (certification) setFormData(certification);
   }, [certification]);
 
   const handleInputChange = (field: keyof Certification, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof Certification, string>> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Certification name is required";
-    }
-
-    if (!formData.organisation.trim()) {
-      newErrors.organisation = "Organisation is required";
-    }
-
-    if (!formData.startDate) {
-      newErrors.startDate = "Start date is required";
-    }
-
-    if (!formData.endDate) {
-      newErrors.endDate = "End date is required";
-    } else if (
-      formData.startDate &&
-      new Date(formData.endDate) < new Date(formData.startDate)
-    ) {
-      newErrors.endDate = "End date must be after start date";
-    }
-
-    if (formData.link && !isValidUrl(formData.link)) {
-      newErrors.link = "Please enter a valid URL";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const isValidUrl = (url: string): boolean => {
+  const isValidUrl = (url: string) => {
     try {
       new URL(url);
       return true;
@@ -326,19 +297,54 @@ const EditCertificationModal: React.FC<EditCertificationModalProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateForm = (): boolean => {
+    const newErrors: Partial<Record<keyof Certification, string>> = {};
+    if (!formData.name.trim())
+      newErrors.name = "Certification name is required";
+    if (!formData.organisation.trim())
+      newErrors.organisation = "Organisation is required";
+    if (!formData.startDate) newErrors.startDate = "Start date is required";
+    if (!formData.endDate) newErrors.endDate = "End date is required";
+    else if (
+      formData.startDate &&
+      new Date(formData.endDate) < new Date(formData.startDate)
+    )
+      newErrors.endDate = "End date must be after start date";
+    if (formData.link && !isValidUrl(formData.link))
+      newErrors.link = "Please enter a valid URL";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-    if (validateForm()) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm() || !certification?.id) return;
+
+    try {
+      const storedUser = localStorage.getItem("user");
+      const user = storedUser ? JSON.parse(storedUser) : null;
+      const studentId = user?.sub;
+
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/certifications/${certification.id}`,
+        {
+          name: formData.name,
+          organisation: formData.organisation,
+          start_date: formData.startDate,
+          end_date: formData.endDate,
+          link: formData.link,
+        },
+        { withCredentials: true }
+      );
       onEdit(formData);
       handleClose();
+    } catch (err) {
+      console.error("Failed to update certification", err);
     }
   };
 
   const handleClose = () => {
-    if (certification) {
-      setFormData(certification);
-    }
+    if (certification) setFormData(certification);
     setErrors({});
     onClose();
   };
@@ -446,7 +452,7 @@ const EditCertificationModal: React.FC<EditCertificationModalProps> = ({
           </button>
           <button
             type="submit"
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer text-sm duration-200 ease-in-out"
+            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer text-sm"
           >
             Update Certification
           </button>
@@ -478,7 +484,6 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
           <strong>{certificationName}</strong> certification? This action cannot
           be undone.
         </p>
-
         <div className="flex space-x-3 pt-2">
           <button
             onClick={onClose}
@@ -499,15 +504,43 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
 };
 
 const CertificationsCard: React.FC = () => {
-  const [certifications, setCertifications] = useState<Certification[]>([
-    ...profileData.certifications,
-  ]);
+  const [certifications, setCertifications] = useState<Certification[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedCertification, setSelectedCertification] =
     useState<Certification | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
+
+  const fetchCertifications = async () => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      const user = storedUser ? JSON.parse(storedUser) : null;
+      const studentId = user?.sub;
+
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/certifications`,
+        { withCredentials: true }
+      );
+
+      const data = response.data.data.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        organisation: c.organisation,
+        startDate: c.start_date,
+        endDate: c.end_date,
+        link: c.link,
+      }));
+      setCertifications(data);
+    } catch (err) {
+      console.error("Failed to fetch certifications", err);
+      setCertifications([...profileData.certifications]);
+    }
+  };
+
+  useEffect(() => {
+    fetchCertifications();
+  }, []);
 
   const handleAddCertification = (newCertification: Certification) => {
     setCertifications([...certifications, newCertification]);
@@ -523,12 +556,24 @@ const CertificationsCard: React.FC = () => {
     }
   };
 
-  const handleDeleteCertification = () => {
-    if (editIndex !== null) {
-      const updatedCertifications = certifications.filter(
-        (_, i) => i !== editIndex
-      );
-      setCertifications(updatedCertifications);
+  const handleDeleteCertification = async () => {
+    if (editIndex !== null && selectedCertification?.id) {
+      try {
+        const storedUser = localStorage.getItem("user");
+        const user = storedUser ? JSON.parse(storedUser) : null;
+        const studentId = user?.sub;
+
+        await axios.delete(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/certifications/${selectedCertification.id}`,
+          { withCredentials: true }
+        );
+        const updatedCertifications = certifications.filter(
+          (_, i) => i !== editIndex
+        );
+        setCertifications(updatedCertifications);
+      } catch (err) {
+        console.error("Failed to delete certification", err);
+      }
       setShowDeleteModal(false);
       setEditIndex(null);
       setSelectedCertification(null);
@@ -548,107 +593,103 @@ const CertificationsCard: React.FC = () => {
   };
 
   const handleExternalLinkClick = (link: string) => {
-    if (link) {
-      window.open(link, "_blank", "noopener,noreferrer");
-    }
+    if (link) window.open(link, "_blank", "noopener,noreferrer");
   };
 
   return (
-    <>
-      <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
-        <AddCertificationModal
-          isOpen={showAddModal}
-          onClose={() => setShowAddModal(false)}
-          onAdd={handleAddCertification}
-        />
+    <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
+      <AddCertificationModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAdd={handleAddCertification}
+      />
+      <EditCertificationModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onEdit={handleEditCertification}
+        certification={selectedCertification}
+      />
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteCertification}
+        certificationName={selectedCertification?.name}
+      />
 
-        <EditCertificationModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onEdit={handleEditCertification}
-          certification={selectedCertification}
-        />
-
-        <DeleteConfirmModal
-          isOpen={showDeleteModal}
-          onClose={() => setShowDeleteModal(false)}
-          onConfirm={handleDeleteCertification}
-          certificationName={selectedCertification?.name}
-        />
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-3">
-            <h3 className="text-lg font-bold text-gray-900">Certifications</h3>
-            <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">
-              {certifications.length}/3
-            </span>
-          </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center space-x-3">
+          <h3 className="text-lg font-bold text-gray-900">Certifications</h3>
+          <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">
+            {certifications.length}/3
+          </span>
         </div>
-        <div className="space-y-4">
-          {certifications.map((cert, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between p-4 hover:shadow-md hover:border-blue-800 transition-all bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="h-12 w-12 rounded-full bg-slate-900 p-1 flex items-center justify-center">
-                  <Award className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900">{cert.name}</h4>
-                  <p className="text-sm text-slate-800">{cert.organisation}</p>
-                  <p className="text-xs text-slate-700">
-                    {new Date(cert.startDate).getFullYear()} -{" "}
-                    {new Date(cert.endDate).getFullYear()}
-                  </p>
-                </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm transition-all cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {certifications.map((cert, index) => (
+          <div
+            key={index}
+            className="flex items-center justify-between p-4 hover:shadow-md hover:border-blue-800 transition-all bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="h-12 w-12 rounded-full bg-slate-900 p-1 flex items-center justify-center">
+                <Award className="w-6 h-6 text-white" />
               </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => handleExternalLinkClick(cert.link)}
-                  className="text-blue-600 hover:text-blue-700 p-1 cursor-pointer"
-                  title="View certificate"
-                  disabled={!cert.link}
-                  style={{ opacity: cert.link ? 1 : 0.5 }}
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => openEditModal(cert, index)}
-                  className="text-blue-600 hover:text-blue-900 p-1 cursor-pointer"
-                  title="Edit certification"
-                >
-                  <Edit3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => openDeleteModal(cert, index)}
-                  className="text-red-600 hover:text-red-900 p-1 cursor-pointer"
-                  title="Delete certification"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+              <div>
+                <h4 className="font-bold text-slate-900">{cert.name}</h4>
+                <p className="text-sm text-slate-800">{cert.organisation}</p>
+                <p className="text-xs text-slate-700">
+                  {new Date(cert.startDate).getFullYear()} -{" "}
+                  {new Date(cert.endDate).getFullYear()}
+                </p>
               </div>
             </div>
-          ))}
-          {certifications.length < 3 && (
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-blue-500 hover:bg-blue-50 transition-all group cursor-pointer"
-            >
-              <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-600 mx-auto mb-1" />
-              <span className="text-sm text-gray-600 group-hover:text-blue-600 font-medium">
-                Add Certification
-              </span>
-            </button>
-          )}
-        </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handleExternalLinkClick(cert.link)}
+                className="text-blue-600 hover:text-blue-700 p-1 cursor-pointer"
+                title="View certificate"
+                disabled={!cert.link}
+                style={{ opacity: cert.link ? 1 : 0.5 }}
+              >
+                <ExternalLink className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => openEditModal(cert, index)}
+                className="text-blue-600 hover:text-blue-900 p-1 cursor-pointer"
+                title="Edit certification"
+              >
+                <Edit3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => openDeleteModal(cert, index)}
+                className="text-red-600 hover:text-red-900 p-1 cursor-pointer"
+                title="Delete certification"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+        {certifications.length < 3 && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-blue-500 hover:bg-blue-50 transition-all group cursor-pointer"
+          >
+            <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-600 mx-auto mb-1" />
+            <span className="text-sm text-gray-600 group-hover:text-blue-600 font-medium">
+              Add Certification
+            </span>
+          </button>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 
