@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import ProfileHeader from "./Components/ProfileHeader";
 import ContactCard from "./Components/ContactCard";
-import AcademicHistoryCard from "./Components/AcademicHistoryCard";
+import AcademicHistoryCard from "./Components/Qualifications";
 import SocialLinksCard from "./Components/SocialLinksCard";
 
 const TeacherProfileBuilder = () => {
