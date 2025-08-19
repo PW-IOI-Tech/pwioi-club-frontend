@@ -1,6 +1,6 @@
 "use client";
-
-import React, { useState } from "react";
+import axios from "axios";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   X,
   Users,
@@ -27,169 +27,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Dummy Data
-const studentProfile = {
-  id: "1",
-  name: "John Doe",
-  email: "john.doe@example.com",
-  gender: "Male",
-  phoneNumber: "+91 9876543210",
-  enrollmentNumber: "2023BCS001",
-  semesterNo: 3,
-  center: { name: "Delhi Center" },
-  department: { name: "Computer Science" },
-  batch: { name: "2023-BCS-A" },
-  courseCount: 6,
-};
-
-const academicData = {
-  id: "1",
-  courses: [
-    { id: "1", name: "Data Structures", code: "CSE201S1", credits: 4 },
-    { id: "2", name: "Database Systems", code: "CSE202S1", credits: 3 },
-    { id: "3", name: "Operating Systems", code: "CSE301S2", credits: 4 },
-    { id: "4", name: "Computer Networks", code: "CSE302S2", credits: 3 },
-    { id: "5", name: "Software Engineering", code: "CSE401S3", credits: 4 },
-    { id: "6", name: "Web Development", code: "CSE402S3", credits: 3 },
-    { id: "7", name: "Artificial Intelligence", code: "CSE403S3", credits: 4 },
-  ],
-  scores: [],
-};
-
-const courseScores = [
-  {
-    id: "1",
-    marksObtained: 85,
-    totalObtained: 100,
-    dateOfExam: "2024-01-15",
-    gradedAt: "2024-01-18",
-  },
-  {
-    id: "2",
-    marksObtained: 78,
-    totalObtained: 100,
-    dateOfExam: "2024-02-01",
-    gradedAt: "2024-02-03",
-  },
-  {
-    id: "3",
-    marksObtained: 92,
-    totalObtained: 100,
-    dateOfExam: "2024-02-15",
-    gradedAt: "2024-02-17",
-  },
-  {
-    id: "4",
-    marksObtained: 88,
-    totalObtained: 100,
-    dateOfExam: "2024-03-01",
-    gradedAt: "2024-03-03",
-  },
-  {
-    id: "5",
-    marksObtained: 76,
-    totalObtained: 100,
-    dateOfExam: "2024-03-15",
-    gradedAt: "2024-03-17",
-  },
-];
-
-const batchLeaderboard = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john@example.com",
-    enrollmentNumber: "2023BCS001",
-    totalMarks: 450,
-    rank: 1,
-    center: { name: "Delhi Center" },
-  },
-  {
-    id: "2",
-    name: "Alice Smith",
-    email: "alice@example.com",
-    enrollmentNumber: "2023BCS002",
-    totalMarks: 445,
-    rank: 2,
-    center: { name: "Delhi Center" },
-  },
-  {
-    id: "3",
-    name: "Bob Johnson",
-    email: "bob@example.com",
-    enrollmentNumber: "2023BCS003",
-    totalMarks: 440,
-    rank: 3,
-    center: { name: "Delhi Center" },
-  },
-  {
-    id: "4",
-    name: "Carol Davis",
-    email: "carol@example.com",
-    enrollmentNumber: "2023BCS004",
-    totalMarks: 435,
-    rank: 4,
-    center: { name: "Delhi Center" },
-  },
-  {
-    id: "5",
-    name: "David Wilson",
-    email: "david@example.com",
-    enrollmentNumber: "2023BCS005",
-    totalMarks: 430,
-    rank: 5,
-    center: { name: "Delhi Center" },
-  },
-];
-
-const departmentLeaderboard = [
-  {
-    id: "1",
-    name: "Sarah Connor",
-    email: "sarah@example.com",
-    enrollmentNumber: "2023BCS101",
-    totalMarks: 465,
-    rank: 1,
-    center: { name: "Mumbai Center" },
-  },
-  {
-    id: "2",
-    name: "Mike Ross",
-    email: "mike@example.com",
-    enrollmentNumber: "2023BCS102",
-    totalMarks: 455,
-    rank: 2,
-    center: { name: "Bangalore Center" },
-  },
-  {
-    id: "3",
-    name: "John Doe",
-    email: "john@example.com",
-    enrollmentNumber: "2023BCS001",
-    totalMarks: 450,
-    rank: 3,
-    center: { name: "Delhi Center" },
-  },
-  {
-    id: "4",
-    name: "Emily Brown",
-    email: "emily@example.com",
-    enrollmentNumber: "2023BCS103",
-    totalMarks: 448,
-    rank: 4,
-    center: { name: "Chennai Center" },
-  },
-  {
-    id: "5",
-    name: "James Bond",
-    email: "james@example.com",
-    enrollmentNumber: "2023BCS104",
-    totalMarks: 442,
-    rank: 5,
-    center: { name: "Hyderabad Center" },
-  },
-];
-
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{
@@ -206,30 +43,264 @@ interface FilterState {
   testNumber: string;
 }
 
+interface StudentProfile {
+  batch: { name: string };
+  semesterNo: number;
+  sub: string;
+}
+
+interface AcademicData {
+  current_semester: any;
+  past_semesters: any[];
+  courses: any[];
+}
+
+const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/student-academics`;
+
 export default function AcademicsSection() {
-  const [activeFilters, setActiveFilters] = useState<FilterState>({
-    semester: 3,
-    course: "CSE401S3",
-    testType: "FORTNIGHTLY_TEST",
-    testNumber: "1",
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>({
+    batch: { name: "2023-2027" },
+    semesterNo: 1,
+    sub: "Computer Science"
   });
-
-  const [pendingFilters, setPendingFilters] = useState<FilterState>({
-    semester: 3,
-    course: "CSE401S3",
-    testType: "FORTNIGHTLY_TEST",
-    testNumber: "1",
-  });
-
+  const [academicData, setAcademicData] = useState<AcademicData | null>(null);
+  const [activeFilters, setActiveFilters] = useState<FilterState | null>(null);
+  const [pendingFilters, setPendingFilters] = useState<FilterState | null>(null);
   const [isLeaderboardModalOpen, setIsLeaderboardModalOpen] = useState(false);
-  const [leaderboardType, setLeaderboardType] = useState<"class" | "overall">(
-    "class"
-  );
+  const [leaderboardType, setLeaderboardType] = useState<"class" | "overall">("class");
   const [semesterFilter, setSemesterFilter] = useState<number | "all">("all");
   const [showCompletedCourses, setShowCompletedCourses] = useState(false);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [leaderboardData, setLeaderboardData] = useState<any>({
+    class: [],
+    overall: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Check if filters have changed
+  const fetchCurrentSemester = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/academics/current-semester`, {
+        withCredentials: true
+      });
+      
+      if (response.data.success) {
+        return response.data.data;
+      }
+    } catch (err) {
+      console.error("Error fetching current semester:", err);
+      throw err;
+    }
+  }, []);
+
+  const fetchPastSemesters = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/academics/past-semesters`, {
+        withCredentials: true
+      });
+      
+      if (response.data.success) {
+        return response.data.data;
+      }
+    } catch (err) {
+      console.error("Error fetching past semesters:", err);
+      throw err;
+    }
+  }, []);
+
+  const fetchPerformanceTrends = useCallback(async (semesterId: string, subjectId: string, examType: string, examName: string) => {
+    try {
+      const response = await axios.get(`${API_BASE}/performance/trends`, {
+        params: {
+          semester_id: semesterId,
+          subject_id: subjectId,
+          exam_type: examType,
+          exam_name: examName,
+        },
+        withCredentials: true,
+      });
+
+      if (response.data.success) {
+        const trends = response.data.data.trends || [];
+        const formatted = trends.map((t: any) => ({
+          test: t.exam_name,
+          percentage: Math.round(t.percentage),
+        }));
+        setChartData(formatted);
+      }
+    } catch (err) {
+      console.error("Error fetching performance trends:", err);
+      // Set sample data when no trends are available
+      setChartData([
+        { test: "Test 1", percentage: 0 },
+        { test: "Test 2", percentage: 0 },
+        { test: "Test 3", percentage: 0 }
+      ]);
+    }
+  }, []);
+
+  const fetchLeaderboard = useCallback(async (type: "class" | "overall", semesterId: string, subjectId: string, examType: string, examName: string) => {
+    try {
+      const endpoint = type === "class" ? "/leaderboard/division" : "/leaderboard/overall";
+      const response = await axios.get(`${API_BASE}${endpoint}`, {
+        params: {
+          semester_id: semesterId,
+          subject_id: subjectId,
+          exam_type: examType,
+          exam_name: examName,
+        },
+        withCredentials: true,
+      });
+
+      if (response.data.success) {
+        const leaderboardEntries = response.data.data.leaderboard.map((entry: any) => ({
+          rank: entry.rank,
+          name: entry.student_name,
+          marks: entry.marks_obtained,
+          percentage: entry.percentage,
+          avatar: entry.student_name.charAt(0).toUpperCase(),
+          isCurrentUser: entry.is_current_user,
+          location: type === "overall" ? entry.center_name : entry.division_code,
+        }));
+
+        setLeaderboardData((prev:any) => ({
+          ...prev,
+          [type]: leaderboardEntries
+        }));
+      }
+    } catch (err) {
+      console.error(`Error fetching ${type} leaderboard:`, err);
+      // Set empty leaderboard data on error
+      setLeaderboardData((prev:any) => ({
+        ...prev,
+        [type]: []
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    const initializeAcademicData = async () => {
+      if (!studentProfile) return;
+
+      try {
+        setLoading(true);
+        
+        const [currentSemester, pastSemesters] = await Promise.all([
+          fetchCurrentSemester(),
+          fetchPastSemesters()
+        ]);
+
+        const allCourses: any[] = [];
+        
+        // Handle current semester subjects
+        if (currentSemester?.subjects) {
+          currentSemester.subjects.forEach((subject: any) => {
+            allCourses.push({
+              id: subject.subject_id,
+              code: subject.subject_code,
+              name: subject.subject_name,
+              credits: subject.credits,
+              semester: currentSemester.semester_info.semester_number,
+              teacher_name: subject.teacher_name,
+              teacher_email: subject.teacher_email
+            });
+          });
+        }
+
+        // Handle past semesters subjects (if any exist)
+        if (pastSemesters?.past_semesters && pastSemesters.past_semesters.length > 0) {
+          pastSemesters.past_semesters.forEach((semester: any) => {
+            if (semester.subjects) {
+              semester.subjects.forEach((subject: any) => {
+                allCourses.push({
+                  id: subject.subject_id,
+                  code: subject.subject_code,
+                  name: subject.subject_name,
+                  credits: subject.credits,
+                  semester: semester.semester_number,
+                  teacher_name: subject.teacher_name,
+                  teacher_email: subject.teacher_email
+                });
+              });
+            }
+          });
+        }
+
+        const academicData = {
+          current_semester: currentSemester,
+          past_semesters: pastSemesters?.past_semesters || [],
+          courses: allCourses
+        };
+
+        setAcademicData(academicData);
+
+        // Initialize filters with first available course
+        if (allCourses.length > 0) {
+          const firstCourse = allCourses[0];
+          const initialFilters = {
+            semester: firstCourse.semester,
+            course: firstCourse.code,
+            testType: "FORTNIGHTLY",
+            testNumber: "1"
+          };
+          
+          setActiveFilters(initialFilters);
+          setPendingFilters(initialFilters);
+        }
+
+      } catch (err) {
+        console.error("Error initializing academic data:", err);
+        setError("Failed to load academic data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAcademicData();
+  }, [studentProfile, fetchCurrentSemester, fetchPastSemesters]);
+
+  // Update trends and leaderboard when filters change
+  useEffect(() => {
+    const updateData = async () => {
+      if (!activeFilters || !academicData) return;
+
+      const selectedCourse = academicData.courses.find(c => c.code === activeFilters.course);
+      if (!selectedCourse) return;
+
+      let semesterId = "";
+      
+      // Find semester ID based on the selected semester
+      if (academicData.current_semester?.semester_info.semester_number === activeFilters.semester) {
+        semesterId = academicData.current_semester.semester_info.semester_id;
+      } else {
+        const pastSemester = academicData.past_semesters?.find((s: any) => s.semester_number === activeFilters.semester);
+        if (pastSemester) {
+          semesterId = pastSemester.semester_id;
+        }
+      }
+      
+      if (!semesterId) {
+        console.warn("No semester ID found for semester:", activeFilters.semester);
+        return;
+      }
+
+      const examName = `${getTestTypeLabel(activeFilters.testType)} ${activeFilters.testNumber}`;
+
+      // Fetch performance trends
+      await fetchPerformanceTrends(semesterId, selectedCourse.id, activeFilters.testType, examName);
+      
+      // Fetch both leaderboards
+      await Promise.all([
+        fetchLeaderboard("class", semesterId, selectedCourse.id, activeFilters.testType, examName),
+        fetchLeaderboard("overall", semesterId, selectedCourse.id, activeFilters.testType, examName)
+      ]);
+    };
+
+    updateData();
+  }, [activeFilters, academicData, fetchPerformanceTrends, fetchLeaderboard]);
+
   const hasFiltersChanged = () => {
+    if (!activeFilters || !pendingFilters) return false;
     return (
       pendingFilters.semester !== activeFilters.semester ||
       pendingFilters.course !== activeFilters.course ||
@@ -239,100 +310,62 @@ export default function AcademicsSection() {
   };
 
   const handleUpdateFilters = () => {
-    setActiveFilters(pendingFilters);
+    if (pendingFilters) setActiveFilters(pendingFilters);
   };
 
   const handleResetFilters = () => {
-    const resetFilters: FilterState = {
-      semester: 3,
-      course: "CSE401S3",
-      testType: "FORTNIGHTLY_TEST",
-      testNumber: "1",
-    };
-    setPendingFilters(resetFilters);
+    if (academicData?.courses && academicData.courses.length > 0) {
+      const firstCourse = academicData.courses[0];
+      const resetFilters = {
+        semester: firstCourse.semester,
+        course: firstCourse.code,
+        testType: "FORTNIGHTLY",
+        testNumber: "1"
+      };
+      setPendingFilters(resetFilters);
+      setActiveFilters(resetFilters);
+    }
   };
 
-  // Utility functions
   const getAvailableSemesters = () => {
+    if (!studentProfile) return [];
     const semesters = [];
-    for (let i = 1; i <= studentProfile.semesterNo; i++) {
+    for (let i = 1; i <= (studentProfile.semesterNo || 1); i++) {
       semesters.push(i);
     }
     return semesters;
   };
 
-  const getCoursesForSemester = (semester: number) => {
-    return academicData.courses.filter((course) => {
-      const semesterPart = course.code.slice(-2);
-      if (semesterPart.startsWith("S")) {
-        const semesterNumber = parseInt(semesterPart.substring(1));
-        return semesterNumber === semester;
-      }
-      return false;
-    });
+  const getAvailableCourses = () => {
+    if (!academicData || !pendingFilters) return [];
+    return academicData.courses.filter(course => course.semester === pendingFilters.semester);
   };
 
   const getTestTypes = () => {
     return [
-      { value: "FORTNIGHTLY_TEST", label: "Fortnightly Test" },
-      { value: "ASSIGNMENT", label: "Assignment" },
+      { value: "FORTNIGHTLY", label: "Fortnightly Test" },
+      { value: "INTERNAL_ASSESSMENT", label: "Assignment" },
       { value: "MID_SEM", label: "Mid Semester" },
       { value: "END_SEM", label: "End Semester" },
       { value: "INTERVIEW", label: "Interview" },
+      { value: "PROJECT", label: "Projects" }
     ];
   };
-
+  
   const getTestNumbers = () => {
-    const numbers = [];
-    const maxTests =
-      pendingFilters.testType === "FORTNIGHTLY_TEST"
-        ? 12
-        : pendingFilters.testType === "ASSIGNMENT"
-        ? 5
-        : pendingFilters.testType === "INTERVIEW"
-        ? 4
-        : 2;
-
-    for (let i = 1; i <= maxTests; i++) {
-      numbers.push(i.toString());
-    }
-    return numbers;
+    return ["1", "2", "3", "4", "5"];
   };
 
   const getTestTypeLabel = (type: string) => {
     const typeMap: { [key: string]: string } = {
-      FORTNIGHTLY_TEST: "Fortnightly Tests",
-      ASSIGNMENT: "Assignments",
-      MID_SEM: "Mid Semester Exams",
-      END_SEM: "End Semester Exams",
-      INTERVIEW: "Interviews",
+      FORTNIGHTLY: "Fortnightly Test",
+      INTERNAL_ASSESSMENT: "Assignment",
+      MID_SEM: "Mid Semester Exam",
+      END_SEM: "End Semester Exam",
+      INTERVIEW: "Interview",
+      PROJECT: "Project"
     };
     return typeMap[type] || type;
-  };
-
-  const getChartData = () => {
-    return courseScores.map((score, index) => ({
-      test: `Test ${index + 1}`,
-      percentage: Math.round((score.marksObtained / score.totalObtained) * 100),
-      marks: score.marksObtained,
-      maxMarks: score.totalObtained,
-    }));
-  };
-
-  const getLeaderboardData = (type: "class" | "overall") => {
-    const data = type === "class" ? batchLeaderboard : departmentLeaderboard;
-    return data.map((student) => ({
-      rank: student.rank,
-      name: student.id === studentProfile.id ? "You" : student.name,
-      avatar: student.id === studentProfile.id ? "Y" : student.name.charAt(0),
-      marks: student.totalMarks,
-      percentage: Math.round((student.totalMarks / 500) * 100),
-      isCurrentUser: student.id === studentProfile.id,
-      location:
-        type === "class"
-          ? `Batch ${studentProfile.batch.name}`
-          : `Department ${studentProfile.department.name}`,
-    }));
   };
 
   const getRankIcon = (rank: number) => {
@@ -353,50 +386,41 @@ export default function AcademicsSection() {
     return "bg-blue-500";
   };
 
-  const getSemesterFromCode = (code: string): number => {
-    const semesterPart = code.slice(-2);
-    if (semesterPart.startsWith("S")) {
-      const semesterNumber = parseInt(semesterPart.substring(1));
-      return isNaN(semesterNumber) ? 0 : semesterNumber;
-    }
-    return 0;
-  };
-
   const getOngoingCourses = () => {
+    if (!academicData || !studentProfile) return [];
     return academicData.courses.filter(
-      (course) => getSemesterFromCode(course.code) === studentProfile.semesterNo
+      (course: any) => course.semester === studentProfile.semesterNo
     );
   };
 
   const getCompletedCourses = () => {
+    if (!academicData || !studentProfile) return [];
     return academicData.courses.filter(
-      (course) => getSemesterFromCode(course.code) < studentProfile.semesterNo
+      (course: any) => course.semester < studentProfile.semesterNo
     );
-  };
-
-  const getUniqueSemesters = () => {
-    const completedCourses = getCompletedCourses();
-    const semesters = new Set<number>();
-    completedCourses.forEach((course) => {
-      const semester = getSemesterFromCode(course.code);
-      if (semester > 0) semesters.add(semester);
-    });
-    return Array.from(semesters).sort((a, b) => a - b);
   };
 
   const getFilteredCompletedCourses = () => {
     const completed = getCompletedCourses();
     if (semesterFilter === "all") return completed;
-    return completed.filter(
-      (course) => getSemesterFromCode(course.code) === semesterFilter
-    );
+    return completed.filter(course => course.semester === semesterFilter);
   };
 
-  const LeaderboardTooltip = ({
-    active,
-    payload,
-    label,
-  }: CustomTooltipProps) => {
+  const getUniqueSemesters = () => {
+    const completed = getCompletedCourses();
+    const semesters = [...new Set(completed.map(course => course.semester))];
+    return semesters.sort((a, b) => a - b);
+  };
+
+  const getChartData = () => {
+    return chartData;
+  };
+
+  const getLeaderboardData = (type: "class" | "overall") => {
+    return leaderboardData[type] || [];
+  };
+
+  const LeaderboardTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white border border-gray-200 rounded-sm shadow-lg p-3">
@@ -413,14 +437,39 @@ export default function AcademicsSection() {
     setIsLeaderboardModalOpen(true);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg text-gray-600">Loading academic data...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg text-red-600">{error}</div>
+      </div>
+    );
+  }
+
+  if (!studentProfile || !academicData || !activeFilters || !pendingFilters) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg text-gray-600">Loading academic data...</div>
+      </div>
+    );
+  }
+
   const ongoingCourses = getOngoingCourses();
-  const availableCourses = getCoursesForSemester(pendingFilters.semester);
+  const availableCourses = getAvailableCourses();
+  const currentSemester = academicData.current_semester;
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
         {/* Header Section */}
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm border border-gray-400  shadow-sm p-6">
+        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm border border-gray-400 shadow-sm p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-white">
@@ -436,7 +485,7 @@ export default function AcademicsSection() {
               <div className="bg-gradient-to-br from-white to-indigo-50 px-4 py-3 rounded-sm border border-gray-200">
                 <div className="text-sm text-slate-900 font-medium">Batch</div>
                 <div className="text-xl font-bold text-slate-800">
-                  {studentProfile.batch.name}
+                  {studentProfile.batch?.name || "N/A"}
                 </div>
               </div>
               <div className="bg-gradient-to-br from-white to-indigo-50 px-4 py-3 rounded-sm border border-gray-200">
@@ -444,7 +493,7 @@ export default function AcademicsSection() {
                   Semester
                 </div>
                 <div className="text-xl font-bold text-slate-800">
-                  {studentProfile.semesterNo}rd
+                  {studentProfile.semesterNo}
                 </div>
               </div>
               <div className="bg-gradient-to-br from-white to-indigo-50 px-4 py-3 rounded-sm border border-gray-200">
@@ -459,7 +508,7 @@ export default function AcademicsSection() {
           </div>
         </div>
 
-        {/* Filter Controls - More Prominent */}
+        {/* Filter Controls */}
         <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg p-6 border border-gray-400">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 bg-blue-100 rounded-sm flex items-center justify-center">
@@ -480,10 +529,14 @@ export default function AcademicsSection() {
                   className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
                   value={pendingFilters.semester}
                   onChange={(e) =>
-                    setPendingFilters((prev) => ({
-                      ...prev,
-                      semester: parseInt(e.target.value),
-                    }))
+                    setPendingFilters((prev) => {
+                      if (!prev) return null;
+                      return {
+                        ...prev,
+                        semester: parseInt(e.target.value),
+                        course: "", 
+                      };
+                    })
                   }
                 >
                   {getAvailableSemesters().map((sem) => (
@@ -505,21 +558,21 @@ export default function AcademicsSection() {
                   className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
                   value={pendingFilters.course}
                   onChange={(e) =>
-                    setPendingFilters((prev) => ({
-                      ...prev,
-                      course: e.target.value,
-                    }))
+                    setPendingFilters((prev) => {
+                      if (!prev) return null;
+                      return {
+                        ...prev,
+                        course: e.target.value,
+                      };
+                    })
                   }
                 >
-                  {availableCourses.length === 0 ? (
-                    <option value="">No courses available</option>
-                  ) : (
-                    availableCourses.map((course) => (
-                      <option key={course.id} value={course.code}>
-                        {course.code.toUpperCase()}
-                      </option>
-                    ))
-                  )}
+                  <option value="">Select Course</option>
+                  {availableCourses.map((course: any, idx: number) => (
+                    <option key={course.id || idx} value={course.code}>
+                      {course.code?.toUpperCase?.() || ""}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
@@ -534,10 +587,13 @@ export default function AcademicsSection() {
                   className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
                   value={pendingFilters.testType}
                   onChange={(e) =>
-                    setPendingFilters((prev) => ({
-                      ...prev,
-                      testType: e.target.value,
-                    }))
+                    setPendingFilters((prev) => {
+                      if (!prev) return null;
+                      return {
+                        ...prev,
+                        testType: e.target.value,
+                      };
+                    })
                   }
                 >
                   {getTestTypes().map((type) => (
@@ -559,10 +615,13 @@ export default function AcademicsSection() {
                   className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
                   value={pendingFilters.testNumber}
                   onChange={(e) =>
-                    setPendingFilters((prev) => ({
-                      ...prev,
-                      testNumber: e.target.value,
-                    }))
+                    setPendingFilters((prev) => {
+                      if (!prev) return null;
+                      return {
+                        ...prev,
+                        testNumber: e.target.value,
+                      };
+                    })
                   }
                 >
                   {getTestNumbers().map((test) => (
@@ -605,14 +664,14 @@ export default function AcademicsSection() {
               <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-sm text-sm font-medium">
                 <span className="flex items-center gap-2">
                   <AlertCircle className="w-4 h-4" />
-                  Click &ldquo;Update Results&ldquo; to apply changes
+                  Click &quot;Update Results&quot; to apply changes
                 </span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Performance Chart - Full Width */}
+        {/* Performance Chart */}
         <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
           <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 px-6 py-4 drop-shadow-sm">
             <h3 className="text-xl font-semibold text-slate-900">
@@ -621,35 +680,45 @@ export default function AcademicsSection() {
             </h3>
           </div>
           <div className="p-6">
-            <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={getChartData()}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis
-                    dataKey="test"
-                    tick={{ fontSize: 12 }}
-                    stroke="#6b7280"
-                    tickLine={{ stroke: "#6b7280" }}
-                  />
-                  <YAxis
-                    domain={[0, 100]}
-                    tick={{ fontSize: 12 }}
-                    stroke="#6b7280"
-                    tickLine={{ stroke: "#6b7280" }}
-                  />
-                  <Tooltip content={<LeaderboardTooltip />} />
-                  <Bar
-                    dataKey="percentage"
-                    fill="#1c398e"
-                    radius={[6, 6, 0, 0]}
-                    name="Performance"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {getChartData().length === 0 ? (
+              <div className="h-80 flex items-center justify-center">
+                <div className="text-center">
+                  <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <h4 className="text-lg font-semibold text-gray-600 mb-2">No Performance Data</h4>
+                  <p className="text-gray-500">Performance trends will appear here once exam results are available.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={getChartData()}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis
+                      dataKey="test"
+                      tick={{ fontSize: 12 }}
+                      stroke="#6b7280"
+                      tickLine={{ stroke: "#6b7280" }}
+                    />
+                    <YAxis
+                      domain={[0, 100]}
+                      tick={{ fontSize: 12 }}
+                      stroke="#6b7280"
+                      tickLine={{ stroke: "#6b7280" }}
+                    />
+                    <Tooltip content={<LeaderboardTooltip />} />
+                    <Bar
+                      dataKey="percentage"
+                      fill="#1c398e"
+                      radius={[6, 6, 0, 0]}
+                      name="Performance"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
         </div>
 
@@ -683,8 +752,9 @@ export default function AcademicsSection() {
                   </div>
                   <div className="text-2xl font-bold text-slate-800">
                     #
-                    {getLeaderboardData("class").find((s) => s.isCurrentUser)
-                      ?.rank || "-"}
+                    {getLeaderboardData("class").find(
+                      (s: any) => s.isCurrentUser
+                    )?.rank || "-"}
                   </div>
                 </div>
                 <div className="bg-gradient-to-br from-white to-indigo-50 p-3 rounded-sm shadow-sm border border-gray-400 text-center">
@@ -692,8 +762,9 @@ export default function AcademicsSection() {
                     Your Score
                   </div>
                   <div className="text-2xl font-bold text-slate-800">
-                    {getLeaderboardData("class").find((s) => s.isCurrentUser)
-                      ?.marks || "-"}
+                    {getLeaderboardData("class").find(
+                      (s: any) => s.isCurrentUser
+                    )?.marks || "-"}
                   </div>
                 </div>
               </div>
@@ -702,7 +773,7 @@ export default function AcademicsSection() {
               <div className="space-y-3">
                 {getLeaderboardData("class")
                   .slice(0, 3)
-                  .map((student) => (
+                  .map((student: any) => (
                     <div
                       key={student.rank}
                       className={`flex items-center gap-4 p-4 rounded-sm border-2 transition-all duration-200 ${
@@ -768,18 +839,19 @@ export default function AcademicsSection() {
                   </div>
                   <div className="text-2xl font-bold text-slate-800">
                     #
-                    {getLeaderboardData("overall").find((s) => s.isCurrentUser)
-                      ?.rank || "-"}
+                    {getLeaderboardData("overall").find(
+                      (s: any) => s.isCurrentUser
+                    )?.rank || "-"}
                   </div>
                 </div>
                 <div className="bg-gradient-to-br from-white to-indigo-50 p-3 rounded-sm shadow-sm border border-gray-400 text-center">
-                  {" "}
                   <div className="text-xs text-slate-900 font-medium mb-1">
                     Your Score
                   </div>
                   <div className="text-2xl font-bold text-slate-800">
-                    {getLeaderboardData("overall").find((s) => s.isCurrentUser)
-                      ?.marks || "-"}
+                    {getLeaderboardData("overall").find(
+                      (s: any) => s.isCurrentUser
+                    )?.marks || "-"}
                   </div>
                 </div>
               </div>
@@ -788,7 +860,7 @@ export default function AcademicsSection() {
               <div className="space-y-3">
                 {getLeaderboardData("overall")
                   .slice(0, 3)
-                  .map((student) => (
+                  .map((student: any) => (
                     <div
                       key={student.rank}
                       className={`flex items-center gap-4 p-4 rounded-sm border-2 transition-all duration-200 ${
@@ -837,9 +909,9 @@ export default function AcademicsSection() {
                   <BookOpen className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Current Courses - Semester {studentProfile.semesterNo}
+                  Current Courses - Semester {currentSemester.semester_number}
                 </h3>
-                <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm font-medium">
+                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                   {ongoingCourses.length} courses
                 </span>
               </div>
@@ -853,6 +925,9 @@ export default function AcademicsSection() {
                         Course Code
                       </th>
                       <th className="text-left py-4 font-semibold text-gray-800">
+                        Course Name
+                      </th>
+                      <th className="text-left py-4 font-semibold text-gray-800">
                         Semester
                       </th>
                       <th className="text-left py-4 font-semibold text-gray-800">
@@ -861,7 +936,7 @@ export default function AcademicsSection() {
                     </tr>
                   </thead>
                   <tbody>
-                    {ongoingCourses.map((course, index) => (
+                    {ongoingCourses.map((course: any, index: number) => (
                       <tr
                         key={index}
                         className="border-b border-gray-50 hover:bg-gray-25 transition-colors"
@@ -870,7 +945,10 @@ export default function AcademicsSection() {
                           {course.code}
                         </td>
                         <td className="py-4 text-gray-600">
-                          Semester {getSemesterFromCode(course.code)}
+                          {course.name || "N/A"}
+                        </td>
+                        <td className="py-4 text-gray-600">
+                          Semester {course.semester}
                         </td>
                         <td className="py-4 text-gray-600">{course.credits}</td>
                       </tr>
@@ -892,6 +970,9 @@ export default function AcademicsSection() {
                   <h3 className="text-lg font-semibold text-slate-900">
                     Completed Courses
                   </h3>
+                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                    {getCompletedCourses().length} courses
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -943,7 +1024,10 @@ export default function AcademicsSection() {
                       No completed courses found
                     </h4>
                     <p className="text-gray-500">
-                      No courses match the selected semester filter.
+                      {semesterFilter === "all" 
+                        ? "You haven't completed any courses yet."
+                        : "No courses match the selected semester filter."
+                      }
                     </p>
                   </div>
                 ) : (
@@ -955,6 +1039,9 @@ export default function AcademicsSection() {
                             Course Code
                           </th>
                           <th className="text-left py-4 font-semibold text-gray-800">
+                            Course Name
+                          </th>
+                          <th className="text-left py-4 font-semibold text-gray-800">
                             Semester
                           </th>
                           <th className="text-left py-4 font-semibold text-gray-800">
@@ -963,22 +1050,27 @@ export default function AcademicsSection() {
                         </tr>
                       </thead>
                       <tbody>
-                        {getFilteredCompletedCourses().map((course, index) => (
-                          <tr
-                            key={index}
-                            className="border-b border-gray-50 hover:bg-gray-25 transition-colors"
-                          >
-                            <td className="py-4 font-medium text-gray-900">
-                              {course.code}
-                            </td>
-                            <td className="py-4 text-gray-600">
-                              Semester {getSemesterFromCode(course.code)}
-                            </td>
-                            <td className="py-4 text-gray-600">
-                              {course.credits}
-                            </td>
-                          </tr>
-                        ))}
+                        {getFilteredCompletedCourses().map(
+                          (course: any, index: number) => (
+                            <tr
+                              key={index}
+                              className="border-b border-gray-50 hover:bg-gray-25 transition-colors"
+                            >
+                              <td className="py-4 font-medium text-gray-900">
+                                {course.code}
+                              </td>
+                              <td className="py-4 text-gray-600">
+                                {course.name || "N/A"}
+                              </td>
+                              <td className="py-4 text-gray-600">
+                                Semester {course.semester}
+                              </td>
+                              <td className="py-4 text-gray-600">
+                                {course.credits}
+                              </td>
+                            </tr>
+                          )
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -988,7 +1080,7 @@ export default function AcademicsSection() {
           </div>
         </div>
 
-        {/* Leaderboard Modal - Improved */}
+        {/* Leaderboard Modal */}
         {isLeaderboardModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
@@ -1017,55 +1109,67 @@ export default function AcademicsSection() {
               </div>
 
               <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
-                <div className="space-y-3">
-                  {getLeaderboardData(leaderboardType).map((student) => (
-                    <div
-                      key={student.rank}
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
-                        student.isCurrentUser
-                          ? "bg-blue-50 border-blue-200 ring-2 ring-blue-100"
-                          : "bg-gray-50 border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex-shrink-0">
-                        {getRankIcon(student.rank)}
-                      </div>
+                {getLeaderboardData(leaderboardType).length === 0 ? (
+                  <div className="text-center py-12">
+                    <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                      No data available
+                    </h3>
+                    <p className="text-gray-500">
+                      Leaderboard data will appear here once results are published.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {getLeaderboardData(leaderboardType).map((student: any) => (
                       <div
-                        className={`w-14 h-14 rounded-full ${getRankColor(
-                          student.rank
-                        )} flex items-center justify-center text-white font-bold text-lg`}
+                        key={student.rank}
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
+                          student.isCurrentUser
+                            ? "bg-blue-50 border-blue-200 ring-2 ring-blue-100"
+                            : "bg-gray-50 border-gray-200 hover:border-gray-300"
+                        }`}
                       >
-                        {student.avatar}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 text-lg">
-                          {student.name}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                            {student.location}
-                          </span>
-                          <span className="text-sm text-gray-600">
-                            Rank #{student.rank}
-                          </span>
+                        <div className="flex-shrink-0">
+                          {getRankIcon(student.rank)}
                         </div>
+                        <div
+                          className={`w-14 h-14 rounded-full ${getRankColor(
+                            student.rank
+                          )} flex items-center justify-center text-white font-bold text-lg`}
+                        >
+                          {student.avatar}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 text-lg">
+                            {student.name}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                              {student.location}
+                            </span>
+                            <span className="text-sm text-gray-600">
+                              Rank #{student.rank}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-gray-900">
+                            {student.marks}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {student.percentage}%
+                          </p>
+                        </div>
+                        {student.isCurrentUser && (
+                          <span className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-full">
+                            You
+                          </span>
+                        )}
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-gray-900">
-                          {student.marks}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {student.percentage}%
-                        </p>
-                      </div>
-                      {student.isCurrentUser && (
-                        <span className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-full">
-                          You
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
