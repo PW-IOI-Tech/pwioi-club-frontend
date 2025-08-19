@@ -2,8 +2,9 @@
 import React, { useState } from "react";
 import ProfileHeader from "./Components/ProfileHeader";
 import ContactCard from "./Components/ContactCard";
-import AcademicHistoryCard from "./Components/Qualifications";
 import SocialLinksCard from "./Components/SocialLinksCard";
+import Qualifications from "./Components/Qualifications";
+import Experience from "./Components/Experience";
 
 const TeacherProfileBuilder = () => {
   const [contactData, setContactData] = useState<any>(null);
@@ -14,7 +15,8 @@ const TeacherProfileBuilder = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <ProfileHeader />
-            <AcademicHistoryCard />
+            <Qualifications />
+            <Experience />
           </div>
 
           <div className="space-y-6">
