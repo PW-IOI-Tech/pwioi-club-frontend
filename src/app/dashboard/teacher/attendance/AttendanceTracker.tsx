@@ -583,7 +583,7 @@ const AttendanceTracker: React.FC = () => {
                       </thead>
                       <tbody>
                         {getSortedStudents(studentOverviewData).map(
-                          (student, index) => (
+                          (student, _index) => (
                             <tr
                               key={student.enrollmentId}
                               className="border-b border-gray-100 hover:bg-blue-25 transition-colors"
@@ -641,7 +641,7 @@ const AttendanceTracker: React.FC = () => {
                   <div className="bg-gradient-to-br from-white to-indigo-50 rounded-lg shadow-sm border border-gray-400 overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-400">
                       <h3 className="text-lg font-semibold text-gray-900">
-                        Today's Attendance - August 19, 2025
+                        Today&lsquo;s Attendance - August 19, 2025
                       </h3>
                     </div>
                     <div className="p-6">
@@ -765,7 +765,7 @@ const AttendanceTracker: React.FC = () => {
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Today's Student Status
+                      Today&lsquo;s Student Status
                     </h3>
                   </div>
                   <div className="overflow-x-auto">
@@ -800,7 +800,7 @@ const AttendanceTracker: React.FC = () => {
                       </thead>
                       <tbody>
                         {getSortedStudents(studentDailyData).map(
-                          (student, index) => (
+                          (student, _index) => (
                             <tr
                               key={student.enrollmentId}
                               className="border-b border-gray-100 hover:bg-gray-50"
