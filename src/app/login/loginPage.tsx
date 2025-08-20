@@ -9,7 +9,7 @@ interface LoginContentProps {
 }
 
 function LoginContent({ imgPath }: LoginContentProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, _setIsLoading] = useState(false);
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
 

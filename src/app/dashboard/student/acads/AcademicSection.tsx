@@ -58,7 +58,7 @@ interface AcademicData {
 const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/student-academics`;
 
 export default function AcademicsSection() {
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>({
+  const [studentProfile, _setStudentProfile] = useState<StudentProfile | null>({
     batch: { name: "2023-2027" },
     semesterNo: 1,
     sub: "Computer Science"

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   BookOpen,
   GraduationCap,
@@ -8,10 +8,8 @@ import {
   ChevronDown,
   Filter,
   AlertCircle,
-  HelpCircle,
   BarChart3,
   Users,
-  TrendingUp,
   Search,
   ArrowUpDown,
 } from "lucide-react";
@@ -731,7 +729,7 @@ const StudentMarksTable: React.FC<StudentMarksTableProps> = ({
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
   const getFilteredStudents = (): StudentMark[] => {
-    let filtered = mockStudentMarks.filter(
+    const filtered = mockStudentMarks.filter(
       (student) =>
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.enrollmentId.toLowerCase().includes(searchTerm.toLowerCase())
@@ -853,7 +851,7 @@ const StudentMarksTable: React.FC<StudentMarksTableProps> = ({
               </tr>
             </thead>
             <tbody>
-              {getFilteredStudents().map((student, index) => (
+              {getFilteredStudents().map((student, _index) => (
                 <tr
                   key={student.enrollmentId}
                   className="border-b border-gray-50 hover:bg-gray-25 transition-colors"

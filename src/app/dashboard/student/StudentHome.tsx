@@ -7,11 +7,12 @@ import {
   Share2,
   Flag,
   X,
-  Image,
   Video,
   Check,
   User,
+  FileImage,
 } from "lucide-react";
+import Image from "next/image";
 
 interface User {
   batch: string;
@@ -224,7 +225,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
               onClick={() => handleMediaSelect("image")}
               className="flex items-center justify-center space-x-2 p-2 text-white bg-slate-900 rounded-sm transition-all duration-200 text-sm font-semibold cursor-pointer hover:bg-slate-800"
             >
-              <Image className="w-4 h-4" />
+              <FileImage className="w-4 h-4" />
               <span>Photo</span>
             </button>
             <button
@@ -296,10 +297,12 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
               {mediaPreview && (
                 <div className="mt-4 relative">
                   {mediaType === "image" ? (
-                    <img
+                    <Image
                       src={mediaPreview}
                       alt="Selected"
                       className="w-full max-h-96 object-cover rounded-lg"
+                      width={100}
+                      height={100}
                     />
                   ) : (
                     <video
@@ -329,7 +332,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
                       onClick={() => handleModalMediaSelect("image")}
                       className="flex items-center space-x-2 px-3 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors text-sm cursor-pointer"
                     >
-                      <Image className="w-4 h-4" />
+                      <FileImage className="w-4 h-4" />
                       <span>Photo</span>
                     </button>
                     <button

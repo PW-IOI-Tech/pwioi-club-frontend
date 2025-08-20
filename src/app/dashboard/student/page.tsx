@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import StudentHome from './StudentHome'
-
+import StudentHome from "./StudentHome";
 
 interface User {
   sub: string;
@@ -14,14 +13,17 @@ interface User {
 }
 
 const page = () => {
-    const [user, setUser] = useState<User | null>(null);
+  const [_user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`, {
-          withCredentials: true, 
-        });
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`,
+          {
+            withCredentials: true,
+          }
+        );
 
         const userData = res.data.data.user;
 
@@ -36,10 +38,7 @@ const page = () => {
     fetchUser();
   }, []);
 
-  return (
-    <StudentHome />
-  )
-}
+  return <StudentHome />;
+};
 
-export default page
-
+export default page;
