@@ -11,6 +11,7 @@ import {
   Check,
   User,
   FileImage,
+  GraduationCap,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -122,6 +123,100 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ userName }) => (
     </p>
   </div>
 );
+
+interface ClassData {
+  id: string;
+  name: string;
+  attendancePercentage: number;
+  subject: string;
+}
+
+interface AttendanceCardsProps {
+  classes: ClassData[];
+}
+
+const AttendanceCards: React.FC<AttendanceCardsProps> = ({ classes }) => {
+  const getThemeColors = (percentage: number) => {
+    if (percentage > 75) {
+      return {
+        gradient: "from-white to-green-50",
+        border: "border-green-100",
+        icon: "text-green-600",
+        percentage: "text-green-700",
+      };
+    } else if (percentage >= 50) {
+      return {
+        gradient: "from-white to-blue-50",
+        border: "border-blue-100",
+        icon: "text-blue-600",
+        percentage: "text-blue-700",
+      };
+    } else {
+      return {
+        gradient: "from-white to-red-50",
+        border: "border-red-100",
+        icon: "text-red-600",
+        percentage: "text-red-700",
+      };
+    }
+  };
+
+  return (
+    <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-sm shadow-sm border border-gray-400">
+      <h3 className="text-lg font-semibold text-slate-700 mb-3">
+        Class Attendance Overview
+      </h3>
+      <div className="grid grid-cols-2 gap-3">
+        {classes.map((classItem) => {
+          const theme = getThemeColors(classItem.attendancePercentage);
+
+          return (
+            <div
+              key={classItem.id}
+              className={`bg-gradient-to-br ${theme.gradient} rounded-lg p-3 border ${theme.border} shadow-sm`}
+            >
+              <div className="flex items-center space-x-1.5 mb-2">
+                <span className="text-xs underline font-semibold text-slate-6000">
+                  {classItem.name}
+                </span>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-slate-800 leading-tight">
+                  {classItem.subject}
+                </p>
+                <div className="flex flex-col">
+                  <span className={`text-2xl font-bold ${theme.percentage}`}>
+                    {classItem.attendancePercentage}%
+                  </span>
+                  <span className="text-xs font-medium text-slate-500">
+                    Attendance
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const sampleClasses: ClassData[] = [
+  { id: "1", name: "SOT24B1", attendancePercentage: 66, subject: "Java" },
+  {
+    id: "2",
+    name: "SOT24B2",
+    attendancePercentage: 49.6,
+    subject: "C Programming",
+  },
+
+  {
+    id: "3",
+    name: "SOT23B1",
+    attendancePercentage: 76,
+    subject: "DSA",
+  },
+];
 
 interface CreatePostProps {
   userInitial: string;
@@ -1028,6 +1123,7 @@ const TeacherHome: React.FC = () => {
           <div className="lg:col-span-3 space-y-4 hidden sm:block">
             <ProfileHeader user={user} />
             <CreatePost userInitial={user.initial} />
+            <AttendanceCards classes={sampleClasses} />
           </div>
         </div>
       </div>
