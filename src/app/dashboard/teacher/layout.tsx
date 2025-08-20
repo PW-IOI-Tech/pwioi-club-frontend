@@ -15,8 +15,6 @@ import {
   ExternalLink,
   Phone,
   Mail,
-  Award,
-  TrendingUp,
   House,
   Calendar,
   Users,
@@ -354,7 +352,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
           </h3>
           <nav className="space-y-2">
             <a
-              href="/dashboard/student/profile"
+              href="/dashboard/teacher/profile"
               className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-blue-200 shadow-sm hover:shadow-md text-sm cursor-pointer group"
             >
               <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
