@@ -557,7 +557,7 @@ export default function UploadSection({
             <button
               onClick={handleGetStudents}
               disabled={!canGetStudents}
-              className="flex items-center gap-2 px-6 py-2 bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 text-white rounded-sm transition-colors font-medium disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer group"
+              className="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-sm transition-colors font-medium disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer group"
             >
               <Users size={16} className="group-hover:scale-110" />
               Get Students List
@@ -691,14 +691,14 @@ export default function UploadSection({
                   <div className="flex flex-col sm:flex-row justify-center gap-3">
                     <button
                       onClick={removeFile}
-                      className="flex items-center justify-center gap-2 px-4 py-2 text-[#1B3A6A] border border-[#1B3A6A] rounded-lg hover:bg-gray-100 transition-colors z-10"
+                      className="flex items-center justify-center gap-2 px-4 py-2 text-[#1B3A6A] border border-[#1B3A6A] rounded-sm hover:bg-red-200 transition-colors z-10 cursor-pointer"
                     >
                       <X size={16} />
                       Remove
                     </button>
                     <button
                       onClick={uploadFile}
-                      className="px-6 py-2 bg-[#1B3A6A] text-white rounded-lg hover:bg-[#486AA0] transition-colors font-medium z-10"
+                      className="px-6 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors font-medium z-10 cursor-pointer"
                     >
                       Upload Data
                     </button>
@@ -722,7 +722,7 @@ export default function UploadSection({
                   <div className="flex flex-col sm:flex-row justify-center gap-3">
                     <button
                       onClick={resetToInitialState}
-                      className="px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors z-10 cursor-pointer"
+                      className="px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-600 hover:text-white transition-colors z-10 cursor-pointer"
                     >
                       Try Again
                     </button>
