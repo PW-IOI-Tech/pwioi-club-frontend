@@ -6,6 +6,7 @@ import SocialLinksCard from "./Components/SocialLinksCard";
 import Qualifications from "./Components/Qualifications";
 import Experience from "./Components/Experience";
 import About from "./Components/About";
+import ResearchPapers from "./Components/ResearchPapers";
 
 const TeacherProfileBuilder = () => {
   const [contactData, setContactData] = useState<any>(null);
@@ -19,6 +20,7 @@ const TeacherProfileBuilder = () => {
             <About />
             <Qualifications />
             <Experience />
+            <ResearchPapers />
           </div>
 
           <div className="space-y-6">
