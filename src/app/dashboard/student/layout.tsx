@@ -27,14 +27,19 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const[userInfo,setUserInfo] = useState<any>(null);
   const pathname = usePathname();
   const router = useRouter();
 
    useEffect(() => {
     if (typeof window !== "undefined") {
       const storedUser = localStorage.getItem("user");
+      const userData = localStorage.getItem("userDetails");
       if (storedUser) {
         setUser(JSON.parse(storedUser));
+      }
+      if (userData) {
+        setUserInfo(JSON.parse(userData));
       }
     }
   }, []);
@@ -43,12 +48,12 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
     name: user?.name || "",
     email: user?.email || "",
     profilePicture: "/api/placeholder/120/120",
-    studentId: "STU2024001",
-    course: "Computer Science & Engineering",
-    batch: "2024-2028",
+    studentId: userInfo?.enrollmentId || "",
+    course: userInfo?.school?.name || "",
     semester: "4th Semester",
+    batch:  userInfo?.batch?.name || "",
     gpa: "8.7",
-    phone: "+1 (555) 123-4567",
+    phone: user?.phone || "",
     completionRate: 87,
     coursesEnrolled: 6,
     certificatesEarned: 12,

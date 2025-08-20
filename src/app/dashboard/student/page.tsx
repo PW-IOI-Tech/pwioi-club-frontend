@@ -12,26 +12,40 @@ interface User {
   designation?: string;
 }
 
-const page = () => {
-  const [_user, setUser] = useState<User | null>(null);
+const Page = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [userDetails, setUserDetails] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`,
-          {
-            withCredentials: true,
-          }
+          { withCredentials: true }
         );
 
-        const userData = res.data.data.user;
-
+        const userData: User = res.data.data.user;
         localStorage.setItem("user", JSON.stringify(userData));
-
         setUser(userData);
+
+        fetchUserDetails(userData.sub);
       } catch (err) {
         console.error("Error fetching user:", err);
+      }
+    };
+
+    const fetchUserDetails = async (userId: string) => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${userId}/basic-details`,
+          { withCredentials: true }
+        );
+
+        const userDetailsData = res.data.data;
+        localStorage.setItem("userDetails", JSON.stringify(userDetailsData));
+        setUserDetails(userDetailsData);
+      } catch (err) {
+        console.error("Error fetching user details:", err);
       }
     };
 
@@ -41,4 +55,4 @@ const page = () => {
   return <StudentHome />;
 };
 
-export default page;
+export default Page;
