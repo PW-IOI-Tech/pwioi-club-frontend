@@ -426,7 +426,7 @@ const SocialLinksCard: React.FC = () => {
 
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
-  const studentId = user?.sub;
+  const studentId = user?.id;
 
   const api = axios.create({
     baseURL: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile`,

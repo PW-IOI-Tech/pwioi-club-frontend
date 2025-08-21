@@ -24,7 +24,7 @@ const StudentProfileDashboard = () => {
         if (!student) return;
 
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${student.sub}/contact`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${student.id}/contact`,
           { withCredentials: true }
         );
 

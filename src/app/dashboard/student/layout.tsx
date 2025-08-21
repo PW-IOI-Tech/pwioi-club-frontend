@@ -36,7 +36,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
       const storedUser = localStorage.getItem("user");
       const userData = localStorage.getItem("userDetails");
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        setUser(JSON.parse(storedUser))
       }
       if (userData) {
         setUserInfo(JSON.parse(userData));

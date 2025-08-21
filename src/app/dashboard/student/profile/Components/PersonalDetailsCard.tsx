@@ -14,7 +14,7 @@ const PersonalDetailsCard = () => {
         if (!student) return;
 
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${student.sub}/personal-details`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${student.id}/personal-details`,
           { withCredentials: true }
         );
 

@@ -110,7 +110,7 @@ const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
     try {
       const storedUser = localStorage.getItem("user");
       const user = storedUser ? JSON.parse(storedUser) : null;
-      const studentId = user?.sub;
+      const studentId = user?.id;
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/certifications`,
@@ -323,7 +323,7 @@ const EditCertificationModal: React.FC<EditCertificationModalProps> = ({
     try {
       const storedUser = localStorage.getItem("user");
       const user = storedUser ? JSON.parse(storedUser) : null;
-      const studentId = user?.sub;
+      const studentId = user?.id;
 
       await axios.patch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/certifications/${certification.id}`,
@@ -516,7 +516,7 @@ const CertificationsCard: React.FC = () => {
     try {
       const storedUser = localStorage.getItem("user");
       const user = storedUser ? JSON.parse(storedUser) : null;
-      const studentId = user?.sub;
+      const studentId = user?.id;
 
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/certifications`,
@@ -561,7 +561,7 @@ const CertificationsCard: React.FC = () => {
       try {
         const storedUser = localStorage.getItem("user");
         const user = storedUser ? JSON.parse(storedUser) : null;
-        const studentId = user?.sub;
+        const studentId = user?.id;
 
         await axios.delete(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/certifications/${selectedCertification.id}`,

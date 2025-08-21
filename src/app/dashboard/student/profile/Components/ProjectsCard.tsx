@@ -26,7 +26,7 @@ const formatDate = (dateString: string) => {
 const ProjectsCard = () => {
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
-  const studentId = user?.sub;
+  const studentId = user?.id;
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);

@@ -99,7 +99,7 @@ const AttendanceTracker: React.FC = () => {
 
       const storedUser = localStorage.getItem("user");
       const user = storedUser ? JSON.parse(storedUser) : null;
-      const studentId = user?.sub;
+      const studentId = user?.id;
 
       if (!studentId) return;
 
@@ -123,7 +123,7 @@ const AttendanceTracker: React.FC = () => {
 
       const storedUser = localStorage.getItem("user");
       const user = storedUser ? JSON.parse(storedUser) : null;
-      const studentId = user?.sub;
+      const studentId = user?.id;
 
       if (!studentId) return;
 
@@ -149,7 +149,7 @@ const AttendanceTracker: React.FC = () => {
   ) => {
     const storedUser = localStorage.getItem("user");
     const user = storedUser ? JSON.parse(storedUser) : null;
-    const studentId = user?.sub;
+    const studentId = user?.id;
 
     if (!studentId || !subjectId || !semesterId) return;
 

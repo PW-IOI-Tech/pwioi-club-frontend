@@ -46,7 +46,7 @@ interface FilterState {
 interface StudentProfile {
   batch: { name: string };
   semesterNo: number;
-  sub: string;
+  id: string;
 }
 
 interface AcademicData {
@@ -61,7 +61,7 @@ export default function AcademicsSection() {
   const [studentProfile, _setStudentProfile] = useState<StudentProfile | null>({
     batch: { name: "2023-2027" },
     semesterNo: 1,
-    sub: "Computer Science"
+    id: "Computer Science"
   });
   const [academicData, setAcademicData] = useState<AcademicData | null>(null);
   const [activeFilters, setActiveFilters] = useState<FilterState | null>(null);
@@ -71,12 +71,28 @@ export default function AcademicsSection() {
   const [semesterFilter, setSemesterFilter] = useState<number | "all">("all");
   const [showCompletedCourses, setShowCompletedCourses] = useState(false);
   const [chartData, setChartData] = useState<any[]>([]);
+   const [exams, setExams] = useState<any[]>([]);
   const [leaderboardData, setLeaderboardData] = useState<any>({
     class: [],
     overall: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+   const fetchExams = useCallback(async (subjectId:string) => {
+    try {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${subjectId}`, {
+        withCredentials: true
+      });
+      
+      if (response.data.success) {
+        return response.data.data;
+      }
+    } catch (err) {
+      console.error("Error fetching current semester:", err);
+      throw err;
+    }
+  }, []);
 
   const fetchCurrentSemester = useCallback(async () => {
     try {
@@ -558,13 +574,7 @@ export default function AcademicsSection() {
                   className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
                   value={pendingFilters.course}
                   onChange={(e) =>
-                    setPendingFilters((prev) => {
-                      if (!prev) return null;
-                      return {
-                        ...prev,
-                        course: e.target.value,
-                      };
-                    })
+                    fetchExams(e.target.value)
                   }
                 >
                   <option value="">Select Course</option>
@@ -585,7 +595,6 @@ export default function AcademicsSection() {
               <div className="relative">
                 <select
                   className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
-                  value={pendingFilters.testType}
                   onChange={(e) =>
                     setPendingFilters((prev) => {
                       if (!prev) return null;

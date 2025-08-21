@@ -17,7 +17,7 @@ const DegreePartnerCard = () => {
   // get studentId from localStorage
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
-  const studentId = user?.sub;
+  const studentId = user?.id;
 
   useEffect(() => {
     const fetchDegreePartner = async () => {
