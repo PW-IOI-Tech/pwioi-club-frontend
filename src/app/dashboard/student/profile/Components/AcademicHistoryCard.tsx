@@ -601,7 +601,7 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
 const AcademicHistoryCard: React.FC = () => {
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
-  const studentId = user?.sub;
+  const studentId = user?.id;
   const [academicHistory, setAcademicHistory] = useState<AcademicHistory[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);

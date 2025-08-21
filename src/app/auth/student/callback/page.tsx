@@ -19,7 +19,13 @@ export default function StudentCallbackPage() {
           { code, role: "STUDENT" },
           { withCredentials: true }
         )
-        .then(() => {
+        .then((res) => {
+          const { tokens, user } = res.data;
+
+          localStorage.setItem("accessToken", tokens.accessToken);
+          localStorage.setItem("refreshToken", tokens.refreshToken);
+          localStorage.setItem("user", JSON.stringify(user));
+
           router.push("/dashboard/student");
         })
         .catch((err) => {
