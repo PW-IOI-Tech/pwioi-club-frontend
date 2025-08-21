@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   BookOpen,
   GraduationCap,
@@ -8,10 +8,8 @@ import {
   ChevronDown,
   Filter,
   AlertCircle,
-  HelpCircle,
   BarChart3,
   Users,
-  TrendingUp,
   Search,
   ArrowUpDown,
 } from "lucide-react";
@@ -226,7 +224,7 @@ const DashboardHeader: React.FC = () => {
 
 const OngoingCoursesTable: React.FC = () => {
   return (
-    <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
+    <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
       <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
@@ -300,7 +298,7 @@ const CompletedCoursesTable: React.FC = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
+    <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
       <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -440,7 +438,7 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8 mb-6">
+    <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-4 sm:p-6 lg:p-8 mb-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
         Select Marks Details
       </h2>
@@ -731,7 +729,7 @@ const StudentMarksTable: React.FC<StudentMarksTableProps> = ({
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
   const getFilteredStudents = (): StudentMark[] => {
-    let filtered = mockStudentMarks.filter(
+    const filtered = mockStudentMarks.filter(
       (student) =>
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.enrollmentId.toLowerCase().includes(searchTerm.toLowerCase())
@@ -853,7 +851,7 @@ const StudentMarksTable: React.FC<StudentMarksTableProps> = ({
               </tr>
             </thead>
             <tbody>
-              {getFilteredStudents().map((student, index) => (
+              {getFilteredStudents().map((student, _index) => (
                 <tr
                   key={student.enrollmentId}
                   className="border-b border-gray-50 hover:bg-gray-25 transition-colors"
@@ -939,7 +937,7 @@ const TeacherMarksDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto space-y-4">
         <DashboardHeader />
         <OngoingCoursesTable />
         <CompletedCoursesTable />

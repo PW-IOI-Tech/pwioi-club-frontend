@@ -422,7 +422,7 @@ const SocialLinksCard: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedSocial, setSelectedSocial] = useState<SocialLink | null>(null);
-  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [_editIndex, setEditIndex] = useState<number | null>(null);
 
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;

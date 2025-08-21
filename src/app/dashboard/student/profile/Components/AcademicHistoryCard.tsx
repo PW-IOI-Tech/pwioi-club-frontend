@@ -608,7 +608,7 @@ const AcademicHistoryCard: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEducation, setSelectedEducation] =
     useState<AcademicHistory | null>(null);
-  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [_editIndex, setEditIndex] = useState<number | null>(null);
 
   const fetchAcademicHistory = async () => {
     try {
