@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   User,
   GraduationCap,
-  HelpCircle,
   LogOut,
   Menu,
   X,
@@ -19,9 +18,7 @@ import {
   Calendar,
   Users,
   School,
-  Upload,
   ChevronDown,
-  Flag,
 } from "lucide-react";
 import Image from "next/image";
 

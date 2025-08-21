@@ -8,21 +8,16 @@ import {
   Calendar,
   FileText,
   ChevronRight,
-  Settings,
   UserCheck,
   School,
   BookOpen,
   Clock,
-  MapPin,
   Briefcase,
   CalendarDays,
   ClipboardList,
   DoorOpen,
   Shield,
   Flag,
-  Home,
-  Menu,
-  X,
 } from "lucide-react";
 
 export default function AdminDashboard() {

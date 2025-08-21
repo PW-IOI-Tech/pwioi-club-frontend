@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Edit, Filter, Search, Trash2, X } from "lucide-react";
 
 interface GenericTableItem {
