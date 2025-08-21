@@ -458,7 +458,7 @@ const AchievementsCard: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedAchievement, setSelectedAchievement] =
     useState<Achievement | null>(null);
-  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [_editIndex, setEditIndex] = useState<number | null>(null);
 
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;

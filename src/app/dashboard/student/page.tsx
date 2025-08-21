@@ -13,8 +13,8 @@ interface User {
 }
 
 const Page = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [userDetails, setUserDetails] = useState<User | null>(null);
+  const [_user, setUser] = useState<User | null>(null);
+  const [_userDetails, setUserDetails] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
