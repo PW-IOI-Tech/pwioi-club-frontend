@@ -11,7 +11,6 @@ import {
   Check,
   User,
   FileImage,
-  GraduationCap,
 } from "lucide-react";
 import Image from "next/image";
 
