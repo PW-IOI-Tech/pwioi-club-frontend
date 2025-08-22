@@ -1,22 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Edit3, Check, X } from "lucide-react";
+import axios from "axios";
 
-const About: React.FC = () => {
+
+const About: React.FC<any> = ({ aboutDetails }) => {
   const [aboutText, setAboutText] = useState<string>("");
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editText, setEditText] = useState<string>("");
-  const [hasContent, setHasContent] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (aboutDetails?.about) {
+      setAboutText(aboutDetails.about);
+    }
+  }, [aboutDetails]);
 
   const handleStartEditing = () => {
     setEditText(aboutText);
     setIsEditing(true);
   };
 
-  const handleSave = () => {
-    setAboutText(editText.trim());
-    setHasContent(editText.trim().length > 0);
+const handleSave = async () => {
+  try {
+    const trimmed = editText.trim();
+    setAboutText(trimmed);
     setIsEditing(false);
-  };
+
+    await axios.patch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/profile/basic-details`,
+      { about: trimmed }, 
+      { withCredentials: true } 
+    );
+    console.log("About updated successfully!");
+  } catch (error) {
+    console.error("Error updating About section:", error);
+  }
+};
+
 
   const handleCancel = () => {
     setEditText(aboutText);
@@ -32,7 +51,7 @@ const About: React.FC = () => {
     <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-lg font-bold text-gray-900">About</h3>
-        {hasContent && !isEditing && (
+        {aboutText && !isEditing && (
           <button
             onClick={handleStartEditing}
             className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm cursor-pointer"
@@ -78,19 +97,11 @@ const About: React.FC = () => {
               </button>
             </div>
           </div>
-        ) : hasContent ? (
+        ) : aboutText ? (
           <div className="p-4 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 hover:shadow-md hover:border-blue-800">
-            <div className="flex items-start space-x-4">
-              <div className="flex-1">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 pr-4">
-                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                      {aboutText}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+              {aboutText}
+            </p>
           </div>
         ) : (
           <button
