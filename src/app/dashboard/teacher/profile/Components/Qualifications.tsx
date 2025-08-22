@@ -154,7 +154,7 @@ const AddQualificationModal: React.FC<AddQualificationModalProps> = ({
           <select
             value={formData.degree}
             onChange={(e) => handleInputChange("degree", e.target.value)}
-            className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
+            className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer ${
               errors.degree ? "border-red-400" : "border-gray-400"
             }`}
           >
@@ -718,6 +718,30 @@ const handleDeleteQualification = async () => {
   return (
     <>
       <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
+        <AddQualificationModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAddQualification}
+        />
+
+        <EditQualificationModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onEdit={handleEditQualification}
+          qualification={selectedQualification}
+        />
+
+        <DeleteConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteQualification}
+          qualificationTitle={
+            selectedQualification
+              ? `${selectedQualification.degree} at ${selectedQualification.institution}`
+              : undefined
+          }
+        />
+
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-bold text-gray-900">Qualifications</h3>
           <button
@@ -788,28 +812,6 @@ const handleDeleteQualification = async () => {
           )}
         </div>
       </div>
-
-      <AddQualificationModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onAdd={handleAddQualification}
-      />
-      <EditQualificationModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onEdit={handleEditQualification}
-        qualification={selectedQualification}
-      />
-      <DeleteConfirmModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDeleteQualification}
-        qualificationTitle={
-          selectedQualification
-            ? `${selectedQualification.degree} at ${selectedQualification.institution}`
-            : undefined
-        }
-      />
     </>
   );
 };

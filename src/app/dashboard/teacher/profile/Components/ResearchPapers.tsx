@@ -22,7 +22,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-sm shadow-2xl border border-gray-400 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-sm shadow-2xl border border-gray-400 w-full max-w-2xl mx-4 max-h-[92vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h3 className="text-lg font-bold text-gray-900">{title}</h3>
           <button
@@ -580,6 +580,26 @@ const ResearchPapers: React.FC = () => {
   return (
     <>
       <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
+        <AddResearchPaperModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAddPaper}
+        />
+
+        <EditResearchPaperModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onEdit={handleEditPaper}
+          paper={selectedPaper}
+        />
+
+        <DeleteConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDeletePaper}
+          paperTitle={selectedPaper?.title}
+        />
+
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-bold text-gray-900">Research Papers</h3>
           <button onClick={() => setShowAddModal(true)}>
@@ -663,24 +683,6 @@ const ResearchPapers: React.FC = () => {
           )}
         </div>
       </div>
-
-      <AddResearchPaperModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onAdd={handleAddPaper}
-      />
-      <EditResearchPaperModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onEdit={handleEditPaper}
-        paper={selectedPaper}
-      />
-      <DeleteConfirmModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDeletePaper}
-        paperTitle={selectedPaper?.title}
-      />
     </>
   );
 };

@@ -666,6 +666,30 @@ const Experience: React.FC = () => {
   return (
     <>
       <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
+        <AddExperienceModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAddExperience}
+        />
+
+        <EditExperienceModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onEdit={handleEditExperience}
+          experience={selectedExperience}
+        />
+
+        <DeleteConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteExperience}
+          experienceTitle={
+            selectedExperience
+              ? `${selectedExperience.title} at ${selectedExperience.companyName}`
+              : undefined
+          }
+        />
+
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-bold text-gray-900">Experience</h3>
           <button
@@ -741,7 +765,6 @@ const Experience: React.FC = () => {
           )}
         </div>
       </div>
-
       <AddExperienceModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}

@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   User,
   GraduationCap,
-  HelpCircle,
   LogOut,
   Menu,
   X,
@@ -19,11 +18,12 @@ import {
   Calendar,
   Users,
   School,
-  Upload,
+  ChevronDown,
 } from "lucide-react";
 import Image from "next/image";
 
-const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
+const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
@@ -42,39 +42,145 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   };
 
   const menuItems = [
-    { id: "home", label: "Home", icon: House, href: "/dashboard/teacher" },
+    { id: "home", label: "Home", icon: House, href: "/dashboard/superadmin" },
     {
-      id: "academics",
-      label: "Academics & Scores",
+      id: "people",
+      label: "People Management",
+      icon: Users,
+      subItems: [
+        {
+          id: "admins",
+          label: "Admins Management",
+          href: "/dashboard/superadmin/people/admins",
+        },
+        {
+          id: "teachers",
+          label: "Teachers Management",
+          href: "/dashboard/superadmin/people/teachers",
+        },
+        {
+          id: "students",
+          label: "Students Management",
+          href: "/dashboard/superadmin/people/students",
+        },
+        {
+          id: "mentors",
+          label: "Mentors Management",
+          href: "/dashboard/superadmin/people/mentors",
+        },
+      ],
+    },
+    {
+      id: "academic",
+      label: "Academic Structure",
       icon: GraduationCap,
-      href: "/dashboard/teacher/acads",
+      subItems: [
+        {
+          id: "centers",
+          label: "Centers Management",
+          href: "/dashboard/superadmin/academic/centers",
+        },
+        {
+          id: "schools",
+          label: "Schools Management",
+          href: "/dashboard/superadmin/academic/schools",
+        },
+        {
+          id: "batches",
+          label: "Batches Management",
+          href: "/dashboard/superadmin/academic/batches",
+        },
+        {
+          id: "divisions",
+          label: "Divisions Management",
+          href: "/dashboard/superadmin/academic/divisions",
+        },
+        {
+          id: "semester",
+          label: "Semester Management",
+          href: "/dashboard/superadmin/academic/semester",
+        },
+        {
+          id: "subjects",
+          label: "Subjects Management",
+          href: "/dashboard/superadmin/academic/subjects",
+        },
+        {
+          id: "classes",
+          label: "Class Management",
+          href: "/dashboard/superadmin/academic/classes",
+        },
+        {
+          id: "cohorts",
+          label: "Cohorts Management",
+          href: "/dashboard/superadmin/academic/cohorts",
+        },
+      ],
     },
     {
-      id: "attendance",
-      label: "Attendance",
+      id: "operations",
+      label: "Operations & Events",
       icon: Calendar,
-      href: "/dashboard/teacher/attendance",
+      subItems: [
+        {
+          id: "jobs",
+          label: "Jobs Management",
+          href: "/dashboard/superadmin/operations/jobs",
+        },
+        {
+          id: "events",
+          label: "Events Management",
+          href: "/dashboard/superadmin/operations/events",
+        },
+        {
+          id: "exams",
+          label: "Exams Management",
+          href: "/dashboard/superadmin/operations/exams",
+        },
+      ],
     },
     {
-      id: "upload",
-      label: "Upload Marks",
-      icon: Upload,
-      href: "/dashboard/teacher/upload",
-    },
-    {
-      id: "help",
-      label: "Help",
-      icon: HelpCircle,
-      href: "/dashboard/teacher/help",
+      id: "resources",
+      label: "Resources",
+      icon: Settings,
+      subItems: [
+        {
+          id: "rooms",
+          label: "Rooms Management",
+          href: "/dashboard/superadmin/resources/rooms",
+        },
+        {
+          id: "policies",
+          label: "Policies Management",
+          href: "/dashboard/superadmin/resources/policies",
+        },
+        {
+          id: "flags",
+          label: "Flag Management",
+          href: "/dashboard/superadmin/resources/flags",
+        },
+      ],
     },
   ];
 
   const getActiveSection = () => {
-    if (pathname.includes("/acads")) return "academics";
-    if (pathname.includes("/attendance")) return "attendance";
-    if (pathname.includes("/upload")) return "upload";
-    if (pathname.includes("/help")) return "help";
+    if (pathname.includes("/people/")) return "people";
+    if (pathname.includes("/academic/")) return "academic";
+    if (pathname.includes("/operations/")) return "operations";
+    if (pathname.includes("/resources/")) return "resources";
     return "home";
+  };
+
+  const isSubItemActive = (href: string) => {
+    return pathname === href;
+  };
+
+  const toggleExpanded = (itemId: string) => {
+    setExpandedItems((prev) =>
+      prev.includes(itemId)
+        ? prev.filter((id) => id !== itemId)
+        : [...prev, itemId]
+    );
   };
 
   const activeSection = getActiveSection();
@@ -155,7 +261,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
       )}
 
       <div
-        className={`hidden lg:flex sticky top-0 h-screen bg-slate-900 border-r border-slate-700/50 shadow-2xl transition-all duration-300 ease-in-out ${
+        className={`hidden lg:flex sticky top-0 h-screen bg-slate-900 border-r border-slate-700/50 shadow-2xl transition-all duration-300 ease-in-out max-h-screen overflow-y-scroll ${
           isSidebarExpanded ? "w-64" : "w-20"
         }`}
       >
@@ -209,6 +315,68 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
+              const isExpanded = expandedItems.includes(item.id);
+              const hasSubItems = item.subItems && item.subItems.length > 0;
+
+              if (hasSubItems) {
+                return (
+                  <div key={item.id} className="space-y-1">
+                    <button
+                      onClick={() => toggleExpanded(item.id)}
+                      className={`w-full flex items-center justify-between px-3 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border hover:scale-105 active:scale-95 ${
+                        isActive
+                          ? "bg-blue-600/20 text-blue-400 shadow-lg border-blue-500/30 backdrop-blur-sm"
+                          : "text-slate-300 hover:bg-slate-700/50 hover:text-white border-transparent hover:border-slate-600/30"
+                      }`}
+                      title={!isSidebarExpanded ? item.label : undefined}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <Icon
+                          className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
+                            isActive ? "text-blue-400" : ""
+                          }`}
+                        />
+                        {isSidebarExpanded && (
+                          <span className="font-medium text-sm whitespace-nowrap">
+                            {item.label}
+                          </span>
+                        )}
+                      </div>
+                      {isSidebarExpanded && (
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                        />
+                      )}
+                      {!isSidebarExpanded && (
+                        <div className="absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-2xl border border-slate-600/50 scale-95 group-hover:scale-100">
+                          {item.label}
+                          <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-slate-800 border-l border-t border-slate-600/50 rotate-45"></div>
+                        </div>
+                      )}
+                    </button>
+
+                    {isSidebarExpanded && isExpanded && (
+                      <div className="ml-6 space-y-1 border-l border-slate-700/50 pl-4">
+                        {item.subItems.map((subItem) => (
+                          <a
+                            key={subItem.id}
+                            href={subItem.href}
+                            className={`block px-3 py-2.5 rounded-lg text-sm transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 ${
+                              isSubItemActive(subItem.href)
+                                ? "bg-blue-600/30 text-blue-300 font-medium border border-blue-500/20"
+                                : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/30"
+                            }`}
+                          >
+                            {subItem.label}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
 
               return (
                 <a
@@ -437,10 +605,61 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600/50 scrollbar-track-transparent">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
+            const isExpanded = expandedItems.includes(item.id);
+            const hasSubItems = item.subItems && item.subItems.length > 0;
+
+            if (hasSubItems) {
+              return (
+                <div key={item.id} className="space-y-1">
+                  <button
+                    onClick={() => toggleExpanded(item.id)}
+                    className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer border hover:scale-105 active:scale-95 ${
+                      isActive
+                        ? "bg-blue-600/20 text-blue-400 shadow-lg border-blue-500/30 backdrop-blur-sm"
+                        : "text-slate-300 hover:bg-slate-700/50 hover:text-white border-transparent hover:border-slate-600/30"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Icon
+                        className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
+                          isActive ? "text-blue-400" : ""
+                        }`}
+                      />
+                      <span className="font-medium tracking-wide">
+                        {item.label}
+                      </span>
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        isExpanded ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isExpanded && (
+                    <div className="ml-8 space-y-1 border-l border-slate-700/50 pl-4 max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600/50 scrollbar-track-transparent">
+                      {item.subItems.map((subItem) => (
+                        <a
+                          key={subItem.id}
+                          href={subItem.href}
+                          className={`block px-3 py-2.5 rounded-lg text-sm transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 ${
+                            isSubItemActive(subItem.href)
+                              ? "bg-blue-600/30 text-blue-300 font-medium border border-blue-500/20"
+                              : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/30"
+                          }`}
+                        >
+                          {subItem.label}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
 
             return (
               <a
@@ -480,10 +699,12 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <div className="flex-1 transition-all duration-300 ease-in-out">
-        <div className="p-1 lg:p-8">{children}</div>
+        <div className={`p-1 lg:p-8 ${isSidebarExpanded ? "max-w-5xl" : "max-w-6xl"}`}>
+          {children}
+        </div>
       </div>
     </div>
   );
 };
 
-export default TeacherLayout;
+export default SuperAdminLayout;

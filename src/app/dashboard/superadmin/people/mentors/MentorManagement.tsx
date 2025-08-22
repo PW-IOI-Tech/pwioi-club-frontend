@@ -1,0 +1,196 @@
+"use client";
+
+import React, { useState, useCallback, useMemo } from "react";
+import { Users, Plus } from "lucide-react";
+import Table from "../../Table";
+import AddMentorModal from "./AddMentorModal";
+
+interface TableMentor {
+  id: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  linkedinLink: string;
+  designation: string;
+  company: string;
+}
+
+const initialMentors: TableMentor[] = [
+  {
+    id: "1",
+    name: "John Smith",
+    email: "john.smith@techcorp.com",
+    phoneNumber: "+91 9876543210",
+    linkedinLink: "https://linkedin.com/in/johnsmith",
+    designation: "Senior Software Engineer",
+    company: "TechCorp",
+  },
+  {
+    id: "2",
+    name: "Sarah Johnson",
+    email: "sarah.johnson@innovate.com",
+    phoneNumber: "+91 9876543211",
+    linkedinLink: "https://linkedin.com/in/sarahjohnson",
+    designation: "Product Manager",
+    company: "Innovate Solutions",
+  },
+  {
+    id: "3",
+    name: "Michael Chen",
+    email: "michael.chen@datatech.com",
+    phoneNumber: "+91 9876543212",
+    linkedinLink: "https://linkedin.com/in/michaelchen",
+    designation: "Data Scientist",
+    company: "DataTech Analytics",
+  },
+];
+
+export default function MentorManagement() {
+  const [mentors, setMentors] = useState<TableMentor[]>(initialMentors);
+  const [error, setError] = useState("");
+  const [isAddMentorModalOpen, setIsAddMentorModalOpen] = useState(false);
+
+  const statistics = useMemo(
+    () => ({
+      totalMentors: mentors.length,
+    }),
+    [mentors]
+  );
+
+  const handleUpdateMentor = useCallback((updatedItem: any) => {
+    const mentorItem = updatedItem as TableMentor;
+    setMentors((prev) =>
+      prev.map((mentor) =>
+        mentor.id === mentorItem.id ? { ...mentor, ...mentorItem } : mentor
+      )
+    );
+  }, []);
+
+  const handleDeleteMentor = useCallback((id: string | number) => {
+    const deleteId = typeof id === "number" ? id.toString() : id;
+    setMentors((prev) => prev.filter((mentor) => mentor.id !== deleteId));
+  }, []);
+
+  const handleAddMentor = useCallback(
+    (newMentorData: {
+      name: string;
+      email: string;
+      phoneNumber: string;
+      linkedinLink: string;
+      designation: string;
+      company: string;
+    }) => {
+      const newMentor: TableMentor = {
+        id: Date.now().toString(),
+        name: newMentorData.name,
+        email: newMentorData.email,
+        phoneNumber: newMentorData.phoneNumber,
+        linkedinLink: newMentorData.linkedinLink,
+        designation: newMentorData.designation,
+        company: newMentorData.company,
+      };
+
+      setMentors((prev) => [...prev, newMentor]);
+      setIsAddMentorModalOpen(false);
+    },
+    []
+  );
+
+  const handleOpenAddModal = useCallback(() => {
+    setIsAddMentorModalOpen(true);
+  }, []);
+
+  const handleCloseAddModal = useCallback(() => {
+    setIsAddMentorModalOpen(false);
+  }, []);
+
+  if (error) {
+    return (
+      <div className="bg-red-50 text-red-600 p-4 rounded-lg max-w-2xl mx-auto mt-8">
+        <h3 className="font-bold">Error</h3>
+        <p>{error}</p>
+        <button
+          onClick={() => setError("")}
+          className="mt-2 px-4 py-2 bg-[#1B3A6A] text-white rounded-lg hover:bg-[#122A4E]"
+        >
+          Dismiss
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-2">
+      <div className="max-w-7xl mx-auto space-y-4">
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
+          Mentor Management
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
+            <div className="p-6 text-center">
+              <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
+              <h4 className="text-lg text-slate-900 mb-1">Total Mentors</h4>
+              <p className="text-5xl font-bold text-[#1B3A6A]">
+                {statistics.totalMentors}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 flex items-center justify-center p-6">
+            <button
+              onClick={handleOpenAddModal}
+              className="flex flex-col items-center justify-center w-full h-full text-slate-900 hover:text-slate-700 transition-colors cursor-pointer"
+            >
+              <div className="bg-gray-200 rounded-full p-3 mb-2 hover:bg-gray-300 transition-colors">
+                <Plus size={24} />
+              </div>
+              <h3 className="text-lg font-semibold">Add New Mentor</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Create a new mentor record
+              </p>
+            </button>
+          </div>
+        </div>
+
+        <Table
+          data={mentors}
+          title="Mentors Overview"
+          filterField="company"
+          badgeFields={["company"]}
+          selectFields={{
+            company: [
+              "TechCorp",
+              "Innovate Solutions",
+              "DataTech Analytics",
+              "Microsoft",
+              "Google",
+              "Amazon",
+              "Meta",
+              "Apple",
+            ],
+            designation: [
+              "Software Engineer",
+              "Senior Software Engineer",
+              "Product Manager",
+              "Data Scientist",
+              "Engineering Manager",
+              "Tech Lead",
+              "Architect",
+            ],
+          }}
+          nonEditableFields={["id"]}
+          onDelete={handleDeleteMentor}
+          onEdit={handleUpdateMentor}
+          hiddenColumns={["id"]}
+        />
+
+        <AddMentorModal
+          isOpen={isAddMentorModalOpen}
+          onClose={handleCloseAddModal}
+          onMentorCreated={handleAddMentor}
+        />
+      </div>
+    </div>
+  );
+}
