@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
-const StudentLayout = ({ children }: { children: React.ReactNode }) => {
+const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
@@ -486,4 +486,4 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export default StudentLayout;
+export default TeacherLayout;
