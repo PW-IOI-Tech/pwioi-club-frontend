@@ -13,7 +13,7 @@ function LoginContent({ imgPath }: LoginContentProps) {
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
 
-  const redirectUri = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/student/callback`;
+  const redirectUri = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/teacher/callback`;
 
   const handleLogin = () => {
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(

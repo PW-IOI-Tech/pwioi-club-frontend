@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { Plus, Edit3, X, Trash2, Award } from "lucide-react";
 
 interface Qualification {
   id?: string;
   degree: string;
   institution: string;
-  fieldOfStudy: string;
+  field_of_study: string;
   grade: number;
-  startDate: string;
-  endDate: string;
+  start_date: string;
+  end_date: string;
 }
 
 interface ModalProps {
@@ -53,10 +54,10 @@ const AddQualificationModal: React.FC<AddQualificationModalProps> = ({
   const [formData, setFormData] = useState<Qualification>({
     degree: "",
     institution: "",
-    fieldOfStudy: "",
+    field_of_study: "",
     grade: 0,
-    startDate: "",
-    endDate: "",
+    start_date: "",
+    end_date: "",
   });
   const [errors, setErrors] = useState<
     Partial<Record<keyof Qualification, string>>
@@ -92,8 +93,8 @@ const AddQualificationModal: React.FC<AddQualificationModalProps> = ({
     if (!formData.degree.trim()) newErrors.degree = "Degree is required";
     if (!formData.institution.trim())
       newErrors.institution = "Institution is required";
-    if (!formData.fieldOfStudy.trim())
-      newErrors.fieldOfStudy = "Field of study is required";
+    if (!formData.field_of_study.trim())
+      newErrors.field_of_study = "Field of study is required";
 
     if (!formData.grade || formData.grade <= 0) {
       newErrors.grade = "Grade is required and must be greater than 0";
@@ -101,29 +102,21 @@ const AddQualificationModal: React.FC<AddQualificationModalProps> = ({
       newErrors.grade = "Grade cannot exceed 100%";
     }
 
-    if (!formData.startDate) newErrors.startDate = "Start date is required";
-    if (!formData.endDate) {
-      newErrors.endDate = "End date is required";
+    if (!formData.start_date) newErrors.start_date = "Start date is required";
+    if (!formData.end_date) {
+      newErrors.end_date = "End date is required";
     } else if (
-      formData.startDate &&
-      new Date(formData.endDate) < new Date(formData.startDate)
+      formData.start_date &&
+      new Date(formData.end_date) < new Date(formData.start_date)
     ) {
-      newErrors.endDate = "End date must be after start date";
-    }
-
-    if (
-      formData.endDate &&
-      new Date(formData.endDate) >
-        new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000)
-    ) {
-      newErrors.endDate = "End date seems too far in the future";
+      newErrors.end_date = "End date must be after start date";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
       onAdd({
@@ -131,7 +124,7 @@ const AddQualificationModal: React.FC<AddQualificationModalProps> = ({
         id: Date.now().toString(),
         degree: formData.degree.trim(),
         institution: formData.institution.trim(),
-        fieldOfStudy: formData.fieldOfStudy.trim(),
+        field_of_study: formData.field_of_study.trim(),
         grade: Number(formData.grade),
       });
       handleClose();
@@ -142,10 +135,10 @@ const AddQualificationModal: React.FC<AddQualificationModalProps> = ({
     setFormData({
       degree: "",
       institution: "",
-      fieldOfStudy: "",
+      field_of_study: "",
       grade: 0,
-      startDate: "",
-      endDate: "",
+      start_date: "",
+      end_date: "",
     });
     setErrors({});
     onClose();
@@ -201,15 +194,15 @@ const AddQualificationModal: React.FC<AddQualificationModalProps> = ({
           </label>
           <input
             type="text"
-            value={formData.fieldOfStudy}
-            onChange={(e) => handleInputChange("fieldOfStudy", e.target.value)}
+            value={formData.field_of_study}
+            onChange={(e) => handleInputChange("field_of_study", e.target.value)}
             placeholder="e.g., Mathematics Education, Elementary Education"
             className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
-              errors.fieldOfStudy ? "border-red-400" : "border-gray-400"
+              errors.field_of_study ? "border-red-400" : "border-gray-400"
             }`}
           />
-          {errors.fieldOfStudy && (
-            <p className="mt-1 text-sm text-red-600">{errors.fieldOfStudy}</p>
+          {errors.field_of_study && (
+            <p className="mt-1 text-sm text-red-600">{errors.field_of_study}</p>
           )}
         </div>
 
@@ -243,14 +236,14 @@ const AddQualificationModal: React.FC<AddQualificationModalProps> = ({
             </label>
             <input
               type="date"
-              value={formData.startDate}
-              onChange={(e) => handleInputChange("startDate", e.target.value)}
+              value={formData.start_date}
+              onChange={(e) => handleInputChange("start_date", e.target.value)}
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer ${
-                errors.startDate ? "border-red-400" : "border-gray-400"
+                errors.start_date ? "border-red-400" : "border-gray-400"
               }`}
             />
-            {errors.startDate && (
-              <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
+            {errors.start_date && (
+              <p className="mt-1 text-sm text-red-600">{errors.start_date}</p>
             )}
           </div>
 
@@ -260,14 +253,14 @@ const AddQualificationModal: React.FC<AddQualificationModalProps> = ({
             </label>
             <input
               type="date"
-              value={formData.endDate}
-              onChange={(e) => handleInputChange("endDate", e.target.value)}
+              value={formData.end_date}
+              onChange={(e) => handleInputChange("end_date", e.target.value)}
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer ${
-                errors.endDate ? "border-red-400" : "border-gray-400"
+                errors.end_date ? "border-red-400" : "border-gray-400"
               }`}
             />
-            {errors.endDate && (
-              <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
+            {errors.end_date && (
+              <p className="mt-1 text-sm text-red-600">{errors.end_date}</p>
             )}
           </div>
         </div>
@@ -309,10 +302,10 @@ const EditQualificationModal: React.FC<EditQualificationModalProps> = ({
   const [formData, setFormData] = useState<Qualification>({
     degree: "",
     institution: "",
-    fieldOfStudy: "",
+    field_of_study: "",
     grade: 0,
-    startDate: "",
-    endDate: "",
+    start_date: "",
+    end_date: "",
   });
   const [errors, setErrors] = useState<
     Partial<Record<keyof Qualification, string>>
@@ -361,8 +354,8 @@ const EditQualificationModal: React.FC<EditQualificationModalProps> = ({
       newErrors.institution = "Institution is required";
     }
 
-    if (!formData.fieldOfStudy.trim()) {
-      newErrors.fieldOfStudy = "Field of study is required";
+    if (!formData.field_of_study.trim()) {
+      newErrors.field_of_study = "Field of study is required";
     }
 
     if (!formData.grade || formData.grade <= 0) {
@@ -371,17 +364,17 @@ const EditQualificationModal: React.FC<EditQualificationModalProps> = ({
       newErrors.grade = "Grade cannot exceed 100%";
     }
 
-    if (!formData.startDate) {
-      newErrors.startDate = "Start date is required";
+    if (!formData.start_date) {
+      newErrors.start_date = "Start date is required";
     }
 
-    if (!formData.endDate) {
-      newErrors.endDate = "End date is required";
+    if (!formData.end_date) {
+      newErrors.end_date = "End date is required";
     } else if (
-      formData.startDate &&
-      new Date(formData.endDate) < new Date(formData.startDate)
+      formData.start_date &&
+      new Date(formData.end_date) < new Date(formData.start_date)
     ) {
-      newErrors.endDate = "End date must be after start date";
+      newErrors.end_date = "End date must be after start date";
     }
 
     setErrors(newErrors);
@@ -396,7 +389,7 @@ const EditQualificationModal: React.FC<EditQualificationModalProps> = ({
         ...formData,
         degree: formData.degree.trim(),
         institution: formData.institution.trim(),
-        fieldOfStudy: formData.fieldOfStudy.trim(),
+        field_of_study: formData.field_of_study.trim(),
         grade: Number(formData.grade),
       });
       handleClose();
@@ -462,15 +455,15 @@ const EditQualificationModal: React.FC<EditQualificationModalProps> = ({
           </label>
           <input
             type="text"
-            value={formData.fieldOfStudy}
-            onChange={(e) => handleInputChange("fieldOfStudy", e.target.value)}
+            value={formData.field_of_study}
+            onChange={(e) => handleInputChange("field_of_study", e.target.value)}
             placeholder="e.g., Mathematics Education, Elementary Education"
             className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
-              errors.fieldOfStudy ? "border-red-400" : "border-gray-400"
+              errors.field_of_study ? "border-red-400" : "border-gray-400"
             }`}
           />
-          {errors.fieldOfStudy && (
-            <p className="mt-1 text-sm text-red-600">{errors.fieldOfStudy}</p>
+          {errors.field_of_study && (
+            <p className="mt-1 text-sm text-red-600">{errors.field_of_study}</p>
           )}
         </div>
 
@@ -504,14 +497,14 @@ const EditQualificationModal: React.FC<EditQualificationModalProps> = ({
             </label>
             <input
               type="date"
-              value={formData.startDate}
-              onChange={(e) => handleInputChange("startDate", e.target.value)}
+              value={formData.start_date}
+              onChange={(e) => handleInputChange("start_date", e.target.value)}
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer ${
-                errors.startDate ? "border-red-400" : "border-gray-400"
+                errors.start_date ? "border-red-400" : "border-gray-400"
               }`}
             />
-            {errors.startDate && (
-              <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
+            {errors.start_date && (
+              <p className="mt-1 text-sm text-red-600">{errors.start_date}</p>
             )}
           </div>
 
@@ -521,14 +514,14 @@ const EditQualificationModal: React.FC<EditQualificationModalProps> = ({
             </label>
             <input
               type="date"
-              value={formData.endDate}
-              onChange={(e) => handleInputChange("endDate", e.target.value)}
+              value={formData.end_date}
+              onChange={(e) => handleInputChange("end_date", e.target.value)}
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer ${
-                errors.endDate ? "border-red-400" : "border-gray-400"
+                errors.end_date ? "border-red-400" : "border-gray-400"
               }`}
             />
-            {errors.endDate && (
-              <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
+            {errors.end_date && (
+              <p className="mt-1 text-sm text-red-600">{errors.end_date}</p>
             )}
           </div>
         </div>
@@ -603,30 +596,112 @@ const Qualifications: React.FC = () => {
     useState<Qualification | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
 
-  const handleAddQualification = (newQualification: Qualification) => {
-    setQualifications((prev) => [...prev, newQualification]);
+  const storedTeacher = localStorage.getItem("user");
+let teacherId: string | null = null;
+
+if (storedTeacher) {
+  try {
+    const parsedTeacher = JSON.parse(storedTeacher);
+    teacherId = parsedTeacher?.id || null;
+  } catch (error) {
+    console.error("Error parsing teacher from localStorage:", error);
+  }
+}
+
+  useEffect(() => {
+    const fetchQualifications = async () => {
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/${teacherId}/academic-history`,{withCredentials:true});
+        if (res.data) {
+          const q: Qualification[] = Object.values(res.data)
+            .filter(Boolean)
+            .map((edu: any) => ({
+              id: edu.id,
+              degree: edu.degree,
+              institution: edu.institution,
+              field_of_study: edu.field_of_study,
+              grade: edu.grade,
+              start_date: edu.start_date,
+              end_date: edu.end_date,
+            }));
+          setQualifications(q);
+        }
+      } catch (err) {
+        console.error("Failed to fetch qualifications", err);
+      }
+    };
+    fetchQualifications();
+  }, [teacherId]);
+
+  const handleAddQualification = async (newQualification: Qualification) => {
+    try {
+      const payload = {
+        degree: newQualification.degree,
+        institution: newQualification.institution,
+        field_of_study: newQualification.field_of_study,
+        grade: newQualification.grade,
+        start_date: newQualification.start_date,
+        end_date: newQualification.end_date,
+      };
+      const res = await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/${teacherId}/academic-history`,
+        payload,{withCredentials:true}
+      );
+      setQualifications((prev) => [...prev, { ...newQualification, id: res.data.id }]);
+    } catch (err) {
+      console.error("Failed to add qualification", err);
+    }
     setShowAddModal(false);
   };
 
-  const handleEditQualification = (updatedQualification: Qualification) => {
-    if (editIndex !== null) {
-      setQualifications((prev) =>
-        prev.map((qual, index) =>
-          index === editIndex ? updatedQualification : qual
-        )
-      );
-    }
-    setShowEditModal(false);
-  };
+const handleEditQualification = async (updatedQualification: Qualification) => {
+  if (!updatedQualification.id) return;
+  try {
+    const payload = {
+      degree: updatedQualification.degree,
+      institution: updatedQualification.institution,
+      field_of_study: updatedQualification.field_of_study,
+      grade: updatedQualification.grade,
+      start_date: updatedQualification.start_date,
+      end_date: updatedQualification.end_date,
+    };
 
-  const handleDeleteQualification = () => {
-    if (editIndex !== null) {
-      setQualifications((prev) =>
-        prev.filter((_, index) => index !== editIndex)
+    const res = await axios.patch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/${teacherId}/academic-history/${updatedQualification.id}`,
+      payload,
+      { withCredentials: true }
+    );
+
+    setQualifications((prev) =>
+      prev.map((q) =>
+        q.id === updatedQualification.id ? { ...updatedQualification, ...res.data } : q
+      )
+    );
+  } catch (err) {
+    console.error("Failed to edit qualification", err);
+  }
+  setShowEditModal(false);
+};
+
+
+const handleDeleteQualification = async () => {
+  if (selectedQualification?.id) {
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/${teacherId}/academic-history/${selectedQualification.id}`,
+        { withCredentials: true }
       );
+
+      setQualifications((prev) =>
+        prev.filter((q) => q.id !== selectedQualification.id)
+      );
+    } catch (err) {
+      console.error("Failed to delete qualification", err);
     }
-    setShowDeleteModal(false);
-  };
+  }
+  setShowDeleteModal(false);
+};
+
 
   const openEditModal = (qualification: Qualification, index: number) => {
     setSelectedQualification(qualification);
@@ -654,7 +729,7 @@ const Qualifications: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          {qualifications.map((qual, index) => (
+          {qualifications.length>0 && qualifications.map((qual, index) => (
             <div
               key={qual.id || index}
               className="flex items-start space-x-4 p-4 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 hover:shadow-md hover:border-blue-800"
@@ -666,19 +741,19 @@ const Qualifications: React.FC = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1 pr-4">
                     <h4 className="font-bold text-slate-900 mb-1">
-                      {qual.degree}
+                      {qual?.degree}
                     </h4>
-                    <p className="text-sm text-slate-800">{qual.institution}</p>
+                    <p className="text-sm text-slate-800">{qual?.institution}</p>
                     <p className="text-sm text-slate-700 font-medium mb-3">
-                      {qual.fieldOfStudy}
+                      {qual?.field_of_study}
                     </p>
                     <div className="flex items-center space-x-2 text-xs text-gray-500">
                       <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
                         Grade: {qual.grade}%
                       </span>
                       <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
-                        {new Date(qual.startDate).getFullYear()} -{" "}
-                        {new Date(qual.endDate).getFullYear()}
+                        {new Date(qual?.start_date).getFullYear()} -{" "}
+                        {new Date(qual?.end_date).getFullYear()}
                       </span>
                     </div>
                   </div>

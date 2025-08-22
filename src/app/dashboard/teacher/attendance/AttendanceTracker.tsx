@@ -1,6 +1,6 @@
 "use client";
-
-import React, { useState } from "react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import {
   Users,
   Calendar,
@@ -25,124 +25,137 @@ import {
   Cell,
 } from "recharts";
 
-const schoolOptions = [
-  { value: "SOT", label: "School of Technology" },
-  { value: "SOM", label: "School of Management" },
-  { value: "SOH", label: "School of Healthcare" },
-];
+interface TeachingDetailsResponse {
+  success: boolean;
+  teacher: {
+    id: string;
+    name: string;
+    email: string;
+    designation: string;
+  };
+  schools: {
+    id: string;
+    name: string;
+    batches: {
+      id: string;
+      name: string;
+      divisions: {
+        id: string;
+        code: string;
+        total_students: number;
+        semesters: {
+          id: string;
+          number: number;
+          start_date: string;
+          end_date: string;
+          is_current: boolean;
+          subjects: {
+            id: string;
+            name: string;
+            code: string;
+            credits: number;
+            exam_types: any;
+            total_exam_types: number;
+            total_exams: number;
+          }[];
+          total_subjects: number;
+        }[];
+        total_semesters: number;
+      }[];
+      total_divisions: number;
+    }[];
+    total_batches: number;
+  }[];
+  summary: {
+    total_schools: number;
+    total_batches: number;
+    total_divisions: number;
+    total_semesters: number;
+    total_subjects: number;
+    total_exams: number;
+    exam_type_breakdown: Record<string, number>;
+  };
+}
 
-const batchOptions = [
-  { value: "21", label: "21" },
-  { value: "22", label: "22" },
-  { value: "23", label: "23" },
-  { value: "24", label: "24" },
-];
 
-const divisionOptions = [
-  { value: "B1", label: "B1" },
-  { value: "B2", label: "B2" },
-  { value: "B3", label: "B3" },
-];
 
-const semesterOptions = [
-  { value: "1", label: "Semester 1" },
-  { value: "2", label: "Semester 2" },
-  { value: "3", label: "Semester 3" },
-  { value: "4", label: "Semester 4" },
-  { value: "5", label: "Semester 5" },
-  { value: "6", label: "Semester 6" },
-  { value: "7", label: "Semester 7" },
-  { value: "8", label: "Semester 8" },
-];
+// Overall Attendance Types
+interface OverallStudentDetail {
+  enrollmentId: string;
+  name: string;
+  overallAttendance: number;
+  totalClassesAttended: number;
+  totalClassesConducted: number;
+}
 
-const subjectOptions = [
-  { value: "data-structures", label: "Data Structures & Algorithms" },
-  { value: "database-systems", label: "Database Management Systems" },
-  { value: "computer-networks", label: "Computer Networks" },
-  { value: "operating-systems", label: "Operating Systems" },
-  { value: "software-engineering", label: "Software Engineering" },
-  { value: "web-development", label: "Web Development" },
-  { value: "machine-learning", label: "Machine Learning" },
-  { value: "cybersecurity", label: "Cybersecurity" },
-];
+interface OverallDistribution {
+  below50: number;
+  between50And75: number;
+  above75: number;
+}
 
-const monthlyAttendanceData = [
-  { month: "Jan", percentage: 85 },
-  { month: "Feb", percentage: 78 },
-  { month: "Mar", percentage: 92 },
-  { month: "Apr", percentage: 88 },
-  { month: "May", percentage: 75 },
-  { month: "Jun", percentage: 82 },
-];
+interface OverallData {
+  averageAttendance: number;
+  totalStudents: number;
+  totalClasses: number;
+  monthsTracked: number;
+  monthlyTrends: any[]; 
+  distributionByAttendance: OverallDistribution;
+  studentDetails: OverallStudentDetail[];
+}
 
-const attendanceRangeData = [
-  { range: "<50%", students: 5, color: "#ef4444" },
-  { range: "50-75%", students: 12, color: "#f59e0b" },
-  { range: ">75%", students: 28, color: "#10b981" },
-];
+interface OverallDetailsResponse {
+  success: boolean;
+  subject: { id: string; name: string; code: string; credits: number };
+  division: {
+    id: string;
+    code: string;
+    batch: { id: string; name: string };
+    school: { id: string; name: string };
+    center: { id: string; name: string };
+  };
+  dateRange: { from: string; to: string };
+  data: OverallData;
+}
 
-const pieChartData = [
-  { name: "Present", value: 38, color: "#10b981" },
-  { name: "Absent", value: 7, color: "#ef4444" },
-];
+// Daily Attendance Types
+interface DailyStudentDetail {
+  enrollmentId: string;
+  name: string;
+  status: "PRESENT" | "ABSENT" | "NOT_MARKED";
+  classesPresent: number;
+  classesAbsent: number;
+  totalClasses: number;
+  attendancePercentage: number;
+}
 
-const studentOverviewData = [
-  {
-    enrollmentId: "ENG001",
-    name: "John Doe",
-    overallAttendance: 85,
-    jan: 90,
-    feb: 85,
-    mar: 88,
-    apr: 82,
-    may: 78,
-    jun: 85,
-  },
-  {
-    enrollmentId: "ENG002",
-    name: "Jane Smith",
-    overallAttendance: 92,
-    jan: 95,
-    feb: 90,
-    mar: 95,
-    apr: 88,
-    may: 92,
-    jun: 90,
-  },
-  {
-    enrollmentId: "ENG003",
-    name: "Mike Johnson",
-    overallAttendance: 78,
-    jan: 80,
-    feb: 75,
-    mar: 82,
-    apr: 78,
-    may: 75,
-    jun: 78,
-  },
-  {
-    enrollmentId: "ENG004",
-    name: "Sarah Wilson",
-    overallAttendance: 88,
-    jan: 85,
-    feb: 90,
-    mar: 85,
-    apr: 92,
-    may: 85,
-    jun: 90,
-  },
-  {
-    enrollmentId: "ENG005",
-    name: "Alex Brown",
-    overallAttendance: 65,
-    jan: 70,
-    feb: 65,
-    mar: 60,
-    apr: 68,
-    may: 62,
-    jun: 65,
-  },
-];
+interface DailySummary {
+  totalStudents: number;
+  totalClasses: number;
+  studentsPresent: number;
+  studentsAbsent: number;
+  studentsNotMarked: number;
+  overallAttendancePercentage: number;
+  totalPresentCount: number;
+  totalAbsentCount: number;
+}
+
+interface DailyDetailsResponse {
+  success: boolean;
+  date: string;
+  subject: { id: string; name: string; code: string; credits: number };
+  division: {
+    id: string;
+    code: string;
+    batch: { id: string; name: string };
+    school: { id: string; name: string };
+    center: { id: string; name: string };
+  };
+  summary: DailySummary;
+  classDetails: any[]; // can refine if API returns details later
+  studentDetails: DailyStudentDetail[];
+}
+
 
 const studentDailyData = [
   { enrollmentId: "ENG001", name: "John Doe", status: "Present" },
@@ -153,6 +166,12 @@ const studentDailyData = [
 ];
 
 const AttendanceTracker: React.FC = () => {
+  const [teachingDetails, setTeachingDetails] = useState<TeachingDetailsResponse | null>(null);
+  const [school, setSchool] = useState("");
+  const [batch, setBatch] = useState("");
+  const [division, setDivision] = useState("");
+  const [semester, setSemester] = useState("");
+  const [subject, setSubject] = useState("");
   const [activeTab, setActiveTab] = useState<"overview" | "daily">("overview");
   const [filters, setFilters] = useState({
     school: "",
@@ -162,7 +181,16 @@ const AttendanceTracker: React.FC = () => {
     subject: "",
   });
   const [sortField, setSortField] = useState<string>("");
+const [overallDetails, setOverallDetails] = useState<OverallDetailsResponse | null>(null);
+const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+
+  const attendanceRangeData = [
+  { range: "<50%", students: overallDetails?.data?.distributionByAttendance?.below50, color: "#ef4444" },
+  { range: "50-75%", students: overallDetails?.data?.distributionByAttendance?.between50And75, color: "#f59e0b" },
+  { range: ">75%", students: overallDetails?.data?.distributionByAttendance?.above75, color: "#10b981" },
+];
 
   const handleFilterChange = (field: string, value: string) => {
     setFilters((prev) => ({
@@ -200,12 +228,138 @@ const AttendanceTracker: React.FC = () => {
     });
   };
 
+  const pieChartData = [
+  { name: "Present", value: dailyDetails?.summary?.totalPresentCount, color: "#10b981" },
+  { name: "Absent", value: dailyDetails?.summary?.totalAbsentCount, color: "#ef4444" },
+];
+
+  const schoolOptions =
+    teachingDetails?.schools.map((s) => ({
+      value: s.id,
+      label: s.name,
+    })) || [];
+
+  const getBatchOptions = (schoolId: string) => {
+    const school = teachingDetails?.schools.find((s) => s.id === schoolId);
+    return (
+      school?.batches.map((b) => ({
+        value: b.id,
+        label: b.name,
+      })) || []
+    );
+  };
+
+  const getDivisionOptions = (schoolId: string, batchId: string) => {
+    const batch = teachingDetails?.schools
+      .find((s) => s.id === schoolId)
+      ?.batches.find((b) => b.id === batchId);
+
+    return (
+      batch?.divisions.map((d) => ({
+        value: d.id,
+        label: d.code,
+      })) || []
+    );
+  };
+
+  const getSemesterOptions = (
+    schoolId: string,
+    batchId: string,
+    divisionId: string
+  ) => {
+    const division = teachingDetails?.schools
+      .find((s) => s.id === schoolId)
+      ?.batches.find((b) => b.id === batchId)
+      ?.divisions.find((d) => d.id === divisionId);
+
+    return (
+      division?.semesters.map((sem) => ({
+        value: sem.id,
+        label: `Semester ${sem.number}`,
+      })) || []
+    );
+  };
+
+  const getTeachingDetails = async () => {
+    try {
+      const response = await axios.get<TeachingDetailsResponse>(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/teaching-details`,
+        { withCredentials: true }
+      );
+      setTeachingDetails(response.data);
+    } catch (error) {
+      console.error("Error fetching teaching details:", error);
+    }
+  };
+
+    const getOverallAttendence = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teacher-attendance/${subject}/overall`,
+        { withCredentials: true }
+      );
+      setOverallDetails(response?.data);
+    } catch (error) {
+      console.error("Error fetching Overall details:", error);
+    }
+  };
+
+   const getDailyAttendence = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teacher-attendance/${subject}/daily`,
+        { withCredentials: true }
+      );
+      setDailyDetails(response?.data);
+    } catch (error) {
+      console.error("Error fetching Overall details:", error);
+    }
+  };
+
+  const getSubjectOptions = (
+    schoolId: string,
+    batchId: string,
+    divisionId: string,
+    semesterId: string
+  ) => {
+    const semester = teachingDetails?.schools
+      .find((s) => s.id === schoolId)
+      ?.batches.find((b) => b.id === batchId)
+      ?.divisions.find((d) => d.id === divisionId)
+      ?.semesters.find((sem) => sem.id === semesterId);
+
+    return (
+      semester?.subjects.map((subj) => ({
+        value: subj.id,
+        label: subj.name,
+      })) || []
+    );
+  };
+
+  const getMonthRange = (from: string, to: string): string[] => {
+  const start = new Date(from);
+  const end = new Date(to);
+
+  const months: string[] = [];
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  let current = new Date(start.getFullYear(), start.getMonth(), 1);
+
+  while (current <= end) {
+    months.push(monthNames[current.getMonth()]);
+    current.setMonth(current.getMonth() + 1);
+  }
+
+  return months;
+};
+
+
   const canShowData =
-    filters.school &&
-    filters.batch &&
-    filters.division &&
-    filters.semester &&
-    filters.subject;
+    school &&
+    batch &&
+    division &&
+    semester &&
+    subject;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -218,6 +372,19 @@ const AttendanceTracker: React.FC = () => {
     }
     return null;
   };
+
+    useEffect(() => {
+    getTeachingDetails();
+  }, []);
+
+  useEffect(() => {
+  const allDetailsPresent = school && batch && division && semester && subject;
+
+  if (allDetailsPresent) {
+    getOverallAttendence();
+    getDailyAttendence();
+  }
+}, [school, batch, division, semester, subject]); 
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">
@@ -243,8 +410,8 @@ const AttendanceTracker: React.FC = () => {
               </label>
               <div className="relative">
                 <select
-                  value={filters.school}
-                  onChange={(e) => handleFilterChange("school", e.target.value)}
+                  value={school}
+                  onChange={(e) => setSchool(e.target.value)}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent appearance-none bg-white cursor-pointer text-sm"
                 >
                   <option value="">Select School</option>
@@ -267,15 +434,14 @@ const AttendanceTracker: React.FC = () => {
               </label>
               <div className="relative">
                 <select
-                  value={filters.batch}
-                  onChange={(e) => handleFilterChange("batch", e.target.value)}
-                  disabled={!filters.school}
+                  value={batch}
+                  onChange={(e) => setBatch(e.target.value)}
+                  disabled={!school}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent disabled:bg-gray-100 cursor-pointer disabled:cursor-not-allowed appearance-none bg-white text-sm"
                 >
                   <option value="">Select Batch</option>
-                  {batchOptions.map((option) => (
+                  {getBatchOptions(school).map((option) => (
                     <option key={option.value} value={option.value}>
-                      {filters.school}
                       {option.label}
                     </option>
                   ))}
@@ -295,18 +461,14 @@ const AttendanceTracker: React.FC = () => {
               </label>
               <div className="relative">
                 <select
-                  value={filters.division}
-                  onChange={(e) =>
-                    handleFilterChange("division", e.target.value)
-                  }
-                  disabled={!filters.batch}
+                  value={division}
+                  onChange={(e) => setDivision(e.target.value)}
+                  disabled={!batch}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent disabled:bg-gray-100 cursor-pointer disabled:cursor-not-allowed appearance-none bg-white text-sm"
                 >
                   <option value="">Select Division</option>
-                  {divisionOptions.map((option) => (
+                  {getDivisionOptions(school, batch).map((option) => (
                     <option key={option.value} value={option.value}>
-                      {filters.school}
-                      {filters.batch}
                       {option.label}
                     </option>
                   ))}
@@ -326,15 +488,13 @@ const AttendanceTracker: React.FC = () => {
               </label>
               <div className="relative">
                 <select
-                  value={filters.semester}
-                  onChange={(e) =>
-                    handleFilterChange("semester", e.target.value)
-                  }
-                  disabled={!filters.division}
+                  value={semester}
+                  onChange={(e) => setSemester(e.target.value)}
+                  disabled={!division}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent disabled:bg-gray-100 cursor-pointer disabled:cursor-not-allowed appearance-none bg-white text-sm"
                 >
                   <option value="">Select Semester</option>
-                  {semesterOptions.map((option) => (
+                  {getSemesterOptions(school, batch, division).map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -355,19 +515,19 @@ const AttendanceTracker: React.FC = () => {
               </label>
               <div className="relative">
                 <select
-                  value={filters.subject}
-                  onChange={(e) =>
-                    handleFilterChange("subject", e.target.value)
-                  }
-                  disabled={!filters.semester}
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  disabled={!semester}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent disabled:bg-gray-100 cursor-pointer disabled:cursor-not-allowed appearance-none bg-white text-sm"
                 >
                   <option value="">Select Subject</option>
-                  {subjectOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
+                  {getSubjectOptions(school, batch, division, semester).map(
+                    (option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    )
+                  )}
                 </select>
                 <ChevronDown
                   size={16}
@@ -419,7 +579,7 @@ const AttendanceTracker: React.FC = () => {
                           Average Attendance
                         </p>
                         <p className="text-3xl font-bold text-slate-900">
-                          83.5%
+                         {overallDetails?.data?.averageAttendance || 0}
                         </p>
                       </div>
                       <div className="p-3 bg-slate-200 rounded-full border border-gray-400">
@@ -434,7 +594,8 @@ const AttendanceTracker: React.FC = () => {
                         <p className="text-sm text-gray-600 mb-1">
                           Total Students
                         </p>
-                        <p className="text-3xl font-bold text-slate-900">45</p>
+                        <p className="text-3xl font-bold text-slate-900">                         {overallDetails?.data?.totalStudents || 0}
+</p>
                       </div>
                       <div className="p-3 bg-slate-200 rounded-full border border-gray-400">
                         <Users className="w-6 h-6 text-slate-900" />
@@ -448,7 +609,8 @@ const AttendanceTracker: React.FC = () => {
                         <p className="text-sm text-gray-600 mb-1">
                           Months Tracked
                         </p>
-                        <p className="text-3xl font-bold text-slate-900">6</p>
+                        <p className="text-3xl font-bold text-slate-900">                         {overallDetails?.data?.monthsTracked || 0}
+</p>
                       </div>
                       <div className="p-3 bg-slate-200 rounded-full border border-gray-400">
                         <Calendar className="w-6 h-6 text-slate-900" />
@@ -467,7 +629,8 @@ const AttendanceTracker: React.FC = () => {
                     <div className="p-6">
                       <div className="h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={monthlyAttendanceData}>
+                          <BarChart data=                         {overallDetails?.data?.monthlyTrends}
+>
                             <CartesianGrid
                               strokeDasharray="3 3"
                               stroke="#f0f0f0"
@@ -561,28 +724,28 @@ const AttendanceTracker: React.FC = () => {
                               Overall % <ArrowUpDown className="w-4 h-4" />
                             </button>
                           </th>
-                          <th className="text-left py-3 px-6 font-medium text-gray-700">
-                            Jan
-                          </th>
-                          <th className="text-left py-3 px-6 font-medium text-gray-700">
-                            Feb
-                          </th>
-                          <th className="text-left py-3 px-6 font-medium text-gray-700">
-                            Mar
-                          </th>
-                          <th className="text-left py-3 px-6 font-medium text-gray-700">
-                            Apr
-                          </th>
-                          <th className="text-left py-3 px-6 font-medium text-gray-700">
-                            May
-                          </th>
-                          <th className="text-left py-3 px-6 font-medium text-gray-700">
-                            Jun
-                          </th>
+                          {overallDetails && (
+  <thead>
+    <tr>
+      {getMonthRange(
+        overallDetails.dateRange.from,
+        overallDetails.dateRange.to
+      ).map((month) => (
+        <th
+          key={month}
+          className="text-left py-3 px-6 font-medium text-gray-700"
+        >
+          {month}
+        </th>
+      ))}
+    </tr>
+  </thead>
+)}
+
                         </tr>
                       </thead>
                       <tbody>
-                        {getSortedStudents(studentOverviewData).map(
+                        {getSortedStudents(overallDetails?.data?.studentDetails || []).map(
                           (student, _index) => (
                             <tr
                               key={student.enrollmentId}
@@ -672,13 +835,13 @@ const AttendanceTracker: React.FC = () => {
                         <div className="flex items-center">
                           <div className="w-4 h-4 bg-green-500 rounded mr-2"></div>
                           <span className="text-sm text-gray-600">
-                            Present (38)
+                            Present ({dailyDetails?.summary?.totalPresentCount})
                           </span>
                         </div>
                         <div className="flex items-center">
                           <div className="w-4 h-4 bg-red-500 rounded mr-2"></div>
                           <span className="text-sm text-gray-600">
-                            Absent (7)
+                            Absent ({dailyDetails?.summary?.totalAbsentCount})
                           </span>
                         </div>
                       </div>
@@ -701,12 +864,12 @@ const AttendanceTracker: React.FC = () => {
                               Present Percentage
                             </p>
                             <p className="text-sm text-gray-600">
-                              84.4% Present
+                              {dailyDetails?.summary?.studentsPresent} Present
                             </p>
                           </div>
                         </div>
                         <div className="text-2xl font-bold text-green-600">
-                          84.4%
+                          {dailyDetails?.summary?.studentsPresent}
                         </div>
                       </div>
 
@@ -718,12 +881,12 @@ const AttendanceTracker: React.FC = () => {
                               Absent Percetnage
                             </p>
                             <p className="text-sm text-gray-600">
-                              84.4% Absent
+                             {dailyDetails?.summary?.studentsAbsent} Absent
                             </p>
                           </div>
                         </div>
                         <div className="text-2xl font-bold text-red-600">
-                          84.4%
+                         {dailyDetails?.summary?.studentsAbsent}
                         </div>
                       </div>
 
@@ -799,7 +962,7 @@ const AttendanceTracker: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {getSortedStudents(studentDailyData).map(
+                        {getSortedStudents(dailyDetails?.studentDetails || []).map(
                           (student, _index) => (
                             <tr
                               key={student.enrollmentId}

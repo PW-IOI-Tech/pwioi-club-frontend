@@ -8,11 +8,13 @@ interface TeacherProfileData {
 }
 
 const TeacherProfileHeader = () => {
-  // Dummy data for teacher profile
+        const storedUser = localStorage.getItem("user");
+      const user = storedUser ? JSON.parse(storedUser) : null;
+
   const [profileData] = useState<TeacherProfileData>({
-    name: "Dr. Sarah Johnson",
+    name: user?.name,
     centerId: "CTR-2024-001",
-    designation: "Senior Professor & Head of Department",
+    designation: user?.designation,
   });
 
   return (
