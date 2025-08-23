@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("dashboard");
   const router = useRouter();
   const userName = "John Anderson";
 

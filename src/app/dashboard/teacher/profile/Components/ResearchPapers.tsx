@@ -513,7 +513,7 @@ const DeleteConfirmModal = ({
 const ResearchPapers: React.FC = () => {
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [loading, setLoading] = useState(true);
-    const [editIndex, setEditIndex] = useState<number | null>(null);
+    const [_editIndex, setEditIndex] = useState<number | null>(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);

@@ -594,7 +594,7 @@ const Qualifications: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedQualification, setSelectedQualification] =
     useState<Qualification | null>(null);
-  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [_editIndex, setEditIndex] = useState<number | null>(null);
 
   const storedTeacher = localStorage.getItem("user");
 let teacherId: string | null = null;

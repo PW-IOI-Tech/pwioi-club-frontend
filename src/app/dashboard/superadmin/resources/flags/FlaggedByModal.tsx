@@ -142,7 +142,7 @@ const FlaggedByModal: React.FC<FlaggedByModalProps> = ({
                 </div>
                 <div className="p-4">
                   <div className="grid gap-3">
-                    {flags.map((flag, index) => (
+                    {flags.map((flag, _index) => (
                       <div
                         key={flag.userId}
                         className="flex justify-between items-center p-3 bg-white border border-gray-100 rounded"

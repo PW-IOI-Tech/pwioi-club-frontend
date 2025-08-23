@@ -570,7 +570,7 @@ const Experience: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedExperience, setSelectedExperience] =
     useState<TeacherExperience | null>(null);
-  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [_editIndex, setEditIndex] = useState<number | null>(null);
 
   const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
 
