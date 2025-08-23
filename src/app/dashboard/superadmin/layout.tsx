@@ -106,6 +106,11 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
           href: "/dashboard/superadmin/academic/subjects",
         },
         {
+          id: "exams",
+          label: "Exams Management",
+          href: "/dashboard/superadmin/academic/exams",
+        },
+        {
           id: "classes",
           label: "Class Management",
           href: "/dashboard/superadmin/academic/classes",
@@ -131,11 +136,6 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
           id: "events",
           label: "Events Management",
           href: "/dashboard/superadmin/operations/events",
-        },
-        {
-          id: "exams",
-          label: "Exams Management",
-          href: "/dashboard/superadmin/operations/exams",
         },
       ],
     },
@@ -699,7 +699,11 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <div className="flex-1 transition-all duration-300 ease-in-out">
-        <div className={`p-1 lg:p-8 ${isSidebarExpanded ? "max-w-5xl" : "max-w-6xl"}`}>
+        <div
+          className={`p-1 lg:p-8 ${
+            isSidebarExpanded ? "max-w-5xl" : "max-w-6xl"
+          }`}
+        >
           {children}
         </div>
       </div>
