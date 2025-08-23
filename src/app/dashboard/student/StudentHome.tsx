@@ -414,7 +414,13 @@ const PostHeader: React.FC<any> = ({ post, getRoleBadgeColor }) => (
             <h3 className="font-semibold text-gray-900 text-sm">
               {post?.userInfo?.name}
             </h3>
-            <span>{post?.author_type}</span>
+             <span
+              className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
+                post?.author_type
+              )}`}
+            >
+              {post?.author_type}
+            </span>
             {post.assignedBy && (
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-br from-white to-indigo-50 text-slate-800 border border-slate-400">
                 📌 {post?.author_type}

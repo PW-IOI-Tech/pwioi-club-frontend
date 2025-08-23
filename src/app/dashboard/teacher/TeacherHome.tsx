@@ -1,5 +1,5 @@
 "use client";
-
+import axios from "axios";
 import React, { useEffect, useState, useRef } from "react";
 import {
   Heart,
@@ -27,11 +27,12 @@ interface Post {
   role: string;
   content: string;
   media: {
-    type: string;
+    type: "image" | "video";
     url: string;
-  } | null;
+  }[];
   likes: number;
   comments: number;
+  _count:any;
   timestamp: string;
   assignedBy: string | null;
 }
@@ -45,10 +46,6 @@ interface WelcomeMessageProps {
   userName: string;
 }
 
-interface CreatePostProps {
-  userInitial: string;
-}
-
 interface PostHeaderProps {
   post: Post;
   getRoleBadgeColor: (role: string) => string;
@@ -56,9 +53,9 @@ interface PostHeaderProps {
 
 interface Comment {
   id: string;
-  author: string;
+  userInfo: any;
   content: string;
-  timestamp: string;
+  createdAt: string;
   avatar?: string;
 }
 
@@ -115,6 +112,7 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ userName }) => (
     <h1 className="text-2xl md:text-3xl text-white mb-2">
       Welcome back, <br className="block sm:hidden" />
       <span className="font-bold">{userName}</span>!{" "}
+      <span className="">👋</span>
     </h1>
     <p className="text-gray-300 leading-tight sm:w-3/4 text-sm">
       Stay connected with your student and teachers community. Share your
@@ -130,11 +128,9 @@ interface ClassData {
   subject: string;
 }
 
-interface AttendanceCardsProps {
-  classes: ClassData[];
-}
 
-const AttendanceCards: React.FC<AttendanceCardsProps> = ({ classes }) => {
+
+const AttendanceCards: React.FC<any> = ({ counts }) => {
   const getThemeColors = (percentage: number) => {
     if (percentage > 75) {
       return {
@@ -160,44 +156,49 @@ const AttendanceCards: React.FC<AttendanceCardsProps> = ({ classes }) => {
     }
   };
 
-  return (
-    <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-sm shadow-sm border border-gray-400">
-      <h3 className="text-lg font-semibold text-slate-700 mb-3">
-        Class Attendance Overview
-      </h3>
-      <div className="grid grid-cols-2 gap-3">
-        {classes.map((classItem) => {
-          const theme = getThemeColors(classItem.attendancePercentage);
+return (
+  <>
+    {counts?.length > 0 && (
+      <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-sm shadow-sm border border-gray-400">
+        <h3 className="text-lg font-semibold text-slate-700 mb-3">
+          Class Attendance Overview
+        </h3>
+        <div className="grid grid-cols-2 gap-3">
+          {counts.map((classItem: any) => {
+            const theme = getThemeColors(classItem.attendancePercentage);
 
-          return (
-            <div
-              key={classItem.id}
-              className={`bg-gradient-to-br ${theme.gradient} rounded-lg p-3 border ${theme.border} shadow-sm`}
-            >
-              <div className="flex items-center space-x-1.5 mb-2">
-                <span className="text-xs underline font-semibold text-slate-6000">
-                  {classItem.name}
-                </span>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm font-bold text-slate-800 leading-tight">
-                  {classItem.subject}
-                </p>
-                <div className="flex flex-col">
-                  <span className={`text-2xl font-bold ${theme.percentage}`}>
-                    {classItem.attendancePercentage}%
-                  </span>
-                  <span className="text-xs font-medium text-slate-500">
-                    Attendance
+            return (
+              <div
+                key={classItem.id}
+                className={`bg-gradient-to-br ${theme.gradient} rounded-lg p-3 border ${theme.border} shadow-sm`}
+              >
+                <div className="flex items-center space-x-1.5 mb-2">
+                  <span className="text-xs underline font-semibold text-slate-600">
+                    {classItem.name}
                   </span>
                 </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-slate-800 leading-tight">
+                    {classItem.subject}
+                  </p>
+                  <div className="flex flex-col">
+                    <span className={`text-2xl font-bold ${theme.percentage}`}>
+                      {classItem.attendancePercentage}%
+                    </span>
+                    <span className="text-xs font-medium text-slate-500">
+                      Attendance
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
+    )}
+  </>
+);
+
 };
 
 const sampleClasses: ClassData[] = [
@@ -217,73 +218,97 @@ const sampleClasses: ClassData[] = [
   },
 ];
 
+
 interface CreatePostProps {
   userInitial: string;
 }
 
-const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
+const CreatePost: React.FC<any> = ({ userInitial }) => {
   const [showModal, setShowModal] = useState(false);
   const [postText, setPostText] = useState("");
-  const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
-  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
+  const [mediaList, setMediaList] = useState<any[]>([]);
+  const [previewFiles, setPreviewFiles] = useState<{ url: string; type: "image" | "video"; key: string }[]>([]);
   const [showToast, setShowToast] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
-  const handleTextAreaClick = () => {
-    setShowModal(true);
-  };
 
-  const handleMediaSelect = (type: "image" | "video") => {
-    if (type === "image") {
-      fileInputRef.current?.click();
-    } else {
-      videoInputRef.current?.click();
-    }
-  };
-
-  const handleFileChange = (
+  const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
     type: "image" | "video"
   ) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setSelectedMedia(file);
-      setMediaType(type);
+    if (!file) return;
+
+    try {
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/media/signed-url`,
+        { fileName: file.name, fileType: file.type },
+        { withCredentials: true }
+      );
+
+      const { uploadUrl, publicUrl, key } = data;
+
+      await fetch(uploadUrl, { method: "PUT", body: file });
+
+      setMediaList((prev) => [...prev,{ type, mime_type: file.type, storage_url: publicUrl, key },]);
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        setMediaPreview(e.target?.result as string);
-      };
+        setPreviewFiles((prev) => [...prev,{ url: e.target?.result as string, type, key },])};
       reader.readAsDataURL(file);
 
       setShowModal(true);
+    } catch (error) {
+      console.error("File upload error:", error);
+    }
+  };
+
+  const handleRemoveMedia = async (key: string) => {
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/media/remove`,
+        {
+          withCredentials: true,
+          data: { key },
+        }
+      );
+
+      setMediaList((prev) => prev.filter((m) => m.key !== key));
+      setPreviewFiles((prev) => prev.filter((p) => p.key !== key));
+    } catch (error) {
+      console.error("Remove file error:", error);
+    }
+  };
+
+  const handlePost = async () => {
+    try {
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/post/create`,
+        { content: postText, media: mediaList },
+        { withCredentials: true }
+      );
+
+      console.log("Post created:", data);
+      handleCancel();
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    } catch (error) {
+      console.error("Post creation error:", error);
     }
   };
 
   const handleCancel = () => {
     setShowModal(false);
     setPostText("");
-    setSelectedMedia(null);
-    setMediaPreview(null);
-    setMediaType(null);
+    setMediaList([]);
+    setPreviewFiles([]);
   };
 
-  const handlePost = () => {
-    console.log("Posting:", { text: postText, media: selectedMedia });
-    handleCancel();
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2000);
-  };
-
-  const handleModalMediaSelect = (type: "image" | "video") => {
-    if (type === "image") {
-      fileInputRef.current?.click();
-    } else {
-      videoInputRef.current?.click();
-    }
+  const handleMediaSelect = (type: "image" | "video") => {
+    if (type === "image") fileInputRef.current?.click();
+    else videoInputRef.current?.click();
   };
 
   return (
@@ -303,7 +328,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
 
         <div className="flex flex-col sm:space-y-4">
           <button
-            onClick={handleTextAreaClick}
+            onClick={() => setShowModal(true)}
             className="w-full bg-gray-50 transition-all duration-200 rounded-sm px-4 py-3 text-left text-gray-600 text-sm border border-gray-400 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent cursor-pointer"
           >
             Share your thoughts, or review what students share...
@@ -382,50 +407,45 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
                 className="w-full border-none resize-none placeholder-gray-500 focus:outline-none min-h-[120px]"
                 autoFocus
               />
-
-              {mediaPreview && (
-                <div className="mt-4 relative">
-                  {mediaType === "image" ? (
-                    <Image
-                      src={mediaPreview}
-                      alt="Selected"
-                      className="w-full max-h-96 object-cover rounded-lg"
-                      height={100}
-                      width={100}
-                    />
-                  ) : (
-                    <video
-                      src={mediaPreview}
-                      controls
-                      className="w-full max-h-96 rounded-lg"
-                    />
-                  )}
-                  <button
-                    onClick={() => {
-                      setSelectedMedia(null);
-                      setMediaPreview(null);
-                      setMediaType(null);
-                    }}
-                    className="absolute top-2 right-2 bg-black bg-opacity-50 text-white p-1 rounded-full hover:bg-opacity-70 cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+              {previewFiles.length > 0 ? (
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {previewFiles.map((file) => (
+                    <div key={file.key} className="relative">
+                      {file.type === "image" ? (
+                        <img
+                          src={file.url}
+                          alt="Selected"
+                          className="w-full max-h-60 object-cover rounded-lg"
+                        />
+                      ) : (
+                        <video
+                          src={file.url}
+                          controls
+                          className="w-full max-h-60 rounded-lg"
+                        />
+                      )}
+                      <button
+                        onClick={() => handleRemoveMedia(file.key)}
+                        className="absolute top-2 right-2 bg-black bg-opacity-50 text-white p-1 rounded-full hover:bg-opacity-70 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              )}
-
-              {!mediaPreview && (
+              ) : (
                 <div className="mt-4 mb-3">
                   <p className="text-sm text-gray-600 mb-2">Add to your post</p>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => handleModalMediaSelect("image")}
+                      onClick={() => handleMediaSelect("image")}
                       className="flex items-center space-x-2 px-3 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors text-sm cursor-pointer"
                     >
                       <FileImage className="w-4 h-4" />
                       <span>Photo</span>
                     </button>
                     <button
-                      onClick={() => handleModalMediaSelect("video")}
+                      onClick={() => handleMediaSelect("video")}
                       className="flex items-center space-x-2 px-3 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors text-sm cursor-pointer"
                     >
                       <Video className="w-4 h-4" />
@@ -445,7 +465,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
               </button>
               <button
                 onClick={handlePost}
-                disabled={!postText.trim() && !selectedMedia}
+                disabled={!postText.trim() && previewFiles.length === 0}
                 className="px-6 py-2 bg-slate-900 text-white rounded-sm sm:rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
               >
                 Post
@@ -455,11 +475,12 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
         </div>
       )}
 
+      {/* Toast */}
       {showToast && (
         <div className="fixed top-4 right-4 z-50">
-          <div className="bg-slate-900 text-white test-sm  px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
+          <div className="bg-slate-900 text-white text-sm px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
             <Check className="w-4 h-4" />
-            <span>Posted Suscessfully!</span>
+            <span>Posted Successfully!</span>
           </div>
         </div>
       )}
@@ -467,33 +488,33 @@ const CreatePost: React.FC<CreatePostProps> = ({ userInitial }) => {
   );
 };
 
-const PostHeader: React.FC<PostHeaderProps> = ({ post, getRoleBadgeColor }) => (
+const PostHeader: React.FC<any> = ({ post, getRoleBadgeColor }) => (
   <div className="p-4 pb-3">
     <div className="flex items-start justify-between">
       <div className="flex items-center space-x-3">
         <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center">
           <span className="text-white font-medium text-sm">
-            {post.author
+            {post?.userInfo?.name
               .split(" ")
-              .map((n) => n[0])
+              .map((n: any) => n[0])
               .join("")}
           </span>
         </div>
         <div>
           <div className="flex items-center space-x-2">
             <h3 className="font-semibold text-gray-900 text-sm">
-              {post.author}
+              {post?.userInfo?.name}
             </h3>
-            <span
+           <span
               className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
-                post.role
+                post?.author_type
               )}`}
             >
-              {post.role}
+              {post?.author_type}
             </span>
             {post.assignedBy && (
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-br from-white to-indigo-50 text-slate-800 border border-slate-400">
-                📌 {post.assignedBy}
+                📌 {post?.author_type}
               </span>
             )}
           </div>
@@ -515,7 +536,9 @@ const PostActions: React.FC<PostActionsProps> = ({
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [newComment, setNewComment] = useState("");
-  const [comments, setComments] = useState<Comment[]>(post.topComments || []);
+  const [comments, setComments] = useState<any>(post?.comments || []);
+  const [AllComments, setAllComments] = useState<any>([]);
+  const totalComments = post?._count?.comments;
   const [showToast, setShowToast] = useState(false);
 
   const isLiked = likedPosts.has(post.id);
@@ -528,39 +551,43 @@ const PostActions: React.FC<PostActionsProps> = ({
     { id: "4", name: "Sarah Wilson", avatar: "👩‍💼" },
   ];
 
-  const mockTopComments = post.topComments || [
-    {
-      id: "1",
-      author: "Alice Brown",
-      content: "This is really insightful! Thanks for sharing.",
-      timestamp: "2h ago",
-      avatar: "👩‍🦳",
-    },
-    {
-      id: "2",
-      author: "Bob Davis",
-      content: "Great post! I completely agree with your perspective.",
-      timestamp: "4h ago",
-      avatar: "👨‍🦲",
-    },
-  ];
-
-  useEffect(() => setComments(mockTopComments), []);
-
-  const handleCommentSubmit = (e: React.FormEvent) => {
+  const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newComment.trim()) {
+    if (!newComment.trim()) return;
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/comments/post-comment`,
+        {
+          postId: post.id,
+          content: newComment,
+        },
+        { withCredentials: true }
+      );
+
+      const createdComment = response.data.data;
+
       const newCommentObj: Comment = {
-        id: Date.now().toString(),
-        author: "You",
-        content: newComment,
-        timestamp: "Just now",
+        id: createdComment.id,
+        userInfo:{
+          name:"You"
+        } ,
+        content: createdComment.content,
+        createdAt: new Date(createdComment.createdAt).toLocaleString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true}),
         avatar: "👤",
       };
 
-      setComments([...comments, newCommentObj]);
-      onComment?.(post.id, newComment);
+      setComments((prev: any) => [...prev, newCommentObj]);
       setNewComment("");
+    } catch (error: any) {
+      console.error("Error posting comment:", error.response?.data || error);
+      alert(error.response?.data?.message || "Failed to post comment");
     }
   };
 
@@ -579,6 +606,20 @@ const PostActions: React.FC<PostActionsProps> = ({
     onShare?.(post.id);
   };
 
+const handleCommentModal = async (postId:string) => {
+        setShowCommentsModal(true)
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/comments/get/${postId}`,
+        { withCredentials: true }
+      );
+      setAllComments(response.data.data);
+    } catch (error: any) {
+      console.error("Error fetching comment:", error.response?.data || error);
+      alert(error.response?.data?.message || "Failed to fetch comment");
+    }
+  };
+
   return (
     <div className="border-t border-gray-100">
       <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-50">
@@ -592,12 +633,13 @@ const PostActions: React.FC<PostActionsProps> = ({
                 {totalLikes} {totalLikes === 1 ? "like" : "likes"}
               </button>
             )}
-            {post.comments > 0 && (
+            {comments?.length > 0 && (
               <button
-                onClick={() => setShowCommentsModal(true)}
+                onClick={() => handleCommentModal(post?.id)}
                 className="underline cursor-pointer"
               >
-                {post.comments} {post.comments === 1 ? "comment" : "comments"}
+                {totalComments}{" "}
+                {comments?.length === 1 ? "comment" : "comments"}
               </button>
             )}
           </div>
@@ -618,7 +660,7 @@ const PostActions: React.FC<PostActionsProps> = ({
             </button>
 
             <button
-              onClick={() => setShowCommentsModal(true)}
+              onClick={() => handleCommentModal(post?.id)}
               className="flex items-center space-x-1 py-2 rounded-md transition-colors hover:bg-gray-50 text-gray-600 cursor-pointer"
             >
               <MessageCircle className="w-4 h-4" />
@@ -647,7 +689,7 @@ const PostActions: React.FC<PostActionsProps> = ({
       {comments.length > 0 && (
         <div className="px-4 py-3 border-t border-gray-50">
           <div className="space-y-3">
-            {comments.slice(0, 2).map((comment) => (
+            {comments?.slice(0,2)?.map((comment: any) => (
               <div key={comment.id} className="flex space-x-3">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm">
@@ -657,14 +699,22 @@ const PostActions: React.FC<PostActionsProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="bg-gray-50 border border-gray-200 rounded-sm px-3 py-2">
                     <div className="font-medium text-sm text-gray-900">
-                      {comment.author}
+                      {comment?.userInfo?.name}
                     </div>
                     <div className="text-sm text-gray-700">
                       {comment.content}
                     </div>
                   </div>
                   <div className="mt-1 text-xs text-gray-500">
-                    {comment.timestamp}
+                   {comment?.createdAt &&
+                        new Date(comment.createdAt).toLocaleString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
                   </div>
                 </div>
               </div>
@@ -674,7 +724,7 @@ const PostActions: React.FC<PostActionsProps> = ({
                 onClick={() => setShowCommentsModal(true)}
                 className="text-sm text-slate-900 hover:text-slate-700 font-medium cursor-pointer underline"
               >
-                View all {comments.length} comments
+                View all {totalComments} comments
               </button>
             )}
           </div>
@@ -726,24 +776,32 @@ const PostActions: React.FC<PostActionsProps> = ({
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {comments.map((comment) => (
+              {AllComments?.map((comment: any) => (
                 <div key={comment.id} className="flex space-x-3">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm">
-                      {comment.avatar || "👤"}
+                      {comment?.avatar || "👤"}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
                       <div className="font-medium text-sm text-gray-900">
-                        {comment.author}
+                        {comment?.userInfo?.username}
                       </div>
                       <div className="text-sm text-gray-700">
                         {comment.content}
                       </div>
                     </div>
                     <div className="mt-1 text-xs text-gray-500">
-                      {comment.timestamp}
+                      {comment?.createdAt &&
+                        new Date(comment.createdAt).toLocaleString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
                     </div>
                   </div>
                 </div>
@@ -791,7 +849,7 @@ const PostActions: React.FC<PostActionsProps> = ({
   );
 };
 
-const Post: React.FC<PostProps> = ({
+const Post: React.FC<any> = ({
   post,
   likedPosts,
   onLike,
@@ -848,10 +906,10 @@ const Post: React.FC<PostProps> = ({
         </div>
       </div>
 
-      {post.media && (
+      {post?.media?.length > 0 && (
         <div className="px-4 pb-3">
           <img
-            src={post.media.url}
+            src={post?.media[0]?.storage_url}
             alt="Post media"
             className="w-full h-64 object-cover rounded-sm bg-gray-100"
           />
@@ -889,22 +947,29 @@ const Feed: React.FC<FeedProps> = ({
   </div>
 );
 
-const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user }) => (
-  <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5 overflow-hidden">
-    <div className="flex items-center space-x-3 mb-3">
-      <div className="w-12 h-12 rounded-md bg-slate-900 flex items-center justify-center shadow-lg border border-white/20 transition-all duration-200">
-        <span className="text-white font-bold text-lg">{user.initial}</span>
-      </div>
-      <div className="flex-1">
-        <h3 className="font-bold text-lg tracking-wide">{user.name}</h3>
-        <p className="text-xs font-medium mb-1 text-blue-900">{user.course}</p>
-        {user.teacherId && (
-          <p className="text-[11px] font-medium">{user.teacherId}</p>
-        )}
+const ProfileHeader: React.FC<any> = ({ user }) => {
+const storedUser = localStorage.getItem("user");
+const userDetail = storedUser ? JSON.parse(storedUser) : null;
+
+
+  return (
+    <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5 overflow-hidden">
+      <div className="flex items-center space-x-3 mb-3">
+        <div className="w-12 h-12 rounded-md bg-slate-900 flex items-center justify-center shadow-lg border border-white/20 transition-all duration-200">
+          <span className="text-white font-bold text-lg">
+            {userDetail?.name?.charAt(0).toUpperCase()}
+          </span>
+        </div>
+        <div className="flex-1">
+          <h3 className="font-bold text-lg tracking-wide">{userDetail?.name}</h3>
+          <p className="text-xs font-medium mb-1 text-blue-900 line-clamp-1">
+            {user?.about}
+          </p>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const ReportModal: React.FC<ReportModalProps> = ({
   isOpen,
@@ -994,7 +1059,12 @@ const ReportModal: React.FC<ReportModalProps> = ({
   );
 };
 
-const TeacherHome: React.FC = () => {
+const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
+  const [user, setUser] = useState<any>(null);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [counts, setCounts] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [reportModal, setReportModal] = useState<ReportModalState>({
     isOpen: false,
@@ -1003,65 +1073,43 @@ const TeacherHome: React.FC = () => {
   const [reportReason, setReportReason] = useState<string>("");
   const [reportDetails, setReportDetails] = useState<string>("");
 
-  const user: User = {
-    name: "Nishchay Bhatia",
-    initial: "N",
-    course: "Computer Science & Engineering",
-    teacherId: "STU2024001",
-  };
-
-  const posts: Post[] = [
-    {
-      id: "1",
-      author: "Prof. Sarah Williams",
-      role: "Faculty",
-      content:
-        "Great presentation on Machine Learning algorithms today! The students showed excellent understanding of neural networks and their applications. Keep up the fantastic work! 🎯",
-      media: null,
-      likes: 24,
-      comments: 8,
-      timestamp: "2h ago",
-      assignedBy: "CS Department",
-    },
-    {
-      id: "2",
-      author: "Alex Chen",
-      role: "Student",
-      content:
-        "Just completed my first full-stack e-commerce project using React and Node.js! Thanks to everyone who provided feedback during development. The learning journey continues! 🚀  Lorem ipsum dolor sit amet consectetur adipisicing elit. Maiores omnis eum sed nesciunt nemo molestias dolorem debitis aliquid neque nihil reprehenderit, ex labore enim ullam delectus impedit accusamus vitae tenetur provident inventore. Dicta, minima dolore sapiente fugiat assumenda nisi doloribus consequuntur dolorem consequatur asperiores eveniet iusto! Iste ducimus voluptate in.",
-      media: {
-        type: "image",
-        url: "https://via.placeholder.com/600x300/1e40af/ffffff?text=E-Commerce+Project+Screenshot",
-      },
-      likes: 42,
-      comments: 15,
-      timestamp: "4h ago",
-      assignedBy: null,
-    },
-    {
-      id: "3",
-      author: "Dr. Michael Rodriguez",
-      role: "Faculty",
-      content:
-        "Reminder: Final project submissions are due next Friday. Please ensure all documentation and code are properly organized. Office hours available this week for any last-minute questions.",
-      media: null,
-      likes: 18,
-      comments: 12,
-      timestamp: "6h ago",
-      assignedBy: "Academic Committee",
-    },
-  ];
-
-  const handleLike = (postId: string): void => {
-    setLikedPosts((prev) => {
-      const newLiked = new Set(prev);
-      if (newLiked.has(postId)) {
-        newLiked.delete(postId);
-      } else {
-        newLiked.add(postId);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
-      return newLiked;
-    });
+    }
+  }, []);
+
+  const handleLike = async (postId: string) => {
+    try {
+      setLikedPosts((prev) => {
+        const newLiked = new Set(prev);
+        if (newLiked.has(postId)) {
+          newLiked.delete(postId);
+        } else {
+          newLiked.add(postId);
+        }
+        return newLiked;
+      });
+
+      if (likedPosts.has(postId)) {
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/likes/unlike/${postId}`,
+          {},
+          { withCredentials: true }
+        );
+      } else {
+        await axios.put(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/likes/like/${postId}`,
+          {},
+          { withCredentials: true }
+        );
+      }
+    } catch (error) {
+      console.error("Error liking/unliking:", error);
+    }
   };
 
   const handleFlag = (postId: string): void => {
@@ -1101,14 +1149,57 @@ const TeacherHome: React.FC = () => {
     }
   };
 
+  const getPosts = async (
+    cursor?: string,
+    limit: number = 10,
+    search?: string
+  ) => {
+    const response = await axios.get(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/post/get`,
+      { withCredentials: true, params: { cursor, limit, search } }
+    );
+    return response.data;
+  };
+
+  const fetchPosts = async (cursor?: string) => {
+    setLoading(true);
+    try {
+      const data = await getPosts(cursor, 10);
+      setPosts((prev) => [...prev, ...data.data]);
+      setNextCursor(data.nextCursor);
+    } catch (error) {
+      console.error("Failed to fetch posts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+const fetchAttendence = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/me/active-subject-attendance`,
+        { withCredentials: true } // ✅ send cookies/JWT
+      );
+      setCounts(response.data?.data); // adjust depending on backend response shape
+    } catch (error) {
+      console.error("Error fetching teacher counts:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAttendence();
+  }, []);
+
+
+
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
           <div className="lg:col-span-7 space-y-4">
-            <WelcomeMessage userName={user.name} />
+            <WelcomeMessage userName={user?.name} />
             <div className="block sm:hidden">
-              <CreatePost userInitial={user.initial} />
+              <CreatePost userInitial={user?.name?.charAt(0).toUpperCase()} />
             </div>
             <Feed
               posts={posts}
@@ -1120,9 +1211,10 @@ const TeacherHome: React.FC = () => {
           </div>
 
           <div className="lg:col-span-3 space-y-4 hidden sm:block">
-            <ProfileHeader user={user} />
-            <CreatePost userInitial={user.initial} />
-            <AttendanceCards classes={sampleClasses} />
+            <ProfileHeader user={userDetails} />
+            <CreatePost userInitial={user?.name?.charAt(0).toUpperCase()} />
+                        <AttendanceCards counts={counts} />
+
           </div>
         </div>
       </div>

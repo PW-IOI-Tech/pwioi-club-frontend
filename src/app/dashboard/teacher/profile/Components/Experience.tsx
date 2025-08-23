@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { Plus, Edit3, X, Trash2, Briefcase, ChevronDown } from "lucide-react";
 
 interface TeacherExperience {
   id?: string;
   title: string;
-  companyName: string;
+  company_name: string;
   location?: string;
-  workMode: string;
-  startDate: string;
-  endDate?: string;
+  work_mode: string;
+  start_date: string;
+  end_date?: string;
   description?: string;
 }
 
@@ -53,18 +54,18 @@ const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<TeacherExperience>({
     title: "",
-    companyName: "",
+    company_name: "",
     location: "",
-    workMode: "",
-    startDate: "",
-    endDate: "",
+    work_mode: "",
+    start_date: "",
+    end_date: "",
     description: "",
   });
   const [errors, setErrors] = useState<
     Partial<Record<keyof TeacherExperience, string>>
   >({});
 
-  const workModeOptions = ["WFH", "WFO", "Hybrid"];
+  const work_modeOptions = ["REMOTE", "ONSITE", "HYBRID"];
 
   const handleInputChange = (field: keyof TeacherExperience, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -76,25 +77,25 @@ const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof TeacherExperience, string>> = {};
     if (!formData.title.trim()) newErrors.title = "Title is required";
-    if (!formData.companyName.trim())
-      newErrors.companyName = "Company name is required";
-    if (!formData.workMode.trim()) newErrors.workMode = "Work mode is required";
+    if (!formData.company_name.trim())
+      newErrors.company_name = "Company name is required";
+    if (!formData.work_mode.trim()) newErrors.work_mode = "Work mode is required";
 
-    if (!formData.startDate) newErrors.startDate = "Start date is required";
+    if (!formData.start_date) newErrors.start_date = "Start date is required";
     if (
-      formData.endDate &&
-      formData.startDate &&
-      new Date(formData.endDate) < new Date(formData.startDate)
+      formData.end_date &&
+      formData.start_date &&
+      new Date(formData.end_date) < new Date(formData.start_date)
     ) {
-      newErrors.endDate = "End date must be after start date";
+      newErrors.end_date = "End date must be after start date";
     }
 
     if (
-      formData.endDate &&
-      new Date(formData.endDate) >
+      formData.end_date &&
+      new Date(formData.end_date) >
         new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000)
     ) {
-      newErrors.endDate = "End date seems too far in the future";
+      newErrors.end_date = "End date seems too far in the future";
     }
 
     setErrors(newErrors);
@@ -108,7 +109,7 @@ const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
         ...formData,
         id: Date.now().toString(),
         title: formData.title.trim(),
-        companyName: formData.companyName.trim(),
+        company_name: formData.company_name.trim(),
         location: formData.location?.trim(),
         description: formData.description?.trim(),
       });
@@ -119,11 +120,11 @@ const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
   const handleClose = () => {
     setFormData({
       title: "",
-      companyName: "",
+      company_name: "",
       location: "",
-      workMode: "",
-      startDate: "",
-      endDate: "",
+      work_mode: "",
+      start_date: "",
+      end_date: "",
       description: "",
     });
     setErrors({});
@@ -157,15 +158,15 @@ const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
           </label>
           <input
             type="text"
-            value={formData.companyName}
-            onChange={(e) => handleInputChange("companyName", e.target.value)}
+            value={formData.company_name}
+            onChange={(e) => handleInputChange("company_name", e.target.value)}
             placeholder="e.g., ABC School, XYZ Educational Institute"
             className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
-              errors.companyName ? "border-red-400" : "border-gray-400"
+              errors.company_name ? "border-red-400" : "border-gray-400"
             }`}
           />
-          {errors.companyName && (
-            <p className="mt-1 text-sm text-red-600">{errors.companyName}</p>
+          {errors.company_name && (
+            <p className="mt-1 text-sm text-red-600">{errors.company_name}</p>
           )}
         </div>
 
@@ -188,14 +189,14 @@ const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
           </label>
           <div className="relative">
             <select
-              value={formData.workMode}
-              onChange={(e) => handleInputChange("workMode", e.target.value)}
+              value={formData.work_mode}
+              onChange={(e) => handleInputChange("work_mode", e.target.value)}
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 appearance-none cursor-pointer ${
-                errors.workMode ? "border-red-400" : "border-gray-400"
+                errors.work_mode ? "border-red-400" : "border-gray-400"
               }`}
             >
               <option value="">Select work mode</option>
-              {workModeOptions.map((mode) => (
+              {work_modeOptions.map((mode) => (
                 <option key={mode} value={mode}>
                   {mode}
                 </option>
@@ -203,8 +204,8 @@ const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
             </select>
             <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
-          {errors.workMode && (
-            <p className="mt-1 text-sm text-red-600">{errors.workMode}</p>
+          {errors.work_mode && (
+            <p className="mt-1 text-sm text-red-600">{errors.work_mode}</p>
           )}
         </div>
 
@@ -215,14 +216,14 @@ const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
             </label>
             <input
               type="date"
-              value={formData.startDate}
-              onChange={(e) => handleInputChange("startDate", e.target.value)}
+              value={formData.start_date}
+              onChange={(e) => handleInputChange("start_date", e.target.value)}
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer ${
-                errors.startDate ? "border-red-400" : "border-gray-400"
+                errors.start_date ? "border-red-400" : "border-gray-400"
               }`}
             />
-            {errors.startDate && (
-              <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
+            {errors.start_date && (
+              <p className="mt-1 text-sm text-red-600">{errors.start_date}</p>
             )}
           </div>
 
@@ -232,14 +233,14 @@ const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
             </label>
             <input
               type="date"
-              value={formData.endDate}
-              onChange={(e) => handleInputChange("endDate", e.target.value)}
+              value={formData.end_date}
+              onChange={(e) => handleInputChange("end_date", e.target.value)}
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer ${
-                errors.endDate ? "border-red-400" : "border-gray-400"
+                errors.end_date ? "border-red-400" : "border-gray-400"
               }`}
             />
-            {errors.endDate && (
-              <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
+            {errors.end_date && (
+              <p className="mt-1 text-sm text-red-600">{errors.end_date}</p>
             )}
           </div>
         </div>
@@ -293,18 +294,18 @@ const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<TeacherExperience>({
     title: "",
-    companyName: "",
+    company_name: "",
     location: "",
-    workMode: "",
-    startDate: "",
-    endDate: "",
+    work_mode: "",
+    start_date: "",
+    end_date: "",
     description: "",
   });
   const [errors, setErrors] = useState<
     Partial<Record<keyof TeacherExperience, string>>
   >({});
 
-  const workModeOptions = ["WFH", "WFO", "Hybrid"];
+  const work_modeOptions = ["WFH", "WFO", "Hybrid"];
 
   useEffect(() => {
     if (experience) {
@@ -326,24 +327,24 @@ const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
       newErrors.title = "Title is required";
     }
 
-    if (!formData.companyName.trim()) {
-      newErrors.companyName = "Company name is required";
+    if (!formData.company_name.trim()) {
+      newErrors.company_name = "Company name is required";
     }
 
-    if (!formData.workMode.trim()) {
-      newErrors.workMode = "Work mode is required";
+    if (!formData.work_mode.trim()) {
+      newErrors.work_mode = "Work mode is required";
     }
 
-    if (!formData.startDate) {
-      newErrors.startDate = "Start date is required";
+    if (!formData.start_date) {
+      newErrors.start_date = "Start date is required";
     }
 
     if (
-      formData.endDate &&
-      formData.startDate &&
-      new Date(formData.endDate) < new Date(formData.startDate)
+      formData.end_date &&
+      formData.start_date &&
+      new Date(formData.end_date) < new Date(formData.start_date)
     ) {
-      newErrors.endDate = "End date must be after start date";
+      newErrors.end_date = "End date must be after start date";
     }
 
     setErrors(newErrors);
@@ -357,7 +358,7 @@ const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
       onEdit({
         ...formData,
         title: formData.title.trim(),
-        companyName: formData.companyName.trim(),
+        company_name: formData.company_name.trim(),
         location: formData.location?.trim(),
         description: formData.description?.trim(),
       });
@@ -400,15 +401,15 @@ const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
           </label>
           <input
             type="text"
-            value={formData.companyName}
-            onChange={(e) => handleInputChange("companyName", e.target.value)}
+            value={formData.company_name}
+            onChange={(e) => handleInputChange("company_name", e.target.value)}
             placeholder="e.g., ABC School, XYZ Educational Institute"
             className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
-              errors.companyName ? "border-red-400" : "border-gray-400"
+              errors.company_name ? "border-red-400" : "border-gray-400"
             }`}
           />
-          {errors.companyName && (
-            <p className="mt-1 text-sm text-red-600">{errors.companyName}</p>
+          {errors.company_name && (
+            <p className="mt-1 text-sm text-red-600">{errors.company_name}</p>
           )}
         </div>
 
@@ -431,14 +432,14 @@ const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
           </label>
           <div className="relative">
             <select
-              value={formData.workMode}
-              onChange={(e) => handleInputChange("workMode", e.target.value)}
+              value={formData.work_mode}
+              onChange={(e) => handleInputChange("work_mode", e.target.value)}
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 appearance-none cursor-pointer ${
-                errors.workMode ? "border-red-400" : "border-gray-400"
+                errors.work_mode ? "border-red-400" : "border-gray-400"
               }`}
             >
               <option value="">Select work mode</option>
-              {workModeOptions.map((mode) => (
+              {work_modeOptions.map((mode) => (
                 <option key={mode} value={mode}>
                   {mode}
                 </option>
@@ -446,8 +447,8 @@ const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
             </select>
             <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
-          {errors.workMode && (
-            <p className="mt-1 text-sm text-red-600">{errors.workMode}</p>
+          {errors.work_mode && (
+            <p className="mt-1 text-sm text-red-600">{errors.work_mode}</p>
           )}
         </div>
 
@@ -458,14 +459,14 @@ const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
             </label>
             <input
               type="date"
-              value={formData.startDate}
-              onChange={(e) => handleInputChange("startDate", e.target.value)}
+              value={formData.start_date}
+              onChange={(e) => handleInputChange("start_date", e.target.value)}
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer ${
-                errors.startDate ? "border-red-400" : "border-gray-400"
+                errors.start_date ? "border-red-400" : "border-gray-400"
               }`}
             />
-            {errors.startDate && (
-              <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
+            {errors.start_date && (
+              <p className="mt-1 text-sm text-red-600">{errors.start_date}</p>
             )}
           </div>
 
@@ -475,14 +476,14 @@ const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
             </label>
             <input
               type="date"
-              value={formData.endDate}
-              onChange={(e) => handleInputChange("endDate", e.target.value)}
+              value={formData.end_date}
+              onChange={(e) => handleInputChange("end_date", e.target.value)}
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 cursor-pointer ${
-                errors.endDate ? "border-red-400" : "border-gray-400"
+                errors.end_date ? "border-red-400" : "border-gray-400"
               }`}
             />
-            {errors.endDate && (
-              <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
+            {errors.end_date && (
+              <p className="mt-1 text-sm text-red-600">{errors.end_date}</p>
             )}
           </div>
         </div>
@@ -561,6 +562,7 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   );
 };
 
+
 const Experience: React.FC = () => {
   const [experiences, setExperiences] = useState<TeacherExperience[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -570,25 +572,70 @@ const Experience: React.FC = () => {
     useState<TeacherExperience | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
 
-  const handleAddExperience = (newExperience: TeacherExperience) => {
-    setExperiences((prev) => [...prev, newExperience]);
+  const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+  useEffect(() => {
+    const fetchExperiences = async () => {
+      try {
+        const res = await axios.get(
+          `${API_BASE}/api/teachers/profile/experiences`,
+          { withCredentials: true }
+        );
+        setExperiences(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch experiences", err);
+      }
+    };
+    fetchExperiences();
+  }, []);
+
+  const handleAddExperience = async (newExperience: TeacherExperience) => {
+    try {
+      const res = await axios.post(
+        `${API_BASE}/api/teachers/profile/experiences`,
+        newExperience,
+        { withCredentials: true }
+      );
+      setExperiences((prev) => [...prev, res.data.data]);
+    } catch (err) {
+      console.error("Add failed", err);
+    }
     setShowAddModal(false);
   };
 
-  const handleEditExperience = (updatedExperience: TeacherExperience) => {
-    if (editIndex !== null) {
+  const handleEditExperience = async (updatedExperience: TeacherExperience) => {
+    if (!updatedExperience.id) return;
+
+    try {
+      const res = await axios.patch(
+        `${API_BASE}/api/teachers/profile/experiences/${updatedExperience.id}`,
+        updatedExperience,
+        { withCredentials: true }
+      );
       setExperiences((prev) =>
-        prev.map((exp, index) =>
-          index === editIndex ? updatedExperience : exp
+        prev.map((exp) =>
+          exp.id === updatedExperience.id ? res.data.data : exp
         )
       );
+    } catch (err) {
+      console.error("Update failed", err);
     }
     setShowEditModal(false);
   };
 
-  const handleDeleteExperience = () => {
-    if (editIndex !== null) {
-      setExperiences((prev) => prev.filter((_, index) => index !== editIndex));
+  const handleDeleteExperience = async () => {
+    if (selectedExperience?.id) {
+      try {
+        await axios.delete(
+          `${API_BASE}/api/teachers/profile/experiences/${selectedExperience.id}`,
+          { withCredentials: true }
+        );
+        setExperiences((prev) =>
+          prev.filter((exp) => exp.id !== selectedExperience.id)
+        );
+      } catch (err) {
+        console.error("Delete failed", err);
+      }
     }
     setShowDeleteModal(false);
   };
@@ -605,26 +652,44 @@ const Experience: React.FC = () => {
     setShowDeleteModal(true);
   };
 
-  const formatDateRange = (startDate: string, endDate?: string) => {
-    const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : null;
-
+  const formatDateRange = (start_date: string, end_date?: string) => {
+    const start = new Date(start_date);
+    const end = end_date ? new Date(end_date) : null;
     const startMonth = start.toLocaleDateString("en-US", { month: "short" });
     const startYear = start.getFullYear();
-
-    if (!end) {
-      return `${startMonth} ${startYear} - Present`;
-    }
-
+    if (!end) return `${startMonth} ${startYear} - Present`;
     const endMonth = end.toLocaleDateString("en-US", { month: "short" });
     const endYear = end.getFullYear();
-
     return `${startMonth} ${startYear} - ${endMonth} ${endYear}`;
   };
 
   return (
     <>
       <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
+        <AddExperienceModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAddExperience}
+        />
+
+        <EditExperienceModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onEdit={handleEditExperience}
+          experience={selectedExperience}
+        />
+
+        <DeleteConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteExperience}
+          experienceTitle={
+            selectedExperience
+              ? `${selectedExperience.title} at ${selectedExperience.companyName}`
+              : undefined
+          }
+        />
+
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-bold text-gray-900">Experience</h3>
           <button
@@ -650,16 +715,16 @@ const Experience: React.FC = () => {
                     <h4 className="font-bold text-slate-900 mb-1">
                       {exp.title}
                     </h4>
-                    <p className="text-sm text-slate-800">{exp.companyName}</p>
+                    <p className="text-sm text-slate-800">{exp.company_name}</p>
                     {exp.location && (
                       <p className="text-sm text-slate-700">{exp.location}</p>
                     )}
                     <div className="flex items-center space-x-2 text-xs text-gray-500 mt-2 mb-3">
                       <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
-                        {exp.workMode}
+                        {exp.work_mode}
                       </span>
                       <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
-                        {formatDateRange(exp.startDate, exp.endDate)}
+                        {formatDateRange(exp.start_date, exp.end_date)}
                       </span>
                     </div>
                     {exp.description && (
@@ -686,6 +751,7 @@ const Experience: React.FC = () => {
               </div>
             </div>
           ))}
+
           {experiences.length === 0 && (
             <button
               onClick={() => setShowAddModal(true)}
@@ -699,7 +765,6 @@ const Experience: React.FC = () => {
           )}
         </div>
       </div>
-
       <AddExperienceModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
@@ -717,7 +782,7 @@ const Experience: React.FC = () => {
         onConfirm={handleDeleteExperience}
         experienceTitle={
           selectedExperience
-            ? `${selectedExperience.title} at ${selectedExperience.companyName}`
+            ? `${selectedExperience.title} at ${selectedExperience.company_name}`
             : undefined
         }
       />

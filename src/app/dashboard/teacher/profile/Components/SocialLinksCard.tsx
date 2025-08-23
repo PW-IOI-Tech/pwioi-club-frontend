@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Edit3, ExternalLink, Trash2, X, Linkedin, Github } from "lucide-react";
+import axios from "axios";
 
 interface SocialLink {
   id: string;
@@ -188,18 +189,18 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   </Modal>
 );
 
-const SocialLinksCard: React.FC = () => {
+const SocialLinksCard: React.FC<any> = ({ aboutDetails }) => {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([
     {
       id: "1",
       platform: "GitHub",
-      link: "https://github.com/johndoe",
+      link: aboutDetails?.github_link,
       icon: Github,
     },
     {
       id: "2",
       platform: "LinkedIn",
-      link: "https://linkedin.com/in/johndoe",
+      link: aboutDetails?.linkedin,
       icon: Linkedin,
     },
   ]);
@@ -207,21 +208,74 @@ const SocialLinksCard: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedSocial, setSelectedSocial] = useState<SocialLink | null>(null);
 
-  const handleEditSocial = (newLink: string) => {
+  const handleEditSocial = async (newLink: string) => {
     if (!selectedSocial) return;
+
+    // Update state optimistically
     setSocialLinks((prev) =>
       prev.map((s) =>
         s.id === selectedSocial.id ? { ...s, link: newLink } : s
       )
     );
     setShowEditModal(false);
+
+    // Map platform name → backend field
+    const fieldMap: Record<string, string> = {
+      LinkedIn: "linkedin_url",
+      GitHub: "github_url",
+      Personal: "personal_email", // if you add personal email later
+    };
+
+    const fieldName = fieldMap[selectedSocial.platform];
+    if (!fieldName) {
+      console.error("Unknown social platform:", selectedSocial.platform);
+      return;
+    }
+
+    try {
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/profile/basic-details`,
+        { [fieldName]: newLink },
+        { withCredentials: true }
+      );
+
+      console.log("✅ Social link updated successfully!");
+    } catch (error) {
+      console.error("❌ Error updating social link:", error);
+    }
   };
 
-  const handleDeleteSocial = () => {
-    if (!selectedSocial) return;
-    setSocialLinks((prev) => prev.filter((s) => s.id !== selectedSocial.id));
-    setShowDeleteModal(false);
+const handleDeleteSocial = async () => {
+  if (!selectedSocial) return;
+
+  // Optimistic UI update
+  setSocialLinks((prev) => prev.filter((s) => s.id !== selectedSocial.id));
+  setShowDeleteModal(false);
+
+  // Map platform → backend field
+  const fieldMap: Record<string, string> = {
+    LinkedIn: "linkedin",
+    GitHub: "github",
   };
+
+  const fieldName = fieldMap[selectedSocial.platform];
+  if (!fieldName) {
+    console.error("Unknown social platform:", selectedSocial.platform);
+    return;
+  }
+
+  try {
+    await axios.delete(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/profile/basic-details?field=${fieldName}`,
+      { withCredentials: true }
+    );
+
+    console.log(`✅ ${fieldName} link deleted successfully!`);
+  } catch (error) {
+    console.error("❌ Error deleting social link:", error);
+  }
+};
+
 
   const openEditModal = (social: SocialLink) => {
     setSelectedSocial(social);
@@ -231,6 +285,7 @@ const SocialLinksCard: React.FC = () => {
   const openDeleteModal = (social: SocialLink) => {
     setSelectedSocial(social);
     setShowDeleteModal(true);
+
   };
 
   const handleExternalLinkClick = (link: string) => {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { Plus, Edit3, X, Trash2, FileText, ExternalLink } from "lucide-react";
 
 interface ResearchPaper {
@@ -6,7 +7,7 @@ interface ResearchPaper {
   title: string;
   abstract: string;
   publicationDate: string;
-  journalName: string;
+  journal_name: string;
   doi: string;
   url: string;
 }
@@ -17,13 +18,11 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
 }
-
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-sm shadow-2xl border border-gray-400 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-sm shadow-2xl border border-gray-400 w-full max-w-2xl mx-4 max-h-[92vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h3 className="text-lg font-bold text-gray-900">{title}</h3>
           <button
@@ -44,7 +43,6 @@ interface AddResearchPaperModalProps {
   onClose: () => void;
   onAdd: (paper: ResearchPaper) => void;
 }
-
 const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
   isOpen,
   onClose,
@@ -54,7 +52,7 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
     title: "",
     abstract: "",
     publicationDate: "",
-    journalName: "",
+    journal_name: "",
     doi: "",
     url: "",
   });
@@ -64,61 +62,49 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
 
   const handleInputChange = (field: keyof ResearchPaper, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof ResearchPaper, string>> = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = "Title is required";
-    }
-
-    if (!formData.journalName.trim()) {
-      newErrors.journalName = "Journal name is required";
-    }
-
-    if (!formData.publicationDate) {
+    if (!formData.title.trim()) newErrors.title = "Title is required";
+    if (!formData.journal_name.trim())
+      newErrors.journal_name = "Journal name is required";
+    if (!formData.publicationDate)
       newErrors.publicationDate = "Publication date is required";
-    } else if (new Date(formData.publicationDate) > new Date()) {
+    else if (new Date(formData.publicationDate) > new Date())
       newErrors.publicationDate = "Publication date cannot be in the future";
-    }
-
-    if (formData.url && formData.url.trim()) {
+    if (formData.url?.trim()) {
       try {
         new URL(formData.url);
       } catch {
         newErrors.url = "Please enter a valid URL";
       }
     }
-
-    if (formData.doi && formData.doi.trim()) {
+    if (formData.doi?.trim()) {
       const doiPattern = /^10\.\d{4,}\/[-._;()\/:a-zA-Z0-9]+$/;
       if (!doiPattern.test(formData.doi.trim())) {
-        newErrors.doi =
-          "Please enter a valid DOI (e.g., 10.1000/journal.example)";
+        newErrors.doi = "Please enter a valid DOI (e.g., 10.1000/journal.example)";
       }
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      onAdd({
-        ...formData,
-        id: Date.now().toString(),
-        title: formData.title.trim(),
-        abstract: formData.abstract.trim(),
-        journalName: formData.journalName.trim(),
-        doi: formData.doi.trim(),
-        url: formData.url.trim(),
-      });
+    if (!validateForm()) return;
+
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/profile/research-papers`,
+        formData,
+        { withCredentials: true }
+      );
+      onAdd(res.data.data); 
       handleClose();
+    } catch (err) {
+      console.error("Error adding paper", err);
     }
   };
 
@@ -127,7 +113,7 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
       title: "",
       abstract: "",
       publicationDate: "",
-      journalName: "",
+      journal_name: "",
       doi: "",
       url: "",
     });
@@ -202,15 +188,15 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
             </label>
             <input
               type="text"
-              value={formData.journalName}
-              onChange={(e) => handleInputChange("journalName", e.target.value)}
+              value={formData.journal_name}
+              onChange={(e) => handleInputChange("journal_name", e.target.value)}
               placeholder="e.g., Journal of Educational Technology"
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
-                errors.journalName ? "border-red-400" : "border-gray-400"
+                errors.journal_name ? "border-red-400" : "border-gray-400"
               }`}
             />
-            {errors.journalName && (
-              <p className="mt-1 text-sm text-red-600">{errors.journalName}</p>
+            {errors.journal_name && (
+              <p className="mt-1 text-sm text-red-600">{errors.journal_name}</p>
             )}
           </div>
         </div>
@@ -250,35 +236,31 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
             <p className="mt-1 text-sm text-red-600">{errors.url}</p>
           )}
         </div>
-
-        <div className="flex space-x-3 pt-2">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 transition-all cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            onClick={handleSubmit}
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
-          >
-            Add Research Paper
-          </button>
-        </div>
-      </div>
+      <div className="flex space-x-3 pt-2">
+        <button
+          type="button"
+          onClick={handleClose}
+          className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          onClick={handleSubmit}
+          className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700"
+        >
+          Add Research Paper
+        </button>
+        </div>      </div>
     </Modal>
   );
 };
-
 interface EditResearchPaperModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEdit: (paper: ResearchPaper) => void;
   paper: ResearchPaper | null;
 }
-
 const EditResearchPaperModal: React.FC<EditResearchPaperModalProps> = ({
   isOpen,
   onClose,
@@ -289,21 +271,18 @@ const EditResearchPaperModal: React.FC<EditResearchPaperModalProps> = ({
     title: "",
     abstract: "",
     publicationDate: "",
-    journalName: "",
+    journal_name: "",
     doi: "",
     url: "",
   });
-  const [errors, setErrors] = useState<
+    const [errors, setErrors] = useState<
     Partial<Record<keyof ResearchPaper, string>>
   >({});
 
   useEffect(() => {
-    if (paper) {
-      setFormData(paper);
-    }
+    if (paper) setFormData(paper);
   }, [paper]);
-
-  const handleInputChange = (field: keyof ResearchPaper, value: string) => {
+    const handleInputChange = (field: keyof ResearchPaper, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -317,8 +296,8 @@ const EditResearchPaperModal: React.FC<EditResearchPaperModalProps> = ({
       newErrors.title = "Title is required";
     }
 
-    if (!formData.journalName.trim()) {
-      newErrors.journalName = "Journal name is required";
+    if (!formData.journal_name.trim()) {
+      newErrors.journal_name = "Journal name is required";
     }
 
     if (!formData.publicationDate) {
@@ -347,32 +326,27 @@ const EditResearchPaperModal: React.FC<EditResearchPaperModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!paper?.id) return;
 
-    if (validateForm()) {
-      onEdit({
-        ...formData,
-        title: formData.title.trim(),
-        abstract: formData.abstract.trim(),
-        journalName: formData.journalName.trim(),
-        doi: formData.doi.trim(),
-        url: formData.url.trim(),
-      });
-      handleClose();
+    try {
+      const res = await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/profile/research-papers/${paper.id}`,
+        formData,
+        { withCredentials: true }
+      );
+      onEdit(res.data.data);
+      onClose();
+    } catch (err) {
+      console.error("Error editing paper", err);
     }
-  };
-
-  const handleClose = () => {
-    if (paper) {
-      setFormData(paper);
-    }
-    setErrors({});
-    onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Edit Research Paper">
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit Research Paper">
       <div className="space-y-4 text-sm">
         <div>
           <label className="block text-sm font-semibold text-slate-900 mb-2">
@@ -438,15 +412,15 @@ const EditResearchPaperModal: React.FC<EditResearchPaperModalProps> = ({
             </label>
             <input
               type="text"
-              value={formData.journalName}
-              onChange={(e) => handleInputChange("journalName", e.target.value)}
+              value={formData.journal_name}
+              onChange={(e) => handleInputChange("journal_name", e.target.value)}
               placeholder="e.g., Journal of Educational Technology"
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
-                errors.journalName ? "border-red-400" : "border-gray-400"
+                errors.journal_name ? "border-red-400" : "border-gray-400"
               }`}
             />
-            {errors.journalName && (
-              <p className="mt-1 text-sm text-red-600">{errors.journalName}</p>
+            {errors.journal_name && (
+              <p className="mt-1 text-sm text-red-600">{errors.journal_name}</p>
             )}
           </div>
         </div>
@@ -487,99 +461,104 @@ const EditResearchPaperModal: React.FC<EditResearchPaperModalProps> = ({
           )}
         </div>
 
-        <div className="flex space-x-3 pt-2">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 transition-all cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            onClick={handleSubmit}
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
-          >
-            Update Research Paper
-          </button>
+                <div className="flex space-x-3 pt-2">
+
+<button
+          type="button"
+          onClick={onClose}
+          className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          onClick={handleSubmit}
+          className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700"
+        >
+          Update Research Paper
+        </button>
         </div>
       </div>
     </Modal>
   );
 };
 
-interface DeleteConfirmModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  paperTitle?: string;
-}
-
-const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
+const DeleteConfirmModal = ({
   isOpen,
   onClose,
   onConfirm,
   paperTitle,
-}) => {
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Delete Research Paper">
-      <div className="space-y-4">
-        <p className="text-gray-700">
-          Are you sure you want to delete{" "}
-          <strong>&ldquo;{paperTitle}&rdquo;</strong>? This action cannot be
-          undone.
-        </p>
-        <div className="flex space-x-3 pt-2">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 text-sm cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 text-sm cursor-pointer"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    </Modal>
-  );
-};
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  paperTitle?: string;
+}) => (
+  <Modal isOpen={isOpen} onClose={onClose} title="Delete Research Paper">
+    <p className="text-gray-700">
+      Are you sure you want to delete <strong>{paperTitle}</strong>?
+    </p>
+    <div className="flex space-x-3 pt-2">
+      <button onClick={onClose} className="flex-1 px-4 py-2 border">Cancel</button>
+      <button
+        onClick={onConfirm}
+        className="flex-1 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700"
+      >
+        Delete
+      </button>
+    </div>
+  </Modal>
+);
 
 const ResearchPapers: React.FC = () => {
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
+  const [loading, setLoading] = useState(true);
+    const [editIndex, setEditIndex] = useState<number | null>(null);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedPaper, setSelectedPaper] = useState<ResearchPaper | null>(
-    null
-  );
-  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [selectedPaper, setSelectedPaper] = useState<ResearchPaper | null>(null);
 
-  const handleAddPaper = (newPaper: ResearchPaper) => {
+  useEffect(() => {
+    const fetchPapers = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/profile/research-papers`,
+          { withCredentials: true }
+        );
+        setPapers(res.data.data);
+      } catch (err) {
+        console.error("Error fetching papers", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPapers();
+  }, []);
+
+  const handleAddPaper = (newPaper: ResearchPaper) =>
     setPapers((prev) => [...prev, newPaper]);
-    setShowAddModal(false);
-  };
 
-  const handleEditPaper = (updatedPaper: ResearchPaper) => {
-    if (editIndex !== null) {
-      setPapers((prev) =>
-        prev.map((paper, index) => (index === editIndex ? updatedPaper : paper))
+  const handleEditPaper = (updated: ResearchPaper) =>
+    setPapers((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+
+  const handleDeletePaper = async () => {
+    if (!selectedPaper?.id) return;
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/profile/research-papers/${selectedPaper.id}`,
+        { withCredentials: true }
       );
-    }
-    setShowEditModal(false);
-  };
-
-  const handleDeletePaper = () => {
-    if (editIndex !== null) {
-      setPapers((prev) => prev.filter((_, index) => index !== editIndex));
+      setPapers((prev) => prev.filter((p) => p.id !== selectedPaper.id));
+    } catch (err) {
+      console.error("Error deleting paper", err);
     }
     setShowDeleteModal(false);
   };
 
-  const openEditModal = (paper: ResearchPaper, index: number) => {
+  if (loading) return <p>Loading papers...</p>;
+    const openEditModal = (paper: ResearchPaper, index: number) => {
     setSelectedPaper(paper);
     setEditIndex(index);
     setShowEditModal(true);
@@ -597,15 +576,33 @@ const ResearchPapers: React.FC = () => {
     }
   };
 
+
   return (
     <>
       <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
+        <AddResearchPaperModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAddPaper}
+        />
+
+        <EditResearchPaperModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onEdit={handleEditPaper}
+          paper={selectedPaper}
+        />
+
+        <DeleteConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDeletePaper}
+          paperTitle={selectedPaper?.title}
+        />
+
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-bold text-gray-900">Research Papers</h3>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm cursor-pointer"
-          >
+          <button onClick={() => setShowAddModal(true)}>
             <Plus className="w-4 h-4" />
           </button>
         </div>
@@ -637,7 +634,7 @@ const ResearchPapers: React.FC = () => {
                       )}
                     </div>
                     <p className="text-sm text-slate-800 font-medium mb-2">
-                      {paper.journalName}
+                      {paper.journal_name}
                     </p>
                     {paper.abstract && (
                       <p className="text-sm text-slate-700 mb-3 line-clamp-2">
@@ -686,24 +683,6 @@ const ResearchPapers: React.FC = () => {
           )}
         </div>
       </div>
-
-      <AddResearchPaperModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onAdd={handleAddPaper}
-      />
-      <EditResearchPaperModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onEdit={handleEditPaper}
-        paper={selectedPaper}
-      />
-      <DeleteConfirmModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDeletePaper}
-        paperTitle={selectedPaper?.title}
-      />
     </>
   );
 };

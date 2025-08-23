@@ -1,5 +1,5 @@
 "use client";
-
+import axios from "axios";
 import React, { useState, useRef, useEffect } from "react";
 import {
   Upload,
@@ -18,67 +18,74 @@ import SchemaHelpModal from "./SchemaHelpModal";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+interface TeachingDetailsResponse {
+  success: boolean;
+  teacher: {
+    id: string;
+    name: string;
+    email: string;
+    designation: string;
+  };
+  schools: {
+    id: string;
+    name: string;
+    batches: {
+      id: string;
+      name: string;
+      divisions: {
+        id: string;
+        code: string;
+        total_students: number;
+        semesters: {
+          id: string;
+          number: number;
+          start_date: string;
+          end_date: string;
+          is_current: boolean;
+          subjects: {
+            id: string;
+            name: string;
+            code: string;
+            credits: number;
+            exam_types: any;
+            total_exam_types: number;
+            total_exams: number;
+          }[];
+          total_subjects: number;
+        }[];
+        total_semesters: number;
+      }[];
+      total_divisions: number;
+    }[];
+    total_batches: number;
+  }[];
+  summary: {
+    total_schools: number;
+    total_batches: number;
+    total_divisions: number;
+    total_semesters: number;
+    total_subjects: number;
+    total_exams: number;
+    exam_type_breakdown: Record<string, number>;
+  };
+}
+
+
 interface UploadSectionProps {
   onSuccess?: () => void;
   uploadUrl?: string;
 }
 
 interface Student {
-  enrollmentId: string;
-  studentName: string;
+  enrollment_id: string;
+  name: string;
 }
-
-const schoolOptions = [
-  { value: "SOT", label: "School of Technology" },
-  { value: "SOM", label: "School of Management" },
-  { value: "SOH", label: "School of Health" },
-];
-
-const subjectsBySchool = {
-  SOT: [
-    "Computer Programming",
-    "Data Structures",
-    "Database Management",
-    "Software Engineering",
-    "Computer Networks",
-    "Operating Systems",
-    "Web Development",
-    "Mobile Application Development",
-  ],
-  SOM: [
-    "Management Information Systems",
-    "Business Analytics",
-    "Digital Marketing",
-    "E-commerce",
-  ],
-  SOH: [
-    "Health Informatics",
-    "Medical Database Systems",
-    "Healthcare Technology",
-  ],
-};
-
-const examTypes = [
-  { value: "fortnightly", label: "Fortnightly" },
-  { value: "internal_assessment", label: "Internal Assessment" },
-  { value: "interview", label: "Interview" },
-];
-
-const mockStudents: Student[] = [
-  { enrollmentId: "2023SOT001", studentName: "John Doe" },
-  { enrollmentId: "2023SOT002", studentName: "Jane Smith" },
-  { enrollmentId: "2023SOT003", studentName: "Mike Johnson" },
-  { enrollmentId: "2023SOT004", studentName: "Sarah Wilson" },
-  { enrollmentId: "2023SOT005", studentName: "David Brown" },
-  { enrollmentId: "2023SOT006", studentName: "Emily Davis" },
-  { enrollmentId: "2023SOT007", studentName: "Chris Miller" },
-  { enrollmentId: "2023SOT008", studentName: "Lisa Anderson" },
-];
 
 export default function UploadSection({
   onSuccess,
   uploadUrl = `${backendUrl}/api/marks/upload-marks`,
 }: UploadSectionProps) {
+   const [teachingDetails, setTeachingDetails] = useState<TeachingDetailsResponse | null>(null);
   const [school, setSchool] = useState("");
   const [batch, setBatch] = useState("");
   const [division, setDivision] = useState("");
@@ -100,35 +107,21 @@ export default function UploadSection({
   const [showSchemaHelp, setShowSchemaHelp] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const getBatchOptions = () => {
-    if (!school) return [];
-    return [
-      { value: `${school}23`, label: `${school}23` },
-      { value: `${school}24`, label: `${school}24` },
-      { value: `${school}25`, label: `${school}25` },
-    ];
+  const getTeachingDetails = async () => {
+    try {
+      const response = await axios.get<TeachingDetailsResponse>(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/teaching-details`,
+        { withCredentials: true }
+      );
+      setTeachingDetails(response.data);
+    } catch (error) {
+      console.error("Error fetching teaching details:", error);
+    }
   };
 
-  const getDivisionOptions = () => {
-    if (!batch) return [];
-    return [
-      { value: `${batch}B1`, label: `${batch}B1` },
-      { value: `${batch}B2`, label: `${batch}B2` },
-    ];
-  };
-
-  const getSemesterOptions = () => [
-    { value: "1", label: "Semester 1" },
-    { value: "2", label: "Semester 2" },
-    { value: "3", label: "Semester 3" },
-    { value: "4", label: "Semester 4" },
-  ];
-
-  const getExamNumberOptions = () =>
-    Array.from({ length: 12 }, (_, i) => ({
-      value: (i + 1).toString(),
-      label: `Exam ${i + 1}`,
-    }));
+  useEffect(() => {
+    getTeachingDetails();
+  }, []);
 
   const canGetStudents = school && batch && division && semester && subject;
 
@@ -164,7 +157,13 @@ export default function UploadSection({
 
   const handleGetStudents = async () => {
     try {
-      setStudents(mockStudents);
+       const response = await axios.get(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/${subject}/students`,
+      {
+        withCredentials: true,
+      }
+    );
+      setStudents(response?.data?.data);
       setShowStudents(true);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -173,7 +172,7 @@ export default function UploadSection({
 
   const copyStudentsToClipboard = () => {
     const rows = students
-      .map((student) => `${student.enrollmentId}\t${student.studentName}\t\t\t`)
+      .map((student) => `${student.enrollment_id}\t${student.name}\t\t\t`)
       .join("\n");
 
     navigator.clipboard.writeText(rows).then(() => {
@@ -264,66 +263,37 @@ export default function UploadSection({
     resetToInitialState();
   };
 
-  const uploadFile = async () => {
-    if (!uploadedFile) return;
+const uploadFile = async () => {
+  if (!uploadedFile) return;
 
-    setUploadStatus("uploading");
-    setErrorMessage("");
-    setSuccessMessage("");
+  setUploadStatus("uploading");
+  setErrorMessage("");
+  setSuccessMessage("");
 
-    try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        throw new Error("Authentication required. Please log in again.");
+  try {
+    const formData = new FormData();
+    formData.append("marksFile", uploadedFile);
+    console.log(examNumber);
+    
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${examNumber}/upload`,
+      formData,
+      {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       }
+    );
 
-      const formData = new FormData();
-      formData.append("file", uploadedFile);
+    setSuccessMessage("File uploaded successfully!");
+    setUploadStatus("success");
+  } catch (error: any) {
+    setErrorMessage(error.response?.data?.message || "File upload failed.");
+    setUploadStatus("error");
+  }
+};
 
-      // Add form data to the upload
-      formData.append("school", school);
-      formData.append("batch", batch);
-      formData.append("division", division);
-      formData.append("semester", semester);
-      formData.append("subject", subject);
-      formData.append("examType", examType);
-      formData.append("examNumber", examNumber);
-
-      const response = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { token: token },
-        body: formData,
-      });
-
-      if (response.status === 404) {
-        setUploadStatus("404error");
-        setErrorMessage(
-          "The data you are pushing might not be in correct schema format"
-        );
-        return;
-      }
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        setUploadStatus("success");
-        setSuccessMessage(result.message || "Data uploaded successfully!");
-        if (onSuccess) onSuccess();
-      } else {
-        throw new Error(result.message || "Failed to upload data");
-      }
-    } catch (error: any) {
-      if (error.message.includes("fetch")) {
-        setUploadStatus("404error");
-        setErrorMessage(
-          "Unable to reach the upload service. Please try again or contact support."
-        );
-      } else {
-        setUploadStatus("error");
-        setErrorMessage(error.message || "An error occurred during upload");
-      }
-    }
-  };
 
   const downloadSampleFile = () => {
     const link = document.createElement("a");
@@ -334,6 +304,119 @@ export default function UploadSection({
     link.click();
     document.body.removeChild(link);
   };
+
+const schoolOptions =
+  teachingDetails?.schools.map((s) => ({
+    value: s.id,
+    label: s.name,
+  })) || [];
+
+const getBatchOptions = (schoolId: string) => {
+  const school = teachingDetails?.schools.find((s) => s.id === schoolId);
+  return (
+    school?.batches.map((b) => ({
+      value: b.id,
+      label: b.name,
+    })) || []
+  );
+};
+
+const getDivisionOptions = (schoolId: string, batchId: string) => {
+  const batch = teachingDetails?.schools
+    .find((s) => s.id === schoolId)
+    ?.batches.find((b) => b.id === batchId);
+
+  return (
+    batch?.divisions.map((d) => ({
+      value: d.id,
+      label: d.code,
+    })) || []
+  );
+};
+
+const getSemesterOptions = (
+  schoolId: string,
+  batchId: string,
+  divisionId: string
+) => {
+  const division = teachingDetails?.schools
+    .find((s) => s.id === schoolId)
+    ?.batches.find((b) => b.id === batchId)
+    ?.divisions.find((d) => d.id === divisionId);
+
+  return (
+    division?.semesters.map((sem) => ({
+      value: sem.id,
+      label: `Semester ${sem.number}`,
+    })) || []
+  );
+};
+
+const getSubjectOptions = (
+  schoolId: string,
+  batchId: string,
+  divisionId: string,
+  semesterId: string
+) => {
+  const semester = teachingDetails?.schools
+    .find((s) => s.id === schoolId)
+    ?.batches.find((b) => b.id === batchId)
+    ?.divisions.find((d) => d.id === divisionId)
+    ?.semesters.find((sem) => sem.id === semesterId);
+
+  return (
+    semester?.subjects.map((subj) => ({
+      value: subj.id,
+      label: subj.name,
+    })) || []
+  );
+};
+
+const getExamTypeOptions = (
+  schoolId: string,
+  batchId: string,
+  divisionId: string,
+  semesterId: string,
+  subjectId: string
+) => {
+  const subject = teachingDetails?.schools
+    ?.find((s) => s.id === schoolId)
+    ?.batches?.find((b) => b.id === batchId)
+    ?.divisions?.find((d) => d.id === divisionId)
+    ?.semesters?.find((sem) => sem.id === semesterId)
+    ?.subjects?.find((sub) => sub.id === subjectId);
+
+  return (
+    subject?.exam_types?.map((et:any) => ({
+      value: et.exam_type,
+      label: et.exam_type
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c:any) => c.toUpperCase()),
+    })) ?? []
+  );
+};
+
+const getExamNumberOptions = (
+  schoolId: string,
+  batchId: string,
+  divisionId: string,
+  semesterId: string,
+  subjectId: string,
+  examType: string
+) => {
+  const examTypeObj = teachingDetails?.schools
+    ?.find((s) => s.id === schoolId)
+    ?.batches?.find((b) => b.id === batchId)
+    ?.divisions?.find((d) => d.id === divisionId)
+    ?.semesters?.find((sem) => sem.id === semesterId)
+    ?.subjects?.find((sub) => sub.id === subjectId)
+    ?.exam_types?.find((et: any) => et.exam_type === examType);
+
+  return examTypeObj?.exams?.map((exam: any) => ({
+    value: exam.id,   
+    label: exam.name, 
+  })) || [];
+};
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">
@@ -365,193 +448,207 @@ export default function UploadSection({
             Select Exam Details
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 mb-4 text-sm">
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                School
-              </label>
-              <div className="relative">
-                <select
-                  value={school}
-                  onChange={(e) => setSchool(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select School</option>
-                  {schoolOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-            </div>
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 mb-4 text-sm">
+  {/* School */}
+  <div>
+    <label className="block font-medium text-gray-700 mb-2">School</label>
+    <div className="relative">
+      <select
+        value={school}
+        onChange={(e) => {
+          setSchool(e.target.value);
+        }}
+        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
+      >
+        <option value="">Select School</option>
+        {schoolOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        size={16}
+        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+      />
+    </div>
+  </div>
 
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Batch
-              </label>
-              <div className="relative">
-                <select
-                  value={batch}
-                  onChange={(e) => setBatch(e.target.value)}
-                  disabled={!school}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Batch</option>
-                  {getBatchOptions().map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !school ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
+  {/* Batch */}
+  <div>
+    <label className="block font-medium text-gray-700 mb-2">Batch</label>
+    <div className="relative">
+      <select
+        value={batch}
+        onChange={(e) => {
+          setBatch(e.target.value);
+        }}
+        disabled={!school}
+        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+      >
+        <option value="">Select Batch</option>
+        {getBatchOptions(school).map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        size={16}
+        className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+          !school ? "text-gray-300" : "text-gray-400"
+        }`}
+      />
+    </div>
+  </div>
 
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Division
-              </label>
-              <div className="relative">
-                <select
-                  value={division}
-                  onChange={(e) => setDivision(e.target.value)}
-                  disabled={!batch}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Division</option>
-                  {getDivisionOptions().map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !batch ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
+  {/* Division */}
+  <div>
+    <label className="block font-medium text-gray-700 mb-2">Division</label>
+    <div className="relative">
+      <select
+        value={division}
+        onChange={(e) => {
+          setDivision(e.target.value);
+        }}
+        disabled={!batch}
+        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+      >
+        <option value="">Select Division</option>
+        {getDivisionOptions(school, batch).map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        size={16}
+        className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+          !batch ? "text-gray-300" : "text-gray-400"
+        }`}
+      />
+    </div>
+  </div>
 
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Semester
-              </label>
-              <div className="relative">
-                <select
-                  value={semester}
-                  onChange={(e) => setSemester(e.target.value)}
-                  disabled={!division}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Semester</option>
-                  {getSemesterOptions().map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !division ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
+  {/* Semester */}
+  <div>
+    <label className="block font-medium text-gray-700 mb-2">Semester</label>
+    <div className="relative">
+      <select
+        value={semester}
+        onChange={(e) => {
+          setSemester(e.target.value);
+        }}
+        disabled={!division}
+        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+      >
+        <option value="">Select Semester</option>
+        {getSemesterOptions(school, batch, division).map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        size={16}
+        className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+          !division ? "text-gray-300" : "text-gray-400"
+        }`}
+      />
+    </div>
+  </div>
 
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Subject
-              </label>
-              <div className="relative">
-                <select
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  disabled={!semester || !school}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Subject</option>
-                  {school &&
-                    subjectsBySchool[
-                      school as keyof typeof subjectsBySchool
-                    ]?.map((subj) => (
-                      <option key={subj} value={subj}>
-                        {subj}
-                      </option>
-                    ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !semester || !school ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
+  {/* Subject */}
+  <div>
+    <label className="block font-medium text-gray-700 mb-2">Subject</label>
+    <div className="relative">
+      <select
+        value={subject}
+        onChange={(e) => {
+          setSubject(e.target.value);
+        }}
+        disabled={!semester}
+        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+      >
+        <option value="">Select Subject</option>
+        {getSubjectOptions(school, batch, division, semester).map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        size={16}
+        className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+          !semester ? "text-gray-300" : "text-gray-400"
+        }`}
+      />
+    </div>
+  </div>
 
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Exam Type
-              </label>
-              <div className="relative">
-                <select
-                  value={examType}
-                  onChange={(e) => setExamType(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Exam Type</option>
-                  {examTypes.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-            </div>
+  <div>
+    <label className="block font-medium text-gray-700 mb-2">Exam Type</label>
+    <div className="relative">
+      <select
+        value={examType}
+        onChange={(e) => {
+          setExamType(e.target.value);
+        }}
+        disabled={!subject}
+        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+      >
+        <option value="">Select Exam Type</option>
+        {getExamTypeOptions(school, batch, division, semester, subject).map(
+          (option:any) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          )
+        )}
+      </select>
+      <ChevronDown
+        size={16}
+        className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+          !subject ? "text-gray-300" : "text-gray-400"
+        }`}
+      />
+    </div>
+  </div>
 
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Exam Number
-              </label>
-              <div className="relative">
-                <select
-                  value={examNumber}
-                  onChange={(e) => setExamNumber(e.target.value)}
-                  disabled={!examType}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Exam Number</option>
-                  {getExamNumberOptions().map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !examType ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
-          </div>
+  {/* Exam Number */}
+  <div>
+    <label className="block font-medium text-gray-700 mb-2">Exam Number</label>
+    <div className="relative">
+      <select
+        value={examNumber}
+        onChange={(e) => setExamNumber(e.target.value)}
+        disabled={!examType}
+        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+      >
+        <option value="">Select Exam Number</option>
+        {getExamNumberOptions(
+          school,
+          batch,
+          division,
+          semester,
+          subject,
+          examType
+        ).map((option:any) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        size={16}
+        className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+          !examType ? "text-gray-300" : "text-gray-400"
+        }`}
+      />
+    </div>
+  </div>
+</div>
+
 
           <div className="mb-6">
             <button
@@ -594,14 +691,14 @@ export default function UploadSection({
                 <tbody>
                   {students.map((student, index) => (
                     <tr
-                      key={student.enrollmentId}
+                      key={student?.enrollment_id}
                       className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
                     >
                       <td className="px-4 py-2 text-sm text-gray-900">
-                        {student.enrollmentId}
+                        {student?.enrollment_id}
                       </td>
                       <td className="px-4 py-2 text-sm text-gray-900">
-                        {student.studentName}
+                        {student?.name}
                       </td>
                     </tr>
                   ))}
