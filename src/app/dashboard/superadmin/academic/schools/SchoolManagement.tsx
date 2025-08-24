@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
-import { Users, Plus, School, UserRoundPen, ChevronDown } from "lucide-react";
+
+import React, { useState, useCallback, useMemo, useEffect } from "react";
+import { Users, Plus, School, UserRoundPen } from "lucide-react";
 import Table from "../../Table";
 import AddSchoolModal from "./AddSchoolModal";
+import axios from "axios";
 
 interface TableSchool {
   id: string;
@@ -15,107 +17,179 @@ interface TableSchool {
   teachersCount: number;
 }
 
-const initialSchools: TableSchool[] = [
-  {
-    id: "1",
-    location: "Bangalore",
-    schoolName: "SOT",
-    divisionsCount: 8,
-    batchesCount: 12,
-    stdCount: 480,
-    teachersCount: 35,
-  },
-  {
-    id: "2",
-    location: "Lucknow",
-    schoolName: "SOM",
-    divisionsCount: 6,
-    batchesCount: 10,
-    stdCount: 350,
-    teachersCount: 28,
-  },
-  {
-    id: "3",
-    location: "Pune",
-    schoolName: "SOH",
-    divisionsCount: 5,
-    batchesCount: 8,
-    stdCount: 280,
-    teachersCount: 22,
-  },
-  {
-    id: "4",
-    location: "Noida",
-    schoolName: "SOT",
-    divisionsCount: 7,
-    batchesCount: 11,
-    stdCount: 420,
-    teachersCount: 32,
-  },
-  {
-    id: "5",
-    location: "Bangalore",
-    schoolName: "SOM",
-    divisionsCount: 6,
-    batchesCount: 9,
-    stdCount: 315,
-    teachersCount: 25,
-  },
-];
-
-const LOCATIONS = ["Bangalore", "Lucknow", "Pune", "Noida"] as const;
 
 export default function SchoolManagement() {
-  const [schools, setSchools] = useState<TableSchool[]>(initialSchools);
-  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [schools, setSchools] = useState<TableSchool[]>([]);
+  const [centers,setCenters] = useState<any>();
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   const [isAddSchoolModalOpen, setIsAddSchoolModalOpen] = useState(false);
   const [showContent, setShowContent] = useState(false);
 
-  const filteredSchools = useMemo(() => {
-    if (!selectedLocation) return [];
-    return schools.filter((school) => school.location === selectedLocation);
-  }, [schools, selectedLocation]);
 
-  const statistics = useMemo(() => {
-    const filtered = schools.filter((s) => s.location === selectedLocation);
-    return {
-      totalSchools: filtered.length,
-      totalStudents: filtered.reduce((sum, s) => sum + s.stdCount, 0),
-      totalTeachers: filtered.reduce((sum, s) => sum + s.teachersCount, 0),
-    };
-  }, [schools, selectedLocation]);
+  const api = axios.create({
+    baseURL: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools`,
+  });
 
-  const handleUpdateSchool = useCallback((updatedItem: any) => {
-    const schoolItem = updatedItem as TableSchool;
-    setSchools((prev) =>
-      prev.map((school) =>
-        school.id === schoolItem.id ? { ...school, ...schoolItem } : school
-      )
-    );
+  const fetchSchools = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get(`/${centerId}`,{withCredentials:true});
+      const schoolsData = res.data.data;
+
+      const schoolsWithStats = await Promise.all(
+        schoolsData.map(async (school: any) => {
+          try {
+            const statsRes = await api.get(`/school-stats/${school.id}`, {
+              withCredentials: true,
+            });
+            const stats = statsRes.data.data;
+            return {
+              id: school.id,
+              location: "N/A",
+              schoolName: school.name,
+              divisionsCount: stats.divisions,
+              batchesCount: stats.batches,
+              stdCount: stats.students,
+              teachersCount: stats.teachers,
+            };
+          } catch {
+            return {
+              id: school.id,
+              location: "N/A",
+              schoolName: school.name,
+              divisionsCount: 0,
+              batchesCount: 0,
+              stdCount: 0,
+              teachersCount: 0,
+            };
+          }
+        })
+      );
+
+      setSchools(schoolsWithStats);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch schools");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSchools();
   }, []);
 
-  const handleDeleteSchool = useCallback((id: string | number) => {
-    const deleteId = typeof id === "number" ? id.toString() : id;
-    setSchools((prev) => prev.filter((school) => school.id !== deleteId));
-  }, []);
+  useEffect(()=>{
+      const res = axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,{withCredentials:true});
+      setCenters(res?.data?.data)
 
-  const handleAddSchool = useCallback(
-    (newSchoolData: { location: string; schoolName: string }) => {
-      const newSchool: TableSchool = {
-        id: Date.now().toString(),
-        location: newSchoolData.location,
-        schoolName: newSchoolData.schoolName,
-        divisionsCount: 0,
-        batchesCount: 0,
-        stdCount: 0,
-        teachersCount: 0,
-      };
+  },[])
 
-      setSchools((prev) => [...prev, newSchool]);
+  const handleAddSchool = async (newSchoolData: {
+    location: string;
+    schoolName: string;
+  }) => {
+    try {
+      await api.post(
+        "/create",
+        {
+          centerId,
+          schoolNames: [newSchoolData.schoolName],
+        },
+        { withCredentials: true }
+      );
+      fetchSchools();
       setIsAddSchoolModalOpen(false);
-    },
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to add school");
+    }
+  };
+
+  const handleUpdateSchool = async (updatedItem: any) => {
+    try {
+      await api.patch(
+        `/${updatedItem.id}`,
+        {
+          name: updatedItem.schoolName,
+        },
+        { withCredentials: true }
+      );
+      fetchSchools();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to update school");
+    }
+  };
+
+  const handleDeleteSchool = async (id: string | number) => {
+    try {
+      await api.delete(`/${id}`, { withCredentials: true });
+      fetchSchools();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to delete school");
+    }
+  };
+
+  const statistics = useMemo(
+    () => ({
+      totalSchools: schools.length,
+      totalStudents: schools.reduce((sum, school) => sum + school.stdCount, 0),
+      totalTeachers: schools.reduce(
+        (sum, school) => sum + school.teachersCount,
+        0
+      ),
+    }),
+    [schools]
+  );
+
+
+  const handleOpenAddModal = useCallback(
+    () => setIsAddSchoolModalOpen(true),
     []
   );
+  const handleCloseAddModal = useCallback(
+    () => setIsAddSchoolModalOpen(false),
+    []
+  );
+
+
+  if (loading) return <p className="p-6">Loading schools...</p>;
+
+  if (error) {
+    return (
+      <div className="bg-red-50 text-red-600 p-4 rounded-lg max-w-2xl mx-auto mt-8">
+        <h3 className="font-bold">Error</h3>
+        <p>{error}</p>
+        <button
+          onClick={() => {
+            setError("");
+            fetchSchools();
+          }}
+          className="mt-2 px-4 py-2 bg-[#1B3A6A] text-white rounded-lg hover:bg-[#122A4E]"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-2">
+      <div className="max-w-7xl mx-auto space-y-4">
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
+          School Management
+        </h2>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
+            <div className="p-6 text-center">
+              <School className="w-8 h-8 text-slate-900 mx-auto mb-2" />
+              <h4 className="text-lg text-slate-900 mb-1">Total Schools</h4>
+              <p className="text-5xl font-bold text-[#1B3A6A]">
+                {statistics.totalSchools}
+              </p>
+            </div>
+          </div>
 
   const handleOpenAddModal = useCallback(() => {
     if (!selectedLocation) {
@@ -197,6 +271,29 @@ export default function SchoolManagement() {
                 </p>
               </div>
 
+        {/* Table */}
+        <Table
+          data={schools}
+          title="Schools Overview"
+          filterField="location"
+          badgeFields={["location", "schoolName"]}
+          selectFields={{
+            location: ["bangalore", "lucknow", "pune", "noida"],
+            schoolName: ["SOT", "SOM", "SOH"],
+          }}
+          nonEditableFields={[
+            "id",
+            "location",
+            "divisionsCount",
+            "batchesCount",
+            "stdCount",
+            "teachersCount",
+          ]}
+          onDelete={handleDeleteSchool}
+          onEdit={handleUpdateSchool}
+          hiddenColumns={["id"]}
+        />
+
               <div className="bg-gradient-to-br from-white to-blue-50 rounded-sm border border-gray-400 p-6 text-center">
                 <UserRoundPen className="w-8 h-8 text-slate-900 mx-auto mb-2" />
                 <h4 className="text-lg text-slate-900 mb-1">Total Teachers</h4>
@@ -244,6 +341,8 @@ export default function SchoolManagement() {
           </>
         )}
 
+
+        {/* Modal */}
         <AddSchoolModal
           isOpen={isAddSchoolModalOpen}
           onClose={handleCloseAddModal}

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Users, Plus } from "lucide-react";
+import axios from "axios";
 import Table from "../../Table";
 import AddCenterModal from "./AddCenterModal";
 
@@ -12,42 +13,43 @@ interface TableCenter {
   code: string;
 }
 
-const initialCenters: TableCenter[] = [
-  {
-    id: "1",
-    centerName: "Bangalore Tech Hub",
-    location: "Electronic City, Bangalore, Karnataka",
-    code: "1",
-  },
-  {
-    id: "2",
-    centerName: "Lucknow Campus",
-    location: "Gomti Nagar, Lucknow, Uttar Pradesh",
-    code: "2",
-  },
-  {
-    id: "3",
-    centerName: "Pune Innovation Center",
-    location: "Hinjewadi, Pune, Maharashtra",
-    code: "3",
-  },
-  {
-    id: "4",
-    centerName: "Noida Business Park",
-    location: "Sector 62, Noida, Uttar Pradesh",
-    code: "4",
-  },
-];
-
 export default function CenterManagement() {
-  const [centers, setCenters] = useState<TableCenter[]>(initialCenters);
+  const [centers, setCenters] = useState<TableCenter[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isAddCenterModalOpen, setIsAddCenterModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get("http://localhost:8000/api/center/all", {
+          withCredentials: true,
+        });
+
+        if (res.data.success) {
+          const mappedCenters: TableCenter[] = res.data.data.map((c: any) => ({
+            id: c.id,
+            centerName: c.name,
+            location: c.location,
+            code: c.code,
+          }));
+          setCenters(mappedCenters);
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to fetch centers");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCenters();
+  }, []);
 
   const statistics = useMemo(
     () => ({
       totalCenters: centers.length,
-      activeCenters: centers.length, // Assuming all centers are active for now
+      activeCenters: centers.length, // all active for now
     }),
     [centers]
   );
@@ -88,6 +90,10 @@ export default function CenterManagement() {
   const handleCloseAddModal = useCallback(() => {
     setIsAddCenterModalOpen(false);
   }, []);
+
+  if (loading) {
+    return <p className="text-center text-gray-600 mt-6">Loading centers...</p>;
+  }
 
   if (error) {
     return (
