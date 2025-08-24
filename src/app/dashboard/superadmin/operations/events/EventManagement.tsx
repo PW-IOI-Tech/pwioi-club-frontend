@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Calendar, Plus } from "lucide-react";
 import Table from "../../Table";
 import AddEventModal from "./AddEventModal";
+import axios from "axios";
 
 interface TableEvent {
   id: string;
@@ -24,57 +25,58 @@ interface TableEvent {
   thumbnailUrl: string;
 }
 
-const initialEvents: TableEvent[] = [
-  {
-    id: "1",
-    eventName: "Tech Innovation Summit 2025",
-    organizer: "Tech Community",
-    venue: "Bangalore Convention Center",
-    type: "conference",
-    startDate: "2025-09-15",
-    endDate: "2025-09-17",
-    description:
-      "A comprehensive summit showcasing the latest in technology innovation and digital transformation",
-    isVisible: "true",
-    thumbnailUrl: "https://example.com/tech-summit-thumb.jpg",
-  },
-  {
-    id: "2",
-    eventName: "AI Workshop for Beginners",
-    organizer: "DataTech Institute",
-    venue: "Online Platform",
-    type: "workshop",
-    startDate: "2025-08-25",
-    endDate: "2025-08-25",
-    description:
-      "Hands-on workshop introducing artificial intelligence concepts and practical applications",
-    isVisible: "true",
-    thumbnailUrl: "https://example.com/ai-workshop-thumb.jpg",
-  },
-  {
-    id: "3",
-    eventName: "Startup Networking Meet",
-    organizer: "Entrepreneur Hub",
-    venue: "Mumbai Business Center",
-    type: "networking",
-    startDate: "2025-09-01",
-    endDate: "2025-09-01",
-    description:
-      "Connect with fellow entrepreneurs, investors, and industry leaders in an informal setting",
-    isVisible: "false",
-    thumbnailUrl: "https://example.com/networking-thumb.jpg",
-  },
-];
-
 export default function EventManagement() {
-  const [events, setEvents] = useState<TableEvent[]>(initialEvents);
+  const [events, setEvents] = useState<TableEvent[]>([]);
   const [error, setError] = useState("");
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
+
+  const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/event`;
+  const token = localStorage.getItem("token");
+
+  const fetchEvents = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/All`, { withCredentials: true });
+      const rawEvents = res.data.data || [];
+
+      const filteredEvents = rawEvents.map((event: any) => {
+        const { is_visible, thumbnail, createdAt, updatedAt, ...rest } = event;
+        return {
+          id: rest.id,
+          eventName: rest.name,
+          organizer: rest.organiser,
+          venue: rest.venue,
+          type: rest.type.toLowerCase(),
+          startDate: new Date(rest.start_date).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+          endDate: new Date(rest.end_date).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+          description: rest.description,
+          isVisible: is_visible ? "true" : "false",
+          thumbnailUrl: thumbnail || "",
+        };
+      });
+
+      setEvents(filteredEvents);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch events");
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   const statistics = useMemo(
     () => ({
       totalEvents: events.length,
-      visibleEvents: events.filter((event) => event.isVisible == "true").length,
+      visibleEvents: events.filter((event) => event.isVisible === "true")
+        .length,
       upcomingEvents: events.filter(
         (event) => new Date(event.startDate) > new Date()
       ).length,
@@ -82,22 +84,44 @@ export default function EventManagement() {
     [events]
   );
 
-  const handleUpdateEvent = useCallback((updatedItem: any) => {
-    const eventItem = updatedItem as TableEvent;
-    setEvents((prev) =>
-      prev.map((event) =>
-        event.id === eventItem.id ? { ...event, ...eventItem } : event
-      )
-    );
-  }, []);
+  const handleUpdateEvent = useCallback(
+    async (updatedItem: any) => {
+      try {
+        const eventItem = updatedItem as TableEvent;
+        await axios.put(`${API_BASE}/${eventItem.id}`, eventItem, {
+          withCredentials: true,
+        });
 
-  const handleDeleteEvent = useCallback((id: string | number) => {
-    const deleteId = typeof id === "number" ? id.toString() : id;
-    setEvents((prev) => prev.filter((event) => event.id !== deleteId));
-  }, []);
+        setEvents((prev) =>
+          prev.map((event) =>
+            event.id === eventItem.id ? { ...event, ...eventItem } : event
+          )
+        );
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to update event");
+      }
+    },
+    [token]
+  );
+
+  const handleDeleteEvent = useCallback(
+    async (id: string | number) => {
+      try {
+        const deleteId = typeof id === "number" ? id.toString() : id;
+        await axios.delete(`${API_BASE}/${deleteId}`, {
+          withCredentials: true,
+        });
+
+        setEvents((prev) => prev.filter((event) => event.id !== deleteId));
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to delete event");
+      }
+    },
+    [token]
+  );
 
   const handleAddEvent = useCallback(
-    (newEventData: {
+    async (newEventData: {
       eventName: string;
       organizer: string;
       venue: string;
@@ -114,15 +138,31 @@ export default function EventManagement() {
       isVisible: string;
       thumbnailUrl: string;
     }) => {
-      const newEvent: TableEvent = {
-        id: Date.now().toString(),
-        ...newEventData,
-      };
+      try {
+        const payload = {
+          name: newEventData.eventName,
+          organiser: newEventData.organizer,
+          venue: newEventData.venue,
+          type: newEventData.type.toUpperCase(),
+          start_date: new Date(newEventData.startDate).toISOString(),
+          end_date: new Date(newEventData.endDate).toISOString(),
+          description: newEventData.description,
+          isVisible: newEventData.isVisible,
+          thumbnailUrl: newEventData.thumbnailUrl,
+        };
 
-      setEvents((prev) => [...prev, newEvent]);
-      setIsAddEventModalOpen(false);
+        const res = await axios.post(`${API_BASE}`, payload, {
+          withCredentials: true,
+        });
+
+        const createdEvent = res.data.data;
+        setEvents((prev) => [...prev, createdEvent]);
+        setIsAddEventModalOpen(false);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to create event");
+      }
     },
-    []
+    [token]
   );
 
   const handleOpenAddModal = useCallback(() => {

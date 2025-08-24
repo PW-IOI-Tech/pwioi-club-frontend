@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Users, Plus, ChevronDown } from "lucide-react";
 import Table from "../../Table";
 import AddPolicyModal from "./AddPolicyModal";
+import axios from "axios";
 
 interface TablePolicy {
   id: string;
@@ -15,108 +16,146 @@ interface TablePolicy {
   centerLocation: string;
 }
 
-const initialPolicies: TablePolicy[] = [
-  {
-    id: "1",
-    policyName: "Code of Conduct Policy",
-    pdfUrl: "https://example.com/policies/code-of-conduct-v2.0.pdf",
-    effectiveDate: "2024-01-15",
-    isActive: "true",
-    version: "2.0",
-    centerLocation: "Bangalore",
-  },
-  {
-    id: "2",
-    policyName: "Remote Work Policy",
-    pdfUrl: "https://example.com/policies/remote-work-v1.5.pdf",
-    effectiveDate: "2024-03-01",
-    isActive: "true",
-    version: "1.5",
-    centerLocation: "Lucknow",
-  },
-  {
-    id: "3",
-    policyName: "Data Privacy Policy",
-    pdfUrl: "https://example.com/policies/data-privacy-v2.2.pdf",
-    effectiveDate: "2023-12-01",
-    isActive: "false",
-    version: "2.2",
-    centerLocation: "Pune",
-  },
-  {
-    id: "4",
-    policyName: "Leave Management Policy",
-    pdfUrl: "https://example.com/policies/leave-management-v3.0.pdf",
-    effectiveDate: "2024-04-01",
-    isActive: "true",
-    version: "3.0",
-    centerLocation: "Noida",
-  },
-];
-
-const LOCATIONS = ["Bangalore", "Lucknow", "Pune", "Noida"] as const;
-
 export default function PolicyManagement() {
-  const [policies, setPolicies] = useState<TablePolicy[]>(initialPolicies);
+  const [policies, setPolicies] = useState<TablePolicy[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [selectedCenterId, setSelectedCenterId] = useState<string>("");
   const [isAddPolicyModalOpen, setIsAddPolicyModalOpen] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [centers, setCenters] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+          { withCredentials: true }
+        );
+        setCenters(res.data.data); 
+      } catch (err) {
+        console.error("Failed to fetch centers:", err);
+      }
+    };
+    fetchCenters();
+  }, []);
+
+useEffect(() => {
+  if (!selectedCenterId) return;
+  const fetchPolicies = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/policy/center/${selectedCenterId}`,
+        { withCredentials: true }
+      );
+
+      const mappedPolicies: TablePolicy[] = res.data.data.map((p: any) => ({
+        id: p.id,
+        policyName: p.name,
+        pdfUrl: p.pdf_url,
+        effectiveDate: p.effective_date,
+        isActive: String(p.is_active), 
+        version: p.policy_version,
+        centerLocation: centers.find((c) => c.id === p.center_id)?.location || "",
+      }));
+
+      setPolicies(mappedPolicies);
+    } catch (err) {
+      console.error("Failed to fetch policies:", err);
+    }
+  };
+  fetchPolicies();
+}, [selectedCenterId, centers]);
+
 
   const filteredPolicies = useMemo(() => {
     if (!selectedLocation) return [];
-    return policies.filter(
-      (policy) => policy.centerLocation === selectedLocation
-    );
+    return policies.filter((p) => p.centerLocation === selectedLocation);
   }, [policies, selectedLocation]);
 
   const statistics = useMemo(() => {
-    const filtered = policies.filter(
-      (p) => p.centerLocation === selectedLocation
-    );
+    const filtered = policies.filter((p) => p.centerLocation === selectedLocation);
     return {
       totalPolicies: filtered.length,
       activePolicies: filtered.filter((p) => p.isActive === "true").length,
     };
   }, [policies, selectedLocation]);
 
-  const handleUpdatePolicy = useCallback((updatedItem: any) => {
-    const policyItem = updatedItem as TablePolicy;
-    setPolicies((prev) =>
-      prev.map((policy) =>
-        policy.id === policyItem.id ? { ...policy, ...policyItem } : policy
-      )
-    );
-  }, []);
+const handleAddPolicy = useCallback(
+  async (newPolicyData: {
+    policyName: string;
+    pdfUrl: string;
+    effectiveDate: string;
+    isActive: string;
+    version: string;
+    centerLocation: string;
+  }) => {
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/policy`,
+        {
+          name: newPolicyData.policyName, 
+          pdf_url: newPolicyData.pdfUrl,
+          effective_date: new Date(newPolicyData.effectiveDate).toISOString(), 
+          is_active: newPolicyData.isActive === "true",
+          policy_version: newPolicyData.version,
+          center_id: selectedCenterId,
+        },
+        { withCredentials: true }
+      );
 
-  const handleDeletePolicy = useCallback((id: string | number) => {
-    const deleteId = typeof id === "number" ? id.toString() : id;
-    setPolicies((prev) => prev.filter((policy) => policy.id !== deleteId));
-  }, []);
-
-  const handleAddPolicy = useCallback(
-    (newPolicyData: {
-      policyName: string;
-      pdfUrl: string;
-      effectiveDate: string;
-      isActive: string;
-      version: string;
-      centerLocation: string;
-    }) => {
-      const newPolicy: TablePolicy = {
-        id: Date.now().toString(),
-        policyName: newPolicyData.policyName,
-        pdfUrl: newPolicyData.pdfUrl,
-        effectiveDate: newPolicyData.effectiveDate,
-        isActive: newPolicyData.isActive,
-        version: newPolicyData.version,
-        centerLocation: selectedLocation,
-      };
-
-      setPolicies((prev) => [...prev, newPolicy]);
+      setPolicies((prev) => [...prev, res.data.data]);
       setIsAddPolicyModalOpen(false);
-    },
-    [selectedLocation]
-  );
+    } catch (err) {
+      console.error("Failed to create policy:", err);
+    }
+  },
+  [selectedCenterId]
+);
+
+const handleUpdatePolicy = useCallback(async (updatedItem: any) => {
+  try {
+    const res = await axios.put(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/policy/${updatedItem.id}`,
+      {
+        name: updatedItem.policyName,
+        pdf_url: updatedItem.pdfUrl,
+        effective_date: new Date(updatedItem.effectiveDate).toISOString(),
+        is_active: updatedItem.isActive === "true",
+        policy_version: updatedItem.version,
+      },
+      { withCredentials: true }
+    );
+
+    setPolicies((prev) =>
+      prev.map((policy) => (policy.id === updatedItem.id ? res.data.data : policy))
+    );
+  } catch (err) {
+    console.error("Failed to update policy:", err);
+  }
+}, []);
+
+
+  const handleDeletePolicy = useCallback(async (id: string | number) => {
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/policy/${id}`,
+        { withCredentials: true }
+      );
+      setPolicies((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error("Failed to delete policy:", err);
+    }
+  }, []);
+
+  // 🔹 Handle location change (center selection)
+  const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const centerId = e.target.value;
+    const centerObj = centers.find((c) => c.id === centerId);
+
+    setSelectedCenterId(centerId);
+    setSelectedLocation(centerObj?.location || "");
+    setShowContent(!!centerId);
+  };
 
   const handleOpenAddModal = useCallback(() => {
     if (!selectedLocation) {
@@ -129,19 +168,6 @@ export default function PolicyManagement() {
   const handleCloseAddModal = useCallback(() => {
     setIsAddPolicyModalOpen(false);
   }, []);
-
-  const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setSelectedLocation(value);
-
-    if (value) {
-      setTimeout(() => {
-        setShowContent(true);
-      }, 400);
-    } else {
-      setShowContent(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -158,14 +184,14 @@ export default function PolicyManagement() {
           <div className="relative">
             <select
               id="location"
-              value={selectedLocation}
+              value={selectedCenterId}
               onChange={handleLocationChange}
               className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer appearance-none text-sm"
             >
               <option value="">Select Location to Proceed</option>
-              {LOCATIONS.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
+              {centers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.location}
                 </option>
               ))}
             </select>
@@ -222,7 +248,7 @@ export default function PolicyManagement() {
               selectFields={{
                 isActive: ["true", "false"],
                 version: ["1.0", "1.5", "2.0", "2.2", "3.0"],
-                centerLocation: ["Bangalore", "Lucknow", "Pune", "Noida"],
+                centerLocation: centers.map((c) => c.location),
               }}
               nonEditableFields={["id", "centerLocation"]}
               onDelete={handleDeletePolicy}

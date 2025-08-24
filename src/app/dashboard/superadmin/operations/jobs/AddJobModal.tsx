@@ -11,7 +11,7 @@ interface AddJobModalProps {
     workMode: "online" | "onsite" | "hybrid";
     jobType: "internship" | "full-time";
     companyName: string;
-    vacancyCount: string;
+    vacancy: number;
     eligibility: string;
     desc: string;
     closingDate: string;
@@ -25,7 +25,7 @@ interface FormData {
   workMode: "online" | "onsite" | "hybrid" | "";
   jobType: "internship" | "full-time" | "";
   companyName: string;
-  vacancyCount: string;
+  vacancy: number;
   eligibility: string;
   desc: string;
   closingDate: string;
@@ -54,7 +54,7 @@ const AddJobModal: React.FC<AddJobModalProps> = ({
     workMode: "",
     jobType: "",
     companyName: "",
-    vacancyCount: "1",
+    vacancy: 1,
     eligibility: "",
     desc: "",
     closingDate: "",
@@ -71,7 +71,7 @@ const AddJobModal: React.FC<AddJobModalProps> = ({
         workMode: "",
         jobType: "",
         companyName: "",
-        vacancyCount: "1",
+        vacancy: 1,
         eligibility: "",
         desc: "",
         closingDate: "",
@@ -98,17 +98,17 @@ const AddJobModal: React.FC<AddJobModalProps> = ({
   };
 
   const handleVacancyCountChange = (increment: boolean) => {
-    const currentCount = parseInt(formData.vacancyCount) || 1;
+    const currentCount = formData.vacancy;
     const newCount = increment
       ? currentCount + 1
       : Math.max(1, currentCount - 1);
 
-    setFormData((prev) => ({ ...prev, vacancyCount: newCount.toString() }));
+    setFormData((prev) => ({ ...prev, vacancy: newCount}));
 
-    if (formErrors.vacancyCount) {
+    if (formErrors.vacancy) {
       setFormErrors((prev) => {
         const newErrors = { ...prev };
-        delete newErrors.vacancyCount;
+        delete newErrors.vacancy;
         return newErrors;
       });
     }
@@ -143,8 +143,8 @@ const AddJobModal: React.FC<AddJobModalProps> = ({
       errors.companyName = "Company name is required";
     }
 
-    if (!formData.vacancyCount || parseInt(formData.vacancyCount) < 1) {
-      errors.vacancyCount = "Vacancy count must be at least 1";
+    if (!formData.vacancy ||formData.vacancy < 1) {
+      errors.vacancy = "Vacancy count must be at least 1";
     }
 
     if (!formData.eligibility.trim()) {
@@ -198,7 +198,7 @@ const AddJobModal: React.FC<AddJobModalProps> = ({
       workMode: formData.workMode as "online" | "onsite" | "hybrid",
       jobType: formData.jobType as "internship" | "full-time",
       companyName: formData.companyName,
-      vacancyCount: formData.vacancyCount,
+      vacancy: formData.vacancy,
       eligibility: formData.eligibility,
       desc: formData.desc,
       closingDate: formData.closingDate,
@@ -211,7 +211,7 @@ const AddJobModal: React.FC<AddJobModalProps> = ({
       workMode: "",
       jobType: "",
       companyName: "",
-      vacancyCount: "1",
+      vacancy: 1,
       eligibility: "",
       desc: "",
       closingDate: "",
@@ -229,7 +229,7 @@ const AddJobModal: React.FC<AddJobModalProps> = ({
         workMode: "",
         jobType: "",
         companyName: "",
-        vacancyCount: "1",
+        vacancy: 1,
         eligibility: "",
         desc: "",
         closingDate: "",
@@ -448,7 +448,7 @@ const AddJobModal: React.FC<AddJobModalProps> = ({
                   onClick={() => handleVacancyCountChange(false)}
                   className="w-8 h-8 border border-gray-300 rounded-sm flex items-center justify-center hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] cursor-pointer"
                   disabled={
-                    isSubmitting || parseInt(formData.vacancyCount) <= 1
+                    isSubmitting || formData.vacancy <= 1
                   }
                 >
                   <Minus size={16} />
@@ -456,11 +456,11 @@ const AddJobModal: React.FC<AddJobModalProps> = ({
                 <input
                   type="number"
                   name="vacancyCount"
-                  value={formData.vacancyCount}
+                  value={formData.vacancy}
                   onChange={handleInputChange}
                   min="1"
                   className={`w-20 px-3 py-2 border rounded-sm text-center focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
-                    formErrors.vacancyCount
+                    formErrors.vacancy
                       ? "border-red-500"
                       : "border-gray-300"
                   }`}

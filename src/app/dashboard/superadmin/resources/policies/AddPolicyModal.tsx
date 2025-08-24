@@ -24,13 +24,6 @@ interface FormData {
   centerLocation: string;
 }
 
-const centerLocations = [
-  { value: "Bangalore", label: "Bangalore" },
-  { value: "Lucknow", label: "Lucknow" },
-  { value: "Pune", label: "Pune" },
-  { value: "Noida", label: "Noida" },
-];
-
 const activeStatus = [
   { value: "true", label: "Active" },
   { value: "false", label: "Inactive" },
@@ -345,11 +338,10 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
                   disabled={!!prefillLocation || isSubmitting}
                 >
                   <option value="">Select Location</option>
-                  {centerLocations.map((loc) => (
-                    <option key={loc.value} value={loc.value}>
-                      {loc.label}
+
+                    <option >
+                      {prefillLocation}
                     </option>
-                  ))}
                 </select>
                 {!prefillLocation && !isSubmitting && (
                   <ChevronDown
