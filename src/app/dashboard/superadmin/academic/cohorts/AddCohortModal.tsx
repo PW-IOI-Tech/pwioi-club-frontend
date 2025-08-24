@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ChevronDown,
   Upload,
@@ -18,15 +18,22 @@ interface AddCohortModalProps {
     endDate: string;
     school: string;
   }) => void;
-  center: string;
+  prefillLocation?: string;
 }
 
-// Teacher options (mock data)
+interface FormData {
+  cohortName: string;
+  startDate: string;
+  endDate: string;
+  school: string;
+  selectedTeachers: string[];
+}
+
 const teachersData: Record<
   string,
   Record<string, Array<{ value: string; label: string }>>
 > = {
-  bangalore: {
+  Bangalore: {
     SOT: [
       { value: "dr-john-smith", label: "Dr. John Smith" },
       { value: "prof-alice-brown", label: "Prof. Alice Brown" },
@@ -35,50 +42,48 @@ const teachersData: Record<
       { value: "prof-sarah-johnson", label: "Prof. Sarah Johnson" },
       { value: "dr-michael-davis", label: "Dr. Michael Davis" },
     ],
-    SOH: [
+    SOD: [
       { value: "ms-emily-davis", label: "Ms. Emily Davis" },
       { value: "prof-robert-taylor", label: "Prof. Robert Taylor" },
     ],
   },
-  lucknow: {
+  Lucknow: {
     SOT: [{ value: "dr-rajesh-kumar", label: "Dr. Rajesh Kumar" }],
     SOM: [{ value: "dr-amit-singh", label: "Dr. Amit Singh" }],
-    SOH: [{ value: "ms-kavya-patel", label: "Ms. Kavya Patel" }],
+    SOD: [{ value: "ms-kavya-patel", label: "Ms. Kavya Patel" }],
   },
-  pune: {
+  Pune: {
     SOT: [{ value: "dr-suresh-reddy", label: "Dr. Suresh Reddy" }],
     SOM: [{ value: "dr-vikram-shah", label: "Dr. Vikram Shah" }],
-    SOH: [{ value: "ms-pooja-mehta", label: "Ms. Pooja Mehta" }],
+    SOD: [{ value: "ms-pooja-mehta", label: "Ms. Pooja Mehta" }],
   },
-  noida: {
+  Noida: {
     SOT: [{ value: "dr-ashok-verma", label: "Dr. Ashok Verma" }],
     SOM: [{ value: "prof-deepa-agarwal", label: "Prof. Deepa Agarwal" }],
-    SOH: [{ value: "ms-sneha-kapoor", label: "Ms. Sneha Kapoor" }],
+    SOD: [{ value: "ms-sneha-kapoor", label: "Ms. Sneha Kapoor" }],
   },
 };
 
 const schoolOptions = [
   { value: "SOT", label: "School of Technology" },
   { value: "SOM", label: "School of Management" },
-  { value: "SOH", label: "School of Healthcare" },
+  { value: "SOD", label: "School of Design" },
 ];
 
 const AddCohortModal: React.FC<AddCohortModalProps> = ({
   isOpen,
   onClose,
   onCohortCreated,
-  center,
+  prefillLocation,
 }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     cohortName: "",
     startDate: "",
     endDate: "",
     school: "",
-    selectedTeachers: [] as string[],
+    selectedTeachers: [],
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-
-  // Upload state
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<
     "idle" | "uploading" | "success" | "error"
@@ -87,25 +92,33 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
-      setFormData({
-        cohortName: "",
-        startDate: "",
-        endDate: "",
-        school: "",
-        selectedTeachers: [],
-      });
+      if (prefillLocation) {
+        setFormData((prev) => ({
+          ...prev,
+          school: "",
+          selectedTeachers: [],
+        }));
+      } else {
+        setFormData({
+          cohortName: "",
+          startDate: "",
+          endDate: "",
+          school: "",
+          selectedTeachers: [],
+        });
+      }
       setFormErrors({});
       setUploadedFile(null);
       setUploadStatus("idle");
       setErrorMessage("");
     }
-  }, [isOpen]);
+  }, [isOpen, prefillLocation]);
 
   const getAvailableTeachers = () => {
-    if (!center || !formData.school) return [];
-    return teachersData[center]?.[formData.school] || [];
+    if (!prefillLocation || !formData.school) return [];
+    return teachersData[prefillLocation]?.[formData.school] || [];
   };
 
   const handleInputChange = (
@@ -175,7 +188,7 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
   const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
+    if (["dragenter", "dragover"].includes(e.type)) {
       setDragActive(true);
     } else if (e.type === "dragleave") {
       setDragActive(false);
@@ -241,7 +254,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
 
     if (!validateForm()) return;
 
-    // Simulate upload if file exists
     if (
       uploadedFile &&
       uploadStatus !== "success" &&
@@ -250,7 +262,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
       setUploadStatus("uploading");
       setTimeout(() => {
         setUploadStatus("success");
-        // Proceed to create cohort after upload
         setTimeout(() => {
           onCohortCreated({
             cohortName: formData.cohortName,
@@ -264,7 +275,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
       return;
     }
 
-    // If no file, just create cohort
     if (!uploadedFile) {
       onCohortCreated({
         cohortName: formData.cohortName,
@@ -295,18 +305,15 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-sm p-6 max-w-3xl w-full border border-gray-400 max-h-[90vh] overflow-y-scroll">
+      <div className="bg-white rounded-sm p-6 max-w-3xl w-full border border-gray-400 max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add New Cohort</h3>
 
-        <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-sm">
-          <p className="text-sm">
-            <strong>Creating cohort for center:</strong> {center}
-          </p>
+        <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-sm text-sm">
+          <strong>Center:</strong> {prefillLocation}
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-6">
-            {/* Cohort Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Cohort Name *
@@ -317,7 +324,7 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                 value={formData.cohortName}
                 onChange={handleInputChange}
                 placeholder="e.g., Web Dev Batch 2025"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.cohortName ? "border-red-500" : "border-gray-300"
                 }`}
               />
@@ -328,7 +335,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
               )}
             </div>
 
-            {/* School */}
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 School *
@@ -338,7 +344,7 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                   name="school"
                   value={formData.school}
                   onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
+                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
                     formErrors.school ? "border-red-500" : "border-gray-300"
                   }`}
                 >
@@ -359,7 +365,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
               )}
             </div>
 
-            {/* Teachers */}
             {formData.school && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -399,7 +404,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
               </div>
             )}
 
-            {/* Dates */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -410,7 +414,7 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                   name="startDate"
                   value={formData.startDate}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                     formErrors.startDate ? "border-red-500" : "border-gray-300"
                   }`}
                 />
@@ -430,7 +434,7 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                   name="endDate"
                   value={formData.endDate}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                     formErrors.endDate ? "border-red-500" : "border-gray-300"
                   }`}
                 />
@@ -442,14 +446,13 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
               </div>
             </div>
 
-            {/* Custom Upload Section */}
             <div className="border-t pt-6">
               <h4 className="text-sm font-semibold text-gray-800 mb-3">
                 Upload Student List (XLSX)
               </h4>
 
               <div
-                className={`relative border-2 border-dashed rounded-md p-6 text-center transition-all duration-200 ${
+                className={`relative border-2 border-dashed rounded-md p-6 text-center transition-all ${
                   dragActive
                     ? "border-blue-500 bg-blue-50"
                     : uploadStatus === "error"
@@ -463,7 +466,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
               >
-                {/* === STATE: Idle (no file, not uploading) === */}
                 {uploadStatus === "idle" && !uploadedFile && (
                   <>
                     <label
@@ -489,7 +491,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                   </>
                 )}
 
-                {/* === STATE: File Selected (Preview) === */}
                 {uploadedFile && uploadStatus === "idle" && (
                   <div className="space-y-3">
                     <FileSpreadsheet
@@ -502,7 +503,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                     <p className="text-sm text-gray-500">
                       {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
                     </p>
-                    {/* ✅ Now clickable because file input is NOT rendered here */}
                     <button
                       type="button"
                       onClick={removeFile}
@@ -513,7 +513,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                   </div>
                 )}
 
-                {/* === STATE: Uploading === */}
                 {uploadStatus === "uploading" && (
                   <div className="space-y-2">
                     <Loader2
@@ -524,7 +523,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                   </div>
                 )}
 
-                {/* === STATE: Success === */}
                 {uploadStatus === "success" && (
                   <div className="space-y-2">
                     <CheckCircle className="text-green-500 mx-auto" size={32} />
@@ -534,7 +532,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                     <p className="text-sm text-gray-600">
                       {uploadedFile?.name}
                     </p>
-                    {/* ✅ Clickable because no file input overlay */}
                     <button
                       type="button"
                       onClick={removeFile}
@@ -545,7 +542,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                   </div>
                 )}
 
-                {/* === STATE: Error === */}
                 {uploadStatus === "error" && (
                   <div className="space-y-2">
                     <AlertCircle className="text-red-500 mx-auto" size={32} />
@@ -564,7 +560,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                   </div>
                 )}
 
-                {/* ✅ Only render file input when needed: in idle state with no file */}
                 {uploadStatus === "idle" && !uploadedFile && (
                   <input
                     id="file-upload-input"
@@ -577,7 +572,6 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                 )}
               </div>
 
-              {/* Optional: Hint */}
               <p className="text-xs text-gray-500 mt-2">
                 You can drag & drop or click to select a file.
               </p>
@@ -589,22 +583,20 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
               type="button"
               onClick={handleClose}
               disabled={uploadStatus === "uploading"}
-              className="px-4 py-2 border border-gray-300 rounded-sm text-slate-900 hover:bg-gray-100 disabled:opacity-50 cursor-pointer"
+              className="px-4 py-2 border border-gray-300 rounded-sm text-slate-900 hover:bg-gray-100 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={uploadStatus === "uploading"}
-              className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 cursor-pointer"
+              className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50"
             >
               {uploadStatus === "uploading" ? (
                 <>
                   <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
                   Uploading...
                 </>
-              ) : uploadStatus === "success" ? (
-                "Cohort Created!"
               ) : (
                 "Create Cohort"
               )}

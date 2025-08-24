@@ -5,7 +5,6 @@ import { Plus, ChevronDown, Users, Component } from "lucide-react";
 import Table from "../../Table";
 import AddCohortModal from "./AddCohortModal";
 
-// Types
 interface TableCohort {
   id: string;
   cohortName: string;
@@ -17,22 +16,14 @@ interface TableCohort {
   school: string;
 }
 
-// Center options
-const centerOptions = [
-  { value: "bangalore", label: "Bangalore" },
-  { value: "lucknow", label: "Lucknow" },
-  { value: "pune", label: "Pune" },
-  { value: "noida", label: "Noida" },
-];
+const LOCATIONS = ["Bangalore", "Lucknow", "Pune", "Noida"] as const;
 
-// School options
 const schoolOptions = [
   { value: "SOT", label: "School of Technology" },
   { value: "SOM", label: "School of Management" },
   { value: "SOD", label: "School of Design" },
 ];
 
-// Sample data
 const initialCohorts: TableCohort[] = [
   {
     id: "1",
@@ -41,7 +32,7 @@ const initialCohorts: TableCohort[] = [
     endDate: "2025-06-15",
     teacherCount: 2,
     studentCount: 35,
-    center: "bangalore",
+    center: "Bangalore",
     school: "SOT",
   },
   {
@@ -51,52 +42,34 @@ const initialCohorts: TableCohort[] = [
     endDate: "2025-07-30",
     teacherCount: 3,
     studentCount: 42,
-    center: "noida",
+    center: "Noida",
     school: "SOM",
   },
 ];
 
 export default function CohortManagement() {
-  const [cohorts, setCohorts] = useState<TableCohort[]>([]);
-  const [filteredCohorts, setFilteredCohorts] = useState<TableCohort[]>([]);
-  const [error, setError] = useState("");
+  const [cohorts, setCohorts] = useState<TableCohort[]>(initialCohorts);
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [isAddCohortModalOpen, setIsAddCohortModalOpen] = useState(false);
+  const [showContent, setShowContent] = useState(false);
 
-  // Filter state
-  const [selectedCenter, setSelectedCenter] = useState("");
-  const [filtersComplete, setFiltersComplete] = useState(false);
-
-  // Load sample data
-  React.useEffect(() => {
-    setCohorts(initialCohorts);
-  }, []);
+  const filteredCohorts = useMemo(() => {
+    if (!selectedLocation) return [];
+    return cohorts.filter((c) => c.center === selectedLocation);
+  }, [cohorts, selectedLocation]);
 
   const statistics = useMemo(() => {
-    const filtered = cohorts.filter((c) => c.center === selectedCenter);
+    const filtered = cohorts.filter((c) => c.center === selectedLocation);
     return {
       totalCohorts: filtered.length,
       totalStudents: filtered.reduce((sum, c) => sum + c.studentCount, 0),
       totalTeachers: filtered.reduce((sum, c) => sum + c.teacherCount, 0),
     };
-  }, [cohorts, selectedCenter]);
-
-  const handleCenterChange = (center: string) => {
-    setSelectedCenter(center);
-    setFiltersComplete(!!center);
-    if (center) {
-      const filtered = cohorts.filter((c) => c.center === center);
-      setFilteredCohorts(filtered);
-    } else {
-      setFilteredCohorts([]);
-    }
-  };
+  }, [cohorts, selectedLocation]);
 
   const handleUpdateCohort = useCallback((updatedItem: any) => {
     const cohort = updatedItem as TableCohort;
     setCohorts((prev) =>
-      prev.map((c) => (c.id === cohort.id ? { ...c, ...cohort } : c))
-    );
-    setFilteredCohorts((prev) =>
       prev.map((c) => (c.id === cohort.id ? { ...c, ...cohort } : c))
     );
   }, []);
@@ -104,119 +77,107 @@ export default function CohortManagement() {
   const handleDeleteCohort = useCallback((id: string | number) => {
     const deleteId = typeof id === "number" ? id.toString() : id;
     setCohorts((prev) => prev.filter((c) => c.id !== deleteId));
-    setFilteredCohorts((prev) => prev.filter((c) => c.id !== deleteId));
   }, []);
 
   const handleAddCohort = useCallback(
-    (
-      newCohortData: Omit<
-        TableCohort,
-        "id" | "center" | "teacherCount" | "studentCount"
-      >
-    ) => {
+    (newCohortData: {
+      cohortName: string;
+      startDate: string;
+      endDate: string;
+      school: string;
+    }) => {
       const newCohort: TableCohort = {
         id: Date.now().toString(),
         ...newCohortData,
-        center: selectedCenter,
-        teacherCount: 0, // Will be updated later via backend
+        center: selectedLocation,
+        teacherCount: 0,
         studentCount: 0,
       };
 
       setCohorts((prev) => [...prev, newCohort]);
-      setFilteredCohorts((prev) => [...prev, newCohort]);
       setIsAddCohortModalOpen(false);
     },
-    [selectedCenter]
+    [selectedLocation]
   );
 
   const handleOpenAddModal = useCallback(() => {
-    if (filtersComplete) {
-      setIsAddCohortModalOpen(true);
+    if (!selectedLocation) {
+      alert("Please select a center location first.");
+      return;
     }
-  }, [filtersComplete]);
+    setIsAddCohortModalOpen(true);
+  }, [selectedLocation]);
 
   const handleCloseAddModal = useCallback(() => {
     setIsAddCohortModalOpen(false);
   }, []);
 
-  if (error) {
-    return (
-      <div className="bg-red-50 text-red-600 p-4 rounded-lg max-w-2xl mx-auto mt-8">
-        <h3 className="font-bold">Error</h3>
-        <p>{error}</p>
-        <button
-          onClick={() => setError("")}
-          className="mt-2 px-4 py-2 bg-[#1B3A6A] text-white rounded-lg hover:bg-[#122A4E]"
-        >
-          Dismiss
-        </button>
-      </div>
-    );
-  }
+  const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setSelectedLocation(value);
+
+    if (value) {
+      setTimeout(() => {
+        setShowContent(true);
+      }, 400);
+    } else {
+      setShowContent(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
-      <div className="max-w-7xl mx-auto space-y-4">
-        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
-          Cohort Management
-        </h2>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <h2 className="text-3xl font-bold text-slate-900">Cohort Management</h2>
 
-        {/* Filter Section */}
-        <div className="bg-gradient-to-br from-white to-indigo-50 p-6 rounded-sm border border-gray-400">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Select Center
-          </h3>
-          <div className="max-w-md">
-            <div className="relative">
-              <select
-                value={selectedCenter}
-                onChange={(e) => handleCenterChange(e.target.value)}
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
-              >
-                <option value="">Select Center</option>
-                {centerOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={16}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-              />
+        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
+          <label
+            htmlFor="location"
+            className="block text-sm font-medium text-gray-100 mb-2"
+          >
+            Select Center Location
+          </label>
+          <div className="relative">
+            <select
+              id="location"
+              value={selectedLocation}
+              onChange={handleLocationChange}
+              className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer appearance-none text-sm"
+            >
+              <option value="">Select Location to Proceed</option>
+              {LOCATIONS.map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <ChevronDown className="w-5 h-5 text-gray-400" />
             </div>
           </div>
         </div>
 
-        {!filtersComplete ? (
-          /* Shimmer while no center selected */
-          <div className="space-y-6">
-            Please select center location to Proceed
-          </div>
+        {!selectedLocation ? (
+          <ShimmerSkeleton />
+        ) : !showContent ? (
+          <ShimmerSkeleton />
         ) : (
           <>
-            {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
-                <div className="p-6 text-center">
-                  <Component className="w-8 h-8 text-slate-900 mx-auto mb-2" />
-                  <h4 className="text-lg text-slate-900 mb-1">Total Cohorts</h4>
-                  <p className="text-5xl font-bold text-[#1B3A6A]">
-                    {statistics.totalCohorts}
-                  </p>
-                </div>
+              <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 text-center">
+                <Component className="w-8 h-8 text-slate-900 mx-auto mb-2" />
+                <h4 className="text-lg text-slate-900 mb-1">Total Cohorts</h4>
+                <p className="text-5xl font-bold text-[#1B3A6A]">
+                  {statistics.totalCohorts}
+                </p>
               </div>
 
-              <div className="bg-gradient-to-br from-white to-green-50 rounded-sm border border-gray-400">
-                <div className="p-6 text-center">
-                  <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
-                  <h4 className="text-lg text-slate-900 mb-1">
-                    Total Students
-                  </h4>
-                  <p className="text-5xl font-bold text-green-600">
-                    {statistics.totalStudents}
-                  </p>
-                </div>
+              <div className="bg-gradient-to-br from-white to-green-50 rounded-sm border border-gray-400 p-6 text-center">
+                <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
+                <h4 className="text-lg text-slate-900 mb-1">Total Students</h4>
+                <p className="text-5xl font-bold text-green-600">
+                  {statistics.totalStudents}
+                </p>
               </div>
 
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 flex items-center justify-center p-6">
@@ -235,10 +196,9 @@ export default function CohortManagement() {
               </div>
             </div>
 
-            {/* Table */}
             <Table
               data={filteredCohorts}
-              title="Cohorts Overview"
+              title={`Cohorts in ${selectedLocation}`}
               filterField="cohortName"
               badgeFields={["teacherCount", "studentCount"]}
               selectFields={{
@@ -261,8 +221,35 @@ export default function CohortManagement() {
           isOpen={isAddCohortModalOpen}
           onClose={handleCloseAddModal}
           onCohortCreated={handleAddCohort}
-          center={selectedCenter}
+          prefillLocation={selectedLocation}
         />
+      </div>
+    </div>
+  );
+}
+
+function ShimmerSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="bg-white p-6 rounded-sm border border-gray-300 text-center"
+          >
+            <div className="w-8 h-8 bg-gray-200 rounded-full mx-auto mb-2"></div>
+            <div className="h-5 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
+            <div className="h-8 bg-gray-200 rounded w-1/2 mx-auto"></div>
+          </div>
+        ))}
+      </div>
+      <div className="bg-white p-6 rounded-lg shadow-sm">
+        <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-12 bg-gray-100 rounded"></div>
+          ))}
+        </div>
       </div>
     </div>
   );
