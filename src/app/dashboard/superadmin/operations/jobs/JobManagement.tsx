@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Briefcase, Plus } from "lucide-react";
 import Table from "../../Table";
 import AddJobModal from "./AddJobModal";
+import axios from "axios";
 
 interface TableJob {
   id: string;
@@ -13,58 +14,58 @@ interface TableJob {
   workMode: "online" | "onsite" | "hybrid";
   jobType: "internship" | "full-time";
   companyName: string;
-  vacancyCount: string;
+  vacancy: number;
   eligibility: string;
   desc: string;
   closingDate: string;
 }
 
-const initialJobs: TableJob[] = [
-  {
-    id: "1",
-    jobTitle: "Software Developer",
-    location: "Bangalore",
-    jdLink: "https://example.com/job1",
-    workMode: "hybrid",
-    jobType: "full-time",
-    companyName: "Tech Corp",
-    vacancyCount: "5",
-    eligibility: "B.Tech/B.E in CS/IT",
-    desc: "Develop and maintain web applications using modern technologies",
-    closingDate: "2025-09-15",
-  },
-  {
-    id: "2",
-    jobTitle: "Marketing Intern",
-    location: "Mumbai",
-    jdLink: "https://example.com/job2",
-    workMode: "onsite",
-    jobType: "internship",
-    companyName: "Marketing Solutions",
-    vacancyCount: "3",
-    eligibility: "MBA students",
-    desc: "Support marketing campaigns and digital marketing initiatives",
-    closingDate: "2025-08-30",
-  },
-  {
-    id: "3",
-    jobTitle: "Data Analyst",
-    location: "Pune",
-    jdLink: "https://example.com/job3",
-    workMode: "online",
-    jobType: "full-time",
-    companyName: "DataTech Inc",
-    vacancyCount: "2",
-    eligibility: "B.Tech/MCA with experience in data analysis",
-    desc: "Analyze data trends and create insightful reports for business decisions",
-    closingDate: "2025-09-30",
-  },
-];
+const transformJobPayload = (job: Omit<TableJob, "id">) => ({
+  title: job.jobTitle,
+  location: job.location,
+  jd_link: job.jdLink,
+  work_mode:
+    job.workMode.toUpperCase() === "ONLINE"
+      ? "REMOTE"
+      : job.workMode.toUpperCase(),
+  type: job.jobType.toUpperCase().replace("-", "_"),
+  company_name: job.companyName,
+  vacancy_count: job.vacancy,
+  eligibility: job.eligibility,
+  description: job.desc,
+  closing_date: new Date(job.closingDate).toISOString(),
+});
+
+const transformJobResponse = (job: any): TableJob => ({
+  id: job.id,
+  jobTitle: job.title,
+  location: job.location,
+  jdLink: job.jd_link,
+  workMode:
+    job.work_mode === "REMOTE"
+      ? "online"
+      : job.work_mode?.toLowerCase() || "onsite",
+  jobType:
+    job.type?.toLowerCase().replace("_", "-") || "full-time",
+  companyName: job.company_name,
+  vacancy: job.vacancy,
+  eligibility: job.eligibility,
+  desc: job.description,
+  closingDate: job.closing_date
+    ? new Date(job.closing_date).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "",
+});
+
 
 export default function JobManagement() {
-  const [jobs, setJobs] = useState<TableJob[]>(initialJobs);
+  const [jobs, setJobs] = useState<TableJob[]>([]);
   const [error, setError] = useState("");
   const [isAddJobModalOpen, setIsAddJobModalOpen] = useState(false);
+
 
   const statistics = useMemo(
     () => ({
@@ -73,41 +74,72 @@ export default function JobManagement() {
     [jobs]
   );
 
-  const handleUpdateJob = useCallback((updatedItem: any) => {
-    const jobItem = updatedItem as TableJob;
-    setJobs((prev) =>
-      prev.map((job) => (job.id === jobItem.id ? { ...job, ...jobItem } : job))
+// Fetch jobs
+useEffect(() => {
+  const fetchJobs = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/job/All`,
+        { withCredentials: true }
+      );
+      setJobs(res.data.data.map(transformJobResponse));
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch jobs");
+    }
+  };
+
+  fetchJobs();
+}, []);
+
+// Add job
+const handleAddJob = useCallback(async (newJobData: Omit<TableJob, "id">) => {
+  try {
+    const payload = transformJobPayload(newJobData);
+    const res = await axios.post(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/job`,
+      payload,
+      { withCredentials: true }
     );
+
+    setJobs((prev) => [...prev, transformJobResponse(res.data.data)]);
+    setIsAddJobModalOpen(false);
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Failed to add job");
+  }
+}, []);
+
+// Update job
+const handleUpdateJob = useCallback(async (updatedItem:any) => {
+  try {
+    const res = await axios.put(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/job/${updatedItem.id}`,
+      transformJobPayload(updatedItem),
+      { withCredentials: true }
+    );
+
+    setJobs((prev) =>
+      prev.map((job) =>
+        job.id === updatedItem.id ? transformJobResponse(res.data.data) : job
+      )
+    );
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Failed to update job");
+  }
+}, []);
+
+
+  const handleDeleteJob = useCallback(async (id: string | number) => {
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/job/${id}`,
+        { withCredentials: true }
+      );
+
+      setJobs((prev) => prev.filter((job) => job.id !== id));
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to delete job");
+    }
   }, []);
-
-  const handleDeleteJob = useCallback((id: string | number) => {
-    const deleteId = typeof id === "number" ? id.toString() : id;
-    setJobs((prev) => prev.filter((job) => job.id !== deleteId));
-  }, []);
-
-  const handleAddJob = useCallback(
-    (newJobData: {
-      jobTitle: string;
-      location: string;
-      jdLink: string;
-      workMode: "online" | "onsite" | "hybrid";
-      jobType: "internship" | "full-time";
-      companyName: string;
-      vacancyCount: string;
-      eligibility: string;
-      desc: string;
-      closingDate: string;
-    }) => {
-      const newJob: TableJob = {
-        id: Date.now().toString(),
-        ...newJobData,
-      };
-
-      setJobs((prev) => [...prev, newJob]);
-      setIsAddJobModalOpen(false);
-    },
-    []
-  );
 
   const handleOpenAddModal = useCallback(() => {
     setIsAddJobModalOpen(true);
