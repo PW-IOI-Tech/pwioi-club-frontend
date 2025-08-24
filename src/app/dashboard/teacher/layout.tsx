@@ -20,6 +20,7 @@ import {
   Users,
   School,
   Upload,
+  CircleCheckBig,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -62,6 +63,12 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
       href: "/dashboard/teacher/upload",
     },
     {
+      id: "cpr",
+      label: "CPR Management",
+      icon: CircleCheckBig,
+      href: "/dashboard/teacher/cpr",
+    },
+    {
       id: "help",
       label: "Help",
       icon: HelpCircle,
@@ -73,6 +80,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
     if (pathname.includes("/acads")) return "academics";
     if (pathname.includes("/attendance")) return "attendance";
     if (pathname.includes("/upload")) return "upload";
+    if (pathname.includes("/cpr")) return "cpr";
     if (pathname.includes("/help")) return "help";
     return "home";
   };
