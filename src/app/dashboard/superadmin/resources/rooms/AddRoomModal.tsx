@@ -1,31 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import axios from "axios";
 
 interface AddRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onRoomCreated: (roomData: { center: string; roomName: string }) => void;
+  onRoomCreated: (roomData: { center_id: string; roomName: string }) => void;
+  centers:any;
 }
 
 interface FormData {
-  center: string;
+  center_id: string;
   roomName: string;
 }
-
-const centers = [
-  { value: "bangalore", label: "Bangalore" },
-  { value: "lucknow", label: "Lucknow" },
-  { value: "pune", label: "Pune" },
-  { value: "noida", label: "Noida" },
-];
 
 const AddRoomModal: React.FC<AddRoomModalProps> = ({
   isOpen,
   onClose,
   onRoomCreated,
+  centers
 }) => {
   const [formData, setFormData] = useState<FormData>({
-    center: "",
+    center_id: "",
     roomName: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -34,7 +30,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
   React.useEffect(() => {
     if (isOpen) {
       setFormData({
-        center: "",
+        center_id: "",
         roomName: "",
       });
       setFormErrors({});
@@ -46,8 +42,6 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Clear error when user starts typing/selecting
     if (formErrors[name]) {
       setFormErrors((prev) => {
         const newErrors = { ...prev };
@@ -60,7 +54,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!formData.center.trim()) {
+    if (!formData.center_id.trim()) {
       errors.center = "Center is required";
     }
 
@@ -82,15 +76,10 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
     if (!validateForm()) {
       return;
     }
-
     setIsSubmitting(true);
-
-    // Call the parent component's callback to add the room
     onRoomCreated(formData);
-
-    // Reset form
     setFormData({
-      center: "",
+      center_id: "",
       roomName: "",
     });
     setFormErrors({});
@@ -100,7 +89,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
   const handleClose = () => {
     if (!isSubmitting) {
       setFormData({
-        center: "",
+        center_id: "",
         roomName: "",
       });
       setFormErrors({});
@@ -109,6 +98,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
   };
 
   if (!isOpen) return null;
+
 
   return (
     <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -129,8 +119,8 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
               </label>
               <div className="relative">
                 <select
-                  name="center"
-                  value={formData.center}
+                  name="center_id"
+                  value={formData.center_id}
                   onChange={handleInputChange}
                   className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
                     formErrors.center ? "border-red-500" : "border-gray-300"
@@ -138,9 +128,9 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
                   disabled={isSubmitting}
                 >
                   <option value="">Select Center</option>
-                  {centers.map((center) => (
-                    <option key={center.value} value={center.value}>
-                      {center.label}
+                  {centers.map((center:any) => (
+                    <option key={center?.location} value={center?.id}>
+                      {center?.location}
                     </option>
                   ))}
                 </select>

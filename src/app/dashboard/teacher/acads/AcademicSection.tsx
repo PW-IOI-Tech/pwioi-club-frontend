@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BookOpen,
   GraduationCap,
@@ -22,6 +22,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import axios from "axios";
 
 interface Course {
   class: string;
@@ -180,28 +181,6 @@ const mockStudentMarks: StudentMark[] = [
     rank: 1,
   },
 ];
-
-const schoolOptions: SchoolOption[] = [
-  { value: "SOT", label: "School of Technology" },
-  { value: "SOM", label: "School of Management" },
-  { value: "SOD", label: "School of Design" },
-];
-
-const batchOptions: string[] = ["21", "22", "23", "24"];
-const divisionOptions: string[] = ["B1", "B2", "B3"];
-const semesterOptions: number[] = [1, 2, 3, 4, 5, 6, 7, 8];
-
-const testTypes: TestType[] = [
-  { value: "test", label: "Test" },
-  { value: "midterm", label: "Mid-term" },
-  { value: "final", label: "Final Exam" },
-];
-
-const testNumbers: Record<string, number[]> = {
-  test: [1, 2, 3],
-  midterm: [1, 2],
-  final: [1],
-};
 
 const DashboardHeader: React.FC = () => {
   return (
@@ -413,6 +392,138 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [selectedTestType, setSelectedTestType] = useState<string>("");
   const [selectedTestNumber, setSelectedTestNumber] = useState<string>("");
+  const [teachingDetails, setTeachingDetails] = useState<any | null>(null);
+
+  const getTeachingDetails = async () => {
+    try {
+      const response = await axios.get<any>(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/teaching-details`,
+        { withCredentials: true }
+      );
+      setTeachingDetails(response.data);
+    } catch (error) {
+      console.error("Error fetching teaching details:", error);
+    }
+  };
+
+  useEffect(() => {
+    getTeachingDetails();
+  }, []);
+
+  const schoolOptions =
+    teachingDetails?.schools.map((s: any) => ({
+      value: s.id,
+      label: s.name,
+    })) || [];
+
+  const getBatchOptions = (schoolId: string) => {
+    const school = teachingDetails?.schools.find((s: any) => s.id === schoolId);
+    return (
+      school?.batches.map((b: any) => ({
+        value: b.id,
+        label: b.name,
+      })) || []
+    );
+  };
+
+  const getDivisionOptions = (schoolId: string, batchId: string) => {
+    const batch = teachingDetails?.schools
+      .find((s: any) => s.id === schoolId)
+      ?.batches.find((b: any) => b.id === batchId);
+
+    return (
+      batch?.divisions.map((d: any) => ({
+        value: d.id,
+        label: d.code,
+      })) || []
+    );
+  };
+
+  const getSemesterOptions = (
+    schoolId: string,
+    batchId: string,
+    divisionId: string
+  ) => {
+    const division = teachingDetails?.schools
+      .find((s: any) => s.id === schoolId)
+      ?.batches.find((b: any) => b.id === batchId)
+      ?.divisions.find((d: any) => d.id === divisionId);
+
+    return (
+      division?.semesters.map((sem: any) => ({
+        value: sem.id,
+        label: `Semester ${sem.number}`,
+      })) || []
+    );
+  };
+
+  const getSubjectOptions = (
+    schoolId: string,
+    batchId: string,
+    divisionId: string,
+    semesterId: string
+  ) => {
+    const semester = teachingDetails?.schools
+      .find((s: any) => s.id === schoolId)
+      ?.batches.find((b: any) => b.id === batchId)
+      ?.divisions.find((d: any) => d.id === divisionId)
+      ?.semesters.find((sem: any) => sem.id === semesterId);
+
+    return (
+      semester?.subjects.map((subj: any) => ({
+        value: subj.id,
+        label: subj.name,
+      })) || []
+    );
+  };
+
+  const getExamTypeOptions = (
+    schoolId: string,
+    batchId: string,
+    divisionId: string,
+    semesterId: string,
+    subjectId: string
+  ) => {
+    const subject = teachingDetails?.schools
+      ?.find((s: any) => s.id === schoolId)
+      ?.batches?.find((b: any) => b.id === batchId)
+      ?.divisions?.find((d: any) => d.id === divisionId)
+      ?.semesters?.find((sem: any) => sem.id === semesterId)
+      ?.subjects?.find((sub: any) => sub.id === subjectId);
+
+    return (
+      subject?.exam_types?.map((et: any) => ({
+        value: et.exam_type,
+        label: et.exam_type
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c: any) => c.toUpperCase()),
+      })) ?? []
+    );
+  };
+
+  const getExamNumberOptions = (
+    schoolId: string,
+    batchId: string,
+    divisionId: string,
+    semesterId: string,
+    subjectId: string,
+    examType: string
+  ) => {
+    const examTypeObj = teachingDetails?.schools
+      ?.find((s: any) => s.id === schoolId)
+      ?.batches?.find((b: any) => b.id === batchId)
+      ?.divisions?.find((d: any) => d.id === divisionId)
+      ?.semesters?.find((sem: any) => sem.id === semesterId)
+      ?.subjects?.find((sub: any) => sub.id === subjectId)
+      ?.exam_types?.find((et: any) => et.exam_type === examType);
+
+    return (
+      examTypeObj?.exams?.map((exam: any) => ({
+        value: exam.id,
+        label: exam.name,
+      })) || []
+    );
+  };
 
   const canShowMarksDetails =
     selectedSchool &&
@@ -444,16 +555,29 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 mb-4 text-sm">
+        {/* School */}
         <div>
           <label className="block font-medium text-gray-700 mb-2">School</label>
           <div className="relative">
             <select
               value={selectedSchool}
-              onChange={(e) => setSelectedSchool(e.target.value)}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
+              onChange={(e) => {
+                setSelectedSchool(e.target.value);
+                setSelectedBatch("");
+                setSelectedDivision("");
+                setSelectedSemester("");
+                setSelectedSubject("");
+                setSelectedTestType("");
+                setSelectedTestNumber("");
+              }}
+                            disabled={schoolOptions.length===0}
+
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
+              focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
+              appearance-none bg-white cursor-pointer"
             >
               <option value="">Select School</option>
-              {schoolOptions.map((option) => (
+              {schoolOptions.map((option: any) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -466,19 +590,30 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           </div>
         </div>
 
+        {/* Batch */}
         <div>
           <label className="block font-medium text-gray-700 mb-2">Batch</label>
           <div className="relative">
             <select
               value={selectedBatch}
-              onChange={(e) => setSelectedBatch(e.target.value)}
+              onChange={(e) => {
+                setSelectedBatch(e.target.value);
+                setSelectedDivision("");
+                setSelectedSemester("");
+                setSelectedSubject("");
+                setSelectedTestType("");
+                setSelectedTestNumber("");
+              }}
               disabled={!selectedSchool}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
+              focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
+              disabled:bg-gray-100 disabled:cursor-not-allowed 
+              appearance-none bg-white cursor-pointer"
             >
               <option value="">Select Batch</option>
-              {batchOptions.map((batch) => (
-                <option key={batch} value={batch}>
-                  {selectedSchool}20{batch}
+              {getBatchOptions(selectedSchool).map((batch: any) => (
+                <option key={batch.value} value={batch.value}>
+                  {batch.label}
                 </option>
               ))}
             </select>
@@ -491,25 +626,33 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           </div>
         </div>
 
+        {/* Division */}
         <div>
-          <label className="block font-medium text-gray-700 mb-2">
-            Division
-          </label>
+          <label className="block font-medium text-gray-700 mb-2">Division</label>
           <div className="relative">
             <select
               value={selectedDivision}
-              onChange={(e) => setSelectedDivision(e.target.value)}
+              onChange={(e) => {
+                setSelectedDivision(e.target.value);
+                setSelectedSemester("");
+                setSelectedSubject("");
+                setSelectedTestType("");
+                setSelectedTestNumber("");
+              }}
               disabled={!selectedBatch}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
+              focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
+              disabled:bg-gray-100 disabled:cursor-not-allowed 
+              appearance-none bg-white cursor-pointer"
             >
               <option value="">Select Division</option>
-              {divisionOptions.map((division) => (
-                <option key={division} value={division}>
-                  {selectedSchool}
-                  {selectedBatch}
-                  {division}
-                </option>
-              ))}
+              {getDivisionOptions(selectedSchool, selectedBatch).map(
+                (division: any) => (
+                  <option key={division.value} value={division.value}>
+                    {division.label}
+                  </option>
+                )
+              )}
             </select>
             <ChevronDown
               size={16}
@@ -520,21 +663,32 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           </div>
         </div>
 
+        {/* Semester */}
         <div>
-          <label className="block font-medium text-gray-700 mb-2">
-            Semester
-          </label>
+          <label className="block font-medium text-gray-700 mb-2">Semester</label>
           <div className="relative">
             <select
               value={selectedSemester}
-              onChange={(e) => setSelectedSemester(e.target.value)}
+              onChange={(e) => {
+                setSelectedSemester(e.target.value);
+                setSelectedSubject("");
+                setSelectedTestType("");
+                setSelectedTestNumber("");
+              }}
               disabled={!selectedDivision}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
+              focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
+              disabled:bg-gray-100 disabled:cursor-not-allowed 
+              appearance-none bg-white cursor-pointer"
             >
               <option value="">Select Semester</option>
-              {semesterOptions.map((sem) => (
-                <option key={sem} value={sem}>
-                  Semester {sem}
+              {getSemesterOptions(
+                selectedSchool,
+                selectedBatch,
+                selectedDivision
+              ).map((sem: any) => (
+                <option key={sem.value} value={sem.value}>
+                  {sem.label}
                 </option>
               ))}
             </select>
@@ -547,21 +701,34 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           </div>
         </div>
 
+        {/* Subject */}
         <div>
-          <label className="block font-medium text-gray-700 mb-2">
-            Subject
-          </label>
+          <label className="block font-medium text-gray-700 mb-2">Subject</label>
           <div className="relative">
             <select
               value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
+              onChange={(e) => {
+                setSelectedSubject(e.target.value);
+                setSelectedTestType("");
+                setSelectedTestNumber("");
+              }}
               disabled={!selectedSemester}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
+              focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
+              disabled:bg-gray-100 disabled:cursor-not-allowed 
+              appearance-none bg-white cursor-pointer"
             >
               <option value="">Select Subject</option>
-              <option value="Data Structures">Data Structures</option>
-              <option value="Database Management">Database Management</option>
-              <option value="Software Engineering">Software Engineering</option>
+              {getSubjectOptions(
+                selectedSchool,
+                selectedBatch,
+                selectedDivision,
+                selectedSemester
+              ).map((subj: any) => (
+                <option key={subj.value} value={subj.value}>
+                  {subj.label}
+                </option>
+              ))}
             </select>
             <ChevronDown
               size={16}
@@ -572,6 +739,7 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           </div>
         </div>
 
+        {/* Test Type */}
         <div>
           <label className="block font-medium text-gray-700 mb-2">
             Test Type
@@ -579,11 +747,24 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           <div className="relative">
             <select
               value={selectedTestType}
-              onChange={(e) => setSelectedTestType(e.target.value)}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
+              onChange={(e) => {
+                setSelectedTestType(e.target.value);
+                setSelectedTestNumber("");
+              }}
+              disabled={!selectedSubject}
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
+              focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
+              disabled:bg-gray-100 disabled:cursor-not-allowed 
+              appearance-none bg-white cursor-pointer"
             >
               <option value="">Select Test Type</option>
-              {testTypes.map((option) => (
+              {getExamTypeOptions(
+                selectedSchool,
+                selectedBatch,
+                selectedDivision,
+                selectedSemester,
+                selectedSubject
+              ).map((option: any) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -596,6 +777,7 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           </div>
         </div>
 
+        {/* Test Number */}
         <div>
           <label className="block font-medium text-gray-700 mb-2">
             Test Number
@@ -605,19 +787,24 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
               value={selectedTestNumber}
               onChange={(e) => setSelectedTestNumber(e.target.value)}
               disabled={!selectedTestType}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
+              focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
+              disabled:bg-gray-100 disabled:cursor-not-allowed 
+              appearance-none bg-white cursor-pointer"
             >
               <option value="">Select Test Number</option>
-              {selectedTestType &&
-                testNumbers[selectedTestType]?.map((num) => (
-                  <option key={num} value={num}>
-                    {selectedTestType === "test"
-                      ? `Test ${num}`
-                      : selectedTestType === "midterm"
-                      ? `Mid-term ${num}`
-                      : "Final Exam"}
-                  </option>
-                ))}
+              {getExamNumberOptions(
+                selectedSchool,
+                selectedBatch,
+                selectedDivision,
+                selectedSemester,
+                selectedSubject,
+                selectedTestType
+              ).map((num: any) => (
+                <option key={num.value} value={num.value}>
+                  {num.label}
+                </option>
+              ))}
             </select>
             <ChevronDown
               size={16}
@@ -629,11 +816,14 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
         </div>
       </div>
 
+      {/* Submit Button */}
       <div className="mb-6">
         <button
           onClick={handleShowAnalysis}
           disabled={!canShowMarksDetails}
-          className="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-sm transition-colors font-medium disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer group"
+          className="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-sm 
+          transition-colors font-medium disabled:bg-gray-300 
+          disabled:cursor-not-allowed cursor-pointer group"
         >
           <BarChart3 size={16} className="group-hover:scale-110" />
           Show Performance Analysis
@@ -678,7 +868,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
       <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 px-6 py-4 drop-shadow-sm">
         <h3 className="text-xl font-semibold text-slate-900">
           {selectedFilters.subject} -{" "}
-          {testTypes.find((t) => t.value === selectedFilters.testType)?.label}{" "}
+          {/* {testTypes.find((t) => t.value === selectedFilters.testType)?.label}{" "} */}
           Performance Trend
         </h3>
       </div>
@@ -772,11 +962,11 @@ const StudentMarksTable: React.FC<StudentMarksTableProps> = ({
               <Users className="w-4 h-4 text-white" />
             </div>
             <h3 className="text-lg font-semibold text-slate-900">
-              Student Marks -{" "}
+              {/* Student Marks -{" "}
               {
                 testTypes.find((t) => t.value === selectedFilters.testType)
                   ?.label
-              }{" "}
+              }{" "} */}
               {selectedFilters.testNumber}
             </h3>
             <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -934,6 +1124,7 @@ const TeacherMarksDashboard: React.FC = () => {
     setSelectedFilters(filters);
     setShowMarksDetails(true);
   };
+
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">

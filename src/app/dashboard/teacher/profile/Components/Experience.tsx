@@ -685,7 +685,7 @@ const Experience: React.FC = () => {
           onConfirm={handleDeleteExperience}
           experienceTitle={
             selectedExperience
-              ? `${selectedExperience.title} at ${selectedExperience.companyName}`
+              ? `${selectedExperience.title} at ${selectedExperience.company_name}`
               : undefined
           }
         />

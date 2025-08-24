@@ -1,94 +1,143 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Users, Plus } from "lucide-react";
 import Table from "../../Table";
 import AddRoomModal from "./AddRoomModal";
+import axios from "axios";
 
 interface TableRoom {
   id: string;
-  center: string;
+  center: any;
   roomName: string;
 }
 
-const initialRooms: TableRoom[] = [
-  {
-    id: "1",
-    center: "Bangalore",
-    roomName: "Conference Room A",
-  },
-  {
-    id: "2",
-    center: "Lucknow",
-    roomName: "Meeting Room 101",
-  },
-  {
-    id: "3",
-    center: "Pune",
-    roomName: "Training Hall B",
-  },
-  {
-    id: "4",
-    center: "Noida",
-    roomName: "Seminar Room 1",
-  },
-  {
-    id: "5",
-    center: "Bangalore",
-    roomName: "Board Room",
-  },
-  {
-    id: "6",
-    center: "Lucknow",
-    roomName: "Discussion Room 202",
-  },
-];
+interface AddRoomModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onRoomCreated: (roomData: { center_id: string; roomName: string }) => void;
+}
+
 
 export default function RoomManagement() {
-  const [rooms, setRooms] = useState<TableRoom[]>(initialRooms);
+  const [rooms, setRooms] = useState<TableRoom[]>([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [isAddRoomModalOpen, setIsAddRoomModalOpen] = useState(false);
+  const [centers, setCenters] = useState<any[]>([]);
+
+
+  const fetchRooms = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rooms`, {
+        withCredentials:true,
+      });
+
+      const mappedRooms: TableRoom[] = res.data.data.map((room: any) => ({
+        id: room.id,
+        center: room.center?.name || "N/A",
+        roomName: room.name,
+      }));
+
+      setRooms(mappedRooms);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch rooms");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
+
+
+useEffect(() => {
+  const fetchCenters = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+        {withCredentials:true }
+      );
+      setCenters(res.data.data); 
+    } catch (err) {
+      console.error("Failed to fetch centers:", err);
+    }
+  };
+
+  fetchCenters();
+}, []);
 
   const statistics = useMemo(
     () => ({
       totalRooms: rooms.length,
-      roomsByCenter: {
-        bangalore: rooms.filter((room) => room.center === "bangalore").length,
-        lucknow: rooms.filter((room) => room.center === "lucknow").length,
-        pune: rooms.filter((room) => room.center === "pune").length,
-        noida: rooms.filter((room) => room.center === "noida").length,
-      },
+      roomsByCenter: rooms.reduce((acc: any, room) => {
+        const key = room.center.toLowerCase();
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {}),
     }),
     [rooms]
   );
 
-  const handleUpdateRoom = useCallback((updatedItem: any) => {
-    const roomItem = updatedItem as TableRoom;
-    setRooms((prev) =>
-      prev.map((room) =>
-        room.id === roomItem.id ? { ...room, ...roomItem } : room
-      )
-    );
+  // ✅ Update Room
+  const handleUpdateRoom = useCallback(async (updatedItem: any) => {
+    try {
+      const roomItem = updatedItem as TableRoom;
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rooms/${roomItem.id}`,
+        { name: roomItem.roomName },
+        {withCredentials:true}
+      );
+
+      setRooms((prev) =>
+        prev.map((room) =>
+          room.id === roomItem.id ? { ...room, ...roomItem } : room
+        )
+      );
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to update room");
+    }
   }, []);
 
-  const handleDeleteRoom = useCallback((id: string | number) => {
-    const deleteId = typeof id === "number" ? id.toString() : id;
-    setRooms((prev) => prev.filter((room) => room.id !== deleteId));
+  // ✅ Delete Room
+  const handleDeleteRoom = useCallback(async (id: string | number) => {
+    try {
+      const deleteId = typeof id === "number" ? id.toString() : id;
+      await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rooms/${deleteId}`,         {withCredentials:true}
+);
+
+      setRooms((prev) => prev.filter((room) => room.id !== deleteId));
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to delete room");
+    }
   }, []);
 
-  const handleAddRoom = useCallback(
-    (newRoomData: { center: string; roomName: string }) => {
+const handleAddRoom = useCallback(
+  async (newRoomData: { center_id: any; roomName: string;}) => {
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rooms`,
+        { name: newRoomData.roomName, center_id: newRoomData.center_id || "" },
+        {withCredentials:true}
+      );
+
       const newRoom: TableRoom = {
-        id: Date.now().toString(),
-        center: newRoomData.center,
-        roomName: newRoomData.roomName,
+        id: res.data.data.id,
+        center: res.data.data.center.name,
+        roomName: res.data.data.name,
       };
 
       setRooms((prev) => [...prev, newRoom]);
       setIsAddRoomModalOpen(false);
-    },
-    []
-  );
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to add room");
+    }
+  },
+  []
+);
+
 
   const handleOpenAddModal = useCallback(() => {
     setIsAddRoomModalOpen(true);
@@ -97,6 +146,10 @@ export default function RoomManagement() {
   const handleCloseAddModal = useCallback(() => {
     setIsAddRoomModalOpen(false);
   }, []);
+
+  if (loading) {
+    return <p className="text-center mt-8">Loading rooms...</p>;
+  }
 
   if (error) {
     return (
@@ -153,7 +206,7 @@ export default function RoomManagement() {
           filterField="center"
           badgeFields={["center"]}
           selectFields={{
-            center: ["bangalore", "lucknow", "pune", "noida"],
+            center: Array.from(new Set(rooms.map((room) => room.center.toLowerCase()))),
           }}
           nonEditableFields={["id", "center"]}
           onDelete={handleDeleteRoom}
@@ -165,6 +218,7 @@ export default function RoomManagement() {
           isOpen={isAddRoomModalOpen}
           onClose={handleCloseAddModal}
           onRoomCreated={handleAddRoom}
+          centers={centers}
         />
       </div>
     </div>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 
 interface AddCenterModalProps {
   isOpen: boolean;
@@ -46,7 +47,6 @@ const AddCenterModal: React.FC<AddCenterModalProps> = ({
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error when user starts typing
     if (formErrors[name]) {
       setFormErrors((prev) => {
         const newErrors = { ...prev };
@@ -87,35 +87,48 @@ const AddCenterModal: React.FC<AddCenterModalProps> = ({
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
 
-    // Call the parent component's callback to add the center
-    onCenterCreated(formData);
+    try {
+      const payload = {
+        name: formData.centerName,
+        location: formData.location,
+        code: Number(formData.code),
+      };
 
-    // Reset form
-    setFormData({
-      centerName: "",
-      location: "",
-      code: "",
-    });
-    setFormErrors({});
-    setIsSubmitting(false);
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/create`,
+        payload,
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        onCenterCreated(formData);
+        setFormData({ centerName: "", location: "", code: "" });
+        setFormErrors({});
+        onClose();
+      }
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        setFormErrors({ submit: error.response.data.message });
+      } else {
+        setFormErrors({ submit: "Something went wrong. Please try again." });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setFormData({
-        centerName: "",
-        location: "",
-        code: "",
-      });
+      setFormData({ centerName: "", location: "", code: "" });
       setFormErrors({});
       onClose();
     }

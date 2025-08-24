@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Users, Plus } from "lucide-react";
 import Table from "../../Table";
 import AddMentorModal from "./AddMentorModal";
+import axios from "axios";
 
 interface TableMentor {
   id: string;
@@ -15,40 +16,42 @@ interface TableMentor {
   company: string;
 }
 
-const initialMentors: TableMentor[] = [
-  {
-    id: "1",
-    name: "John Smith",
-    email: "john.smith@techcorp.com",
-    phoneNumber: "+91 9876543210",
-    linkedinLink: "https://linkedin.com/in/johnsmith",
-    designation: "Senior Software Engineer",
-    company: "TechCorp",
-  },
-  {
-    id: "2",
-    name: "Sarah Johnson",
-    email: "sarah.johnson@innovate.com",
-    phoneNumber: "+91 9876543211",
-    linkedinLink: "https://linkedin.com/in/sarahjohnson",
-    designation: "Product Manager",
-    company: "Innovate Solutions",
-  },
-  {
-    id: "3",
-    name: "Michael Chen",
-    email: "michael.chen@datatech.com",
-    phoneNumber: "+91 9876543212",
-    linkedinLink: "https://linkedin.com/in/michaelchen",
-    designation: "Data Scientist",
-    company: "DataTech Analytics",
-  },
-];
-
 export default function MentorManagement() {
-  const [mentors, setMentors] = useState<TableMentor[]>(initialMentors);
+  const [mentors, setMentors] = useState<TableMentor[]>([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [isAddMentorModalOpen, setIsAddMentorModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchMentors = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mentor/all`,
+          { withCredentials: true }
+        );
+
+         if (res.data.success) {
+          const mappedMentors: TableMentor[] = res.data.data.map((c: any) => ({
+            id: c.id,
+            centerName: c.name,
+            email:c.email,
+            phone:c.phone,
+            linkedin:c.linkedin,
+            designation:c.designation,
+            company:c.company,
+          }));
+          setMentors(mappedMentors);
+        }
+
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to fetch mentors");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMentors();
+  }, []);
 
   const statistics = useMemo(
     () => ({
@@ -57,44 +60,38 @@ export default function MentorManagement() {
     [mentors]
   );
 
-  const handleUpdateMentor = useCallback((updatedItem: any) => {
+  const handleUpdateMentor = useCallback(async (updatedItem: any) => {
     const mentorItem = updatedItem as TableMentor;
-    setMentors((prev) =>
-      prev.map((mentor) =>
-        mentor.id === mentorItem.id ? { ...mentor, ...mentorItem } : mentor
-      )
-    );
+    try {
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mentor/${mentorItem.id}`,
+        mentorItem,
+        {
+          withCredentials: true,
+        }
+      );
+      setMentors((prev) =>
+        prev.map((mentor) =>
+          mentor.id === mentorItem.id ? res.data.data : mentor
+        )
+      );
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to update mentor");
+    }
   }, []);
 
-  const handleDeleteMentor = useCallback((id: string | number) => {
+  const handleDeleteMentor = useCallback(async (id: string | number) => {
     const deleteId = typeof id === "number" ? id.toString() : id;
-    setMentors((prev) => prev.filter((mentor) => mentor.id !== deleteId));
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mentor/${deleteId}`,
+        { withCredentials: true }
+      );
+      setMentors((prev) => prev.filter((mentor) => mentor.id !== deleteId));
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to delete mentor");
+    }
   }, []);
-
-  const handleAddMentor = useCallback(
-    (newMentorData: {
-      name: string;
-      email: string;
-      phoneNumber: string;
-      linkedinLink: string;
-      designation: string;
-      company: string;
-    }) => {
-      const newMentor: TableMentor = {
-        id: Date.now().toString(),
-        name: newMentorData.name,
-        email: newMentorData.email,
-        phoneNumber: newMentorData.phoneNumber,
-        linkedinLink: newMentorData.linkedinLink,
-        designation: newMentorData.designation,
-        company: newMentorData.company,
-      };
-
-      setMentors((prev) => [...prev, newMentor]);
-      setIsAddMentorModalOpen(false);
-    },
-    []
-  );
 
   const handleOpenAddModal = useCallback(() => {
     setIsAddMentorModalOpen(true);
@@ -153,42 +150,45 @@ export default function MentorManagement() {
           </div>
         </div>
 
-        <Table
-          data={mentors}
-          title="Mentors Overview"
-          filterField="company"
-          badgeFields={["company"]}
-          selectFields={{
-            company: [
-              "TechCorp",
-              "Innovate Solutions",
-              "DataTech Analytics",
-              "Microsoft",
-              "Google",
-              "Amazon",
-              "Meta",
-              "Apple",
-            ],
-            designation: [
-              "Software Engineer",
-              "Senior Software Engineer",
-              "Product Manager",
-              "Data Scientist",
-              "Engineering Manager",
-              "Tech Lead",
-              "Architect",
-            ],
-          }}
-          nonEditableFields={["id"]}
-          onDelete={handleDeleteMentor}
-          onEdit={handleUpdateMentor}
-          hiddenColumns={["id"]}
-        />
+        {loading ? (
+          <p className="text-center text-gray-600">Loading mentors...</p>
+        ) : (
+          <Table
+            data={mentors}
+            title="Mentors Overview"
+            filterField="company"
+            badgeFields={["company"]}
+            selectFields={{
+              company: [
+                "TechCorp",
+                "Innovate Solutions",
+                "DataTech Analytics",
+                "Microsoft",
+                "Google",
+                "Amazon",
+                "Meta",
+                "Apple",
+              ],
+              designation: [
+                "Software Engineer",
+                "Senior Software Engineer",
+                "Product Manager",
+                "Data Scientist",
+                "Engineering Manager",
+                "Tech Lead",
+                "Architect",
+              ],
+            }}
+            nonEditableFields={["id"]}
+            onDelete={handleDeleteMentor}
+            onEdit={handleUpdateMentor}
+            hiddenColumns={["id"]}
+          />
+        )}
 
         <AddMentorModal
           isOpen={isAddMentorModalOpen}
           onClose={handleCloseAddModal}
-          onMentorCreated={handleAddMentor}
         />
       </div>
     </div>

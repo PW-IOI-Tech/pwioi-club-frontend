@@ -1,28 +1,20 @@
 import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import axios from "axios";
 
 interface AddMentorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onMentorCreated: (mentorData: {
-    name: string;
-    email: string;
-    phoneNumber: string;
-    linkedinLink: string;
-    designation: string;
-    company: string;
-  }) => void;
 }
 
 interface FormData {
   name: string;
   email: string;
-  phoneNumber: string;
-  linkedinLink: string;
+  phone: string;
+  linkedin : string;
   designation: string;
   company: string;
 }
-
 const companies = [
   { value: "TechCorp", label: "TechCorp" },
   { value: "Innovate Solutions", label: "Innovate Solutions" },
@@ -44,35 +36,21 @@ const designations = [
   { value: "Architect", label: "Architect" },
 ];
 
+
 const AddMentorModal: React.FC<AddMentorModalProps> = ({
   isOpen,
   onClose,
-  onMentorCreated,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
-    phoneNumber: "",
-    linkedinLink: "",
+    phone: "",
+    linkedin: "",
     designation: "",
     company: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  React.useEffect(() => {
-    if (isOpen) {
-      setFormData({
-        name: "",
-        email: "",
-        phoneNumber: "",
-        linkedinLink: "",
-        designation: "",
-        company: "",
-      });
-      setFormErrors({});
-    }
-  }, [isOpen]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -80,7 +58,6 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error when user starts typing/selecting
     if (formErrors[name]) {
       setFormErrors((prev) => {
         const newErrors = { ...prev };
@@ -105,14 +82,14 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
       errors.email = "Please enter a valid email address";
     }
 
-    if (!formData.phoneNumber.trim()) {
-      errors.phoneNumber = "Phone number is required";
+    if (!formData.phone.trim()) {
+      errors.phone = "Phone number is required";
     } else if (
       !/^[\+]?[1-9][\d]{0,15}$/.test(
-        formData.phoneNumber.replace(/[\s\-\(\)]/g, "")
+        formData.phone.replace(/[\s\-\(\)]/g, "")
       )
     ) {
-      errors.phoneNumber = "Please enter a valid phone number";
+      errors.phone = "Please enter a valid phone number";
     }
 
     if (!formData.designation.trim()) {
@@ -124,39 +101,50 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
     }
 
     if (
-      formData.linkedinLink &&
-      !formData.linkedinLink.includes("linkedin.com")
+      formData.linkedin &&
+      !formData.linkedin.includes("linkedin.com")
     ) {
-      errors.linkedinLink = "Please enter a valid LinkedIn URL";
+      errors.linkedin = "Please enter a valid LinkedIn URL";
     }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mentor/create`,
+        {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          linkedin: formData.linkedin,
+          designation: formData.designation,
+          company: formData.company,
+        },
+        {
+          withCredentials: true,
+        }
+      );
 
-    // Call the parent component's callback to add the mentor
-    onMentorCreated(formData);
-
-    // Reset form
-    setFormData({
-      name: "",
-      email: "",
-      phoneNumber: "",
-      linkedinLink: "",
-      designation: "",
-      company: "",
-    });
-    setFormErrors({});
-    setIsSubmitting(false);
+      if (res.data.success) {
+        handleClose();
+      }
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        setFormErrors({ submit: error.response.data.message });
+      } else {
+        setFormErrors({ submit: "Something went wrong. Please try again." });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
@@ -164,8 +152,8 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
       setFormData({
         name: "",
         email: "",
-        phoneNumber: "",
-        linkedinLink: "",
+        phone: "",
+        linkedin: "",
         designation: "",
         company: "",
       });
@@ -235,18 +223,18 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
               </label>
               <input
                 type="tel"
-                name="phoneNumber"
-                value={formData.phoneNumber}
+                name="phone"
+                value={formData.phone}
                 onChange={handleInputChange}
                 placeholder="e.g., +91 9876543210"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
-                  formErrors.phoneNumber ? "border-red-500" : "border-gray-300"
+                  formErrors.phone ? "border-red-500" : "border-gray-300"
                 }`}
                 disabled={isSubmitting}
               />
-              {formErrors.phoneNumber && (
+              {formErrors.phone && (
                 <p className="mt-1 text-sm text-red-600">
-                  {formErrors.phoneNumber}
+                  {formErrors.phone}
                 </p>
               )}
             </div>
@@ -257,18 +245,18 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
               </label>
               <input
                 type="url"
-                name="linkedinLink"
-                value={formData.linkedinLink}
+                name="linkedin"
+                value={formData.linkedin}
                 onChange={handleInputChange}
                 placeholder="e.g., https://linkedin.com/in/johnsmith"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
-                  formErrors.linkedinLink ? "border-red-500" : "border-gray-300"
+                  formErrors.linkedin ? "border-red-500" : "border-gray-300"
                 }`}
                 disabled={isSubmitting}
               />
-              {formErrors.linkedinLink && (
+              {formErrors.linkedin && (
                 <p className="mt-1 text-sm text-red-600">
-                  {formErrors.linkedinLink}
+                  {formErrors.linkedin}
                 </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
