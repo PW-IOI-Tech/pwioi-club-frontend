@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 interface AddBatchModalProps {
   isOpen: boolean;
   onClose: () => void;
-  userCenter: string;
   onBatchCreated: (batchData: {
     centerName: string;
     depName: string;
     batchName: string;
   }) => void;
+  prefillLocation?: string;
 }
 
 interface FormData {
@@ -22,6 +22,7 @@ const centers = [
   { value: "Bangalore", label: "Bangalore" },
   { value: "Lucknow", label: "Lucknow" },
   { value: "Pune", label: "Pune" },
+  { value: "Noida", label: "Noida" },
 ];
 
 const departments = [
@@ -33,27 +34,36 @@ const departments = [
 const AddBatchModal: React.FC<AddBatchModalProps> = ({
   isOpen,
   onClose,
-  userCenter,
   onBatchCreated,
+  prefillLocation,
 }) => {
   const [formData, setFormData] = useState<FormData>({
-    centerName: userCenter,
+    centerName: "",
     depName: "",
     batchName: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
-      setFormData({
-        centerName: userCenter,
-        depName: "",
-        batchName: "",
-      });
+      if (prefillLocation) {
+        setFormData((prev) => ({
+          ...prev,
+          centerName: prefillLocation,
+          depName: "",
+          batchName: "",
+        }));
+      } else {
+        setFormData({
+          centerName: "",
+          depName: "",
+          batchName: "",
+        });
+      }
       setFormErrors({});
     }
-  }, [isOpen, userCenter]);
+  }, [isOpen, prefillLocation]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -61,7 +71,6 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error when user starts typing/selecting
     if (formErrors[name]) {
       setFormErrors((prev) => {
         const newErrors = { ...prev };
@@ -95,18 +104,14 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
 
-    // Call the parent component's callback to add the batch
     onBatchCreated(formData);
 
-    // Reset form
     setFormData({
-      centerName: userCenter,
+      centerName: prefillLocation || "",
       depName: "",
       batchName: "",
     });
@@ -117,7 +122,7 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
   const handleClose = () => {
     if (!isSubmitting) {
       setFormData({
-        centerName: userCenter,
+        centerName: "",
         depName: "",
         batchName: "",
       });
@@ -128,23 +133,24 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
 
   const generateBatchName = (center: string, department: string) => {
     if (!center || !department) return "";
-
     const year = new Date().getFullYear().toString().slice(-2);
     const centerCode = center.slice(0, 3).toUpperCase();
     return `${department}${year}${centerCode}`;
   };
 
   // Auto-generate batch name when center or department changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (formData.centerName && formData.depName) {
       const suggestedName = generateBatchName(
         formData.centerName,
         formData.depName
       );
-      setFormData((prev) => ({
-        ...prev,
-        batchName: prev.batchName ? prev.batchName : suggestedName,
-      }));
+      if (!formData.batchName) {
+        setFormData((prev) => ({
+          ...prev,
+          batchName: suggestedName,
+        }));
+      }
     }
   }, [formData.centerName, formData.depName]);
 
@@ -172,10 +178,10 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
                   name="centerName"
                   value={formData.centerName}
                   onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
+                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none ${
                     formErrors.centerName ? "border-red-500" : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting}
+                  } ${prefillLocation ? "bg-gray-50 cursor-not-allowed" : ""}`}
+                  disabled={!!prefillLocation || isSubmitting}
                 >
                   <option value="">Select Center</option>
                   {centers.map((center) => (
@@ -184,12 +190,14 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
                     </option>
                   ))}
                 </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                  size={18}
-                />
+                {!prefillLocation && !isSubmitting && (
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
+                    size={18}
+                  />
+                )}
               </div>
-              {formErrors.centerName && (
+              {formErrors.centerName && !prefillLocation && (
                 <p className="mt-1 text-sm text-red-600">
                   {formErrors.centerName}
                 </p>
@@ -205,7 +213,7 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
                   name="depName"
                   value={formData.depName}
                   onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
+                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
                     formErrors.depName ? "border-red-500" : "border-gray-300"
                   }`}
                   disabled={isSubmitting}
@@ -239,7 +247,7 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
                 value={formData.batchName}
                 onChange={handleInputChange}
                 placeholder="e.g., SOT24BAN"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.batchName ? "border-red-500" : "border-gray-300"
                 }`}
                 disabled={isSubmitting}
@@ -259,20 +267,20 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 border border-gray-300 rounded-sm text-slate-900 hover:bg-gray-100 disabled:opacity-50 cursor-pointer"
+              className="px-4 py-2 border border-gray-300 rounded-sm text-slate-900 hover:bg-gray-100 disabled:opacity-50"
               disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 cursor-pointer duration-200 ease-in-out transition-transform"
+              className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
                   <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    className="animate-spin -ml-1 mr-2 h-4 w-4"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"

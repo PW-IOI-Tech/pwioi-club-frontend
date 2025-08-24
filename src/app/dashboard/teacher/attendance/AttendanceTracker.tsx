@@ -77,8 +77,6 @@ interface TeachingDetailsResponse {
   };
 }
 
-
-
 // Overall Attendance Types
 interface OverallStudentDetail {
   enrollmentId: string;
@@ -99,7 +97,7 @@ interface OverallData {
   totalStudents: number;
   totalClasses: number;
   monthsTracked: number;
-  monthlyTrends: any[]; 
+  monthlyTrends: any[];
   distributionByAttendance: OverallDistribution;
   studentDetails: OverallStudentDetail[];
 }
@@ -156,17 +154,9 @@ interface DailyDetailsResponse {
   studentDetails: DailyStudentDetail[];
 }
 
-
-const studentDailyData = [
-  { enrollmentId: "ENG001", name: "John Doe", status: "Present" },
-  { enrollmentId: "ENG002", name: "Jane Smith", status: "Present" },
-  { enrollmentId: "ENG003", name: "Mike Johnson", status: "Absent" },
-  { enrollmentId: "ENG004", name: "Sarah Wilson", status: "Present" },
-  { enrollmentId: "ENG005", name: "Alex Brown", status: "Present" },
-];
-
 const AttendanceTracker: React.FC = () => {
-  const [teachingDetails, setTeachingDetails] = useState<TeachingDetailsResponse | null>(null);
+  const [teachingDetails, setTeachingDetails] =
+    useState<TeachingDetailsResponse | null>(null);
   const [school, setSchool] = useState("");
   const [batch, setBatch] = useState("");
   const [division, setDivision] = useState("");
@@ -181,16 +171,30 @@ const AttendanceTracker: React.FC = () => {
     subject: "",
   });
   const [sortField, setSortField] = useState<string>("");
-const [overallDetails, setOverallDetails] = useState<OverallDetailsResponse | null>(null);
-const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(null);
+  const [overallDetails, setOverallDetails] =
+    useState<OverallDetailsResponse | null>(null);
+  const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(
+    null
+  );
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-
   const attendanceRangeData = [
-  { range: "<50%", students: overallDetails?.data?.distributionByAttendance?.below50, color: "#ef4444" },
-  { range: "50-75%", students: overallDetails?.data?.distributionByAttendance?.between50And75, color: "#f59e0b" },
-  { range: ">75%", students: overallDetails?.data?.distributionByAttendance?.above75, color: "#10b981" },
-];
+    {
+      range: "<50%",
+      students: overallDetails?.data?.distributionByAttendance?.below50,
+      color: "#ef4444",
+    },
+    {
+      range: "50-75%",
+      students: overallDetails?.data?.distributionByAttendance?.between50And75,
+      color: "#f59e0b",
+    },
+    {
+      range: ">75%",
+      students: overallDetails?.data?.distributionByAttendance?.above75,
+      color: "#10b981",
+    },
+  ];
 
   const handleFilterChange = (field: string, value: string) => {
     setFilters((prev) => ({
@@ -229,9 +233,17 @@ const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(nu
   };
 
   const pieChartData = [
-  { name: "Present", value: dailyDetails?.summary?.totalPresentCount, color: "#10b981" },
-  { name: "Absent", value: dailyDetails?.summary?.totalAbsentCount, color: "#ef4444" },
-];
+    {
+      name: "Present",
+      value: dailyDetails?.summary?.totalPresentCount,
+      color: "#10b981",
+    },
+    {
+      name: "Absent",
+      value: dailyDetails?.summary?.totalAbsentCount,
+      color: "#ef4444",
+    },
+  ];
 
   const schoolOptions =
     teachingDetails?.schools.map((s) => ({
@@ -292,7 +304,7 @@ const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(nu
     }
   };
 
-    const getOverallAttendence = async () => {
+  const getOverallAttendence = async () => {
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teacher-attendance/${subject}/overall`,
@@ -304,7 +316,7 @@ const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(nu
     }
   };
 
-   const getDailyAttendence = async () => {
+  const getDailyAttendence = async () => {
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teacher-attendance/${subject}/daily`,
@@ -337,29 +349,36 @@ const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(nu
   };
 
   const getMonthRange = (from: string, to: string): string[] => {
-  const start = new Date(from);
-  const end = new Date(to);
+    const start = new Date(from);
+    const end = new Date(to);
 
-  const months: string[] = [];
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const months: string[] = [];
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
 
-  let current = new Date(start.getFullYear(), start.getMonth(), 1);
+    const current = new Date(start.getFullYear(), start.getMonth(), 1);
 
-  while (current <= end) {
-    months.push(monthNames[current.getMonth()]);
-    current.setMonth(current.getMonth() + 1);
-  }
+    while (current <= end) {
+      months.push(monthNames[current.getMonth()]);
+      current.setMonth(current.getMonth() + 1);
+    }
 
-  return months;
-};
+    return months;
+  };
 
-
-  const canShowData =
-    school &&
-    batch &&
-    division &&
-    semester &&
-    subject;
+  const canShowData = school && batch && division && semester && subject;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -373,18 +392,19 @@ const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(nu
     return null;
   };
 
-    useEffect(() => {
+  useEffect(() => {
     getTeachingDetails();
   }, []);
 
   useEffect(() => {
-  const allDetailsPresent = school && batch && division && semester && subject;
+    const allDetailsPresent =
+      school && batch && division && semester && subject;
 
-  if (allDetailsPresent) {
-    getOverallAttendence();
-    getDailyAttendence();
-  }
-}, [school, batch, division, semester, subject]); 
+    if (allDetailsPresent) {
+      getOverallAttendence();
+      getDailyAttendence();
+    }
+  }, [school, batch, division, semester, subject]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">
@@ -579,7 +599,7 @@ const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(nu
                           Average Attendance
                         </p>
                         <p className="text-3xl font-bold text-slate-900">
-                         {overallDetails?.data?.averageAttendance || 0}
+                          {overallDetails?.data?.averageAttendance || 0}
                         </p>
                       </div>
                       <div className="p-3 bg-slate-200 rounded-full border border-gray-400">
@@ -594,8 +614,10 @@ const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(nu
                         <p className="text-sm text-gray-600 mb-1">
                           Total Students
                         </p>
-                        <p className="text-3xl font-bold text-slate-900">                         {overallDetails?.data?.totalStudents || 0}
-</p>
+                        <p className="text-3xl font-bold text-slate-900">
+                          {" "}
+                          {overallDetails?.data?.totalStudents || 0}
+                        </p>
                       </div>
                       <div className="p-3 bg-slate-200 rounded-full border border-gray-400">
                         <Users className="w-6 h-6 text-slate-900" />
@@ -609,8 +631,10 @@ const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(nu
                         <p className="text-sm text-gray-600 mb-1">
                           Months Tracked
                         </p>
-                        <p className="text-3xl font-bold text-slate-900">                         {overallDetails?.data?.monthsTracked || 0}
-</p>
+                        <p className="text-3xl font-bold text-slate-900">
+                          {" "}
+                          {overallDetails?.data?.monthsTracked || 0}
+                        </p>
                       </div>
                       <div className="p-3 bg-slate-200 rounded-full border border-gray-400">
                         <Calendar className="w-6 h-6 text-slate-900" />
@@ -629,8 +653,7 @@ const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(nu
                     <div className="p-6">
                       <div className="h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data=                         {overallDetails?.data?.monthlyTrends}
->
+                          <BarChart data={overallDetails?.data?.monthlyTrends}>
                             <CartesianGrid
                               strokeDasharray="3 3"
                               stroke="#f0f0f0"
@@ -725,72 +748,71 @@ const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(nu
                             </button>
                           </th>
                           {overallDetails && (
-  <thead>
-    <tr>
-      {getMonthRange(
-        overallDetails.dateRange.from,
-        overallDetails.dateRange.to
-      ).map((month) => (
-        <th
-          key={month}
-          className="text-left py-3 px-6 font-medium text-gray-700"
-        >
-          {month}
-        </th>
-      ))}
-    </tr>
-  </thead>
-)}
-
+                            <thead>
+                              <tr>
+                                {getMonthRange(
+                                  overallDetails.dateRange.from,
+                                  overallDetails.dateRange.to
+                                ).map((month) => (
+                                  <th
+                                    key={month}
+                                    className="text-left py-3 px-6 font-medium text-gray-700"
+                                  >
+                                    {month}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                          )}
                         </tr>
                       </thead>
                       <tbody>
-                        {getSortedStudents(overallDetails?.data?.studentDetails || []).map(
-                          (student, _index) => (
-                            <tr
-                              key={student.enrollmentId}
-                              className="border-b border-gray-100 hover:bg-blue-25 transition-colors"
-                            >
-                              <td className="py-3 px-6 font-medium text-gray-900">
-                                {student.enrollmentId}
-                              </td>
-                              <td className="py-3 px-6 text-gray-600">
-                                {student.name}
-                              </td>
-                              <td className="py-3 px-6">
-                                <span
-                                  className={`px-2 py-1 rounded-full text-sm font-medium ${
-                                    student.overallAttendance >= 85
-                                      ? "bg-green-100 text-green-800"
-                                      : student.overallAttendance >= 75
-                                      ? "bg-yellow-100 text-yellow-800"
-                                      : "bg-red-100 text-red-800"
-                                  }`}
-                                >
-                                  {student.overallAttendance}%
-                                </span>
-                              </td>
-                              <td className="py-3 px-6 text-gray-600">
-                                {student.jan}%
-                              </td>
-                              <td className="py-3 px-6 text-gray-600">
-                                {student.feb}%
-                              </td>
-                              <td className="py-3 px-6 text-gray-600">
-                                {student.mar}%
-                              </td>
-                              <td className="py-3 px-6 text-gray-600">
-                                {student.apr}%
-                              </td>
-                              <td className="py-3 px-6 text-gray-600">
-                                {student.may}%
-                              </td>
-                              <td className="py-3 px-6 text-gray-600">
-                                {student.jun}%
-                              </td>
-                            </tr>
-                          )
-                        )}
+                        {getSortedStudents(
+                          overallDetails?.data?.studentDetails || []
+                        ).map((student, _index) => (
+                          <tr
+                            key={student.enrollmentId}
+                            className="border-b border-gray-100 hover:bg-blue-25 transition-colors"
+                          >
+                            <td className="py-3 px-6 font-medium text-gray-900">
+                              {student.enrollmentId}
+                            </td>
+                            <td className="py-3 px-6 text-gray-600">
+                              {student.name}
+                            </td>
+                            <td className="py-3 px-6">
+                              <span
+                                className={`px-2 py-1 rounded-full text-sm font-medium ${
+                                  student.overallAttendance >= 85
+                                    ? "bg-green-100 text-green-800"
+                                    : student.overallAttendance >= 75
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {student.overallAttendance}%
+                              </span>
+                            </td>
+                            <td className="py-3 px-6 text-gray-600">
+                              {student.jan}%
+                            </td>
+                            <td className="py-3 px-6 text-gray-600">
+                              {student.feb}%
+                            </td>
+                            <td className="py-3 px-6 text-gray-600">
+                              {student.mar}%
+                            </td>
+                            <td className="py-3 px-6 text-gray-600">
+                              {student.apr}%
+                            </td>
+                            <td className="py-3 px-6 text-gray-600">
+                              {student.may}%
+                            </td>
+                            <td className="py-3 px-6 text-gray-600">
+                              {student.jun}%
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
@@ -881,12 +903,12 @@ const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(nu
                               Absent Percetnage
                             </p>
                             <p className="text-sm text-gray-600">
-                             {dailyDetails?.summary?.studentsAbsent} Absent
+                              {dailyDetails?.summary?.studentsAbsent} Absent
                             </p>
                           </div>
                         </div>
                         <div className="text-2xl font-bold text-red-600">
-                         {dailyDetails?.summary?.studentsAbsent}
+                          {dailyDetails?.summary?.studentsAbsent}
                         </div>
                       </div>
 
@@ -962,37 +984,37 @@ const [dailyDetails, setDailyDetails] = useState<DailyDetailsResponse | null>(nu
                         </tr>
                       </thead>
                       <tbody>
-                        {getSortedStudents(dailyDetails?.studentDetails || []).map(
-                          (student, _index) => (
-                            <tr
-                              key={student.enrollmentId}
-                              className="border-b border-gray-100 hover:bg-gray-50"
-                            >
-                              <td className="py-3 px-6 font-medium text-gray-900">
-                                {student.enrollmentId}
-                              </td>
-                              <td className="py-3 px-6 text-gray-600">
-                                {student.name}
-                              </td>
-                              <td className="py-3 px-6">
-                                <span
-                                  className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 w-fit ${
-                                    student.status === "Present"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-red-100 text-red-800"
-                                  }`}
-                                >
-                                  {student.status === "Present" ? (
-                                    <UserCheck className="w-4 h-4" />
-                                  ) : (
-                                    <UserX className="w-4 h-4" />
-                                  )}
-                                  {student.status}
-                                </span>
-                              </td>
-                            </tr>
-                          )
-                        )}
+                        {getSortedStudents(
+                          dailyDetails?.studentDetails || []
+                        ).map((student, _index) => (
+                          <tr
+                            key={student.enrollmentId}
+                            className="border-b border-gray-100 hover:bg-gray-50"
+                          >
+                            <td className="py-3 px-6 font-medium text-gray-900">
+                              {student.enrollmentId}
+                            </td>
+                            <td className="py-3 px-6 text-gray-600">
+                              {student.name}
+                            </td>
+                            <td className="py-3 px-6">
+                              <span
+                                className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 w-fit ${
+                                  student.status === "Present"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {student.status === "Present" ? (
+                                  <UserCheck className="w-4 h-4" />
+                                ) : (
+                                  <UserX className="w-4 h-4" />
+                                )}
+                                {student.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>

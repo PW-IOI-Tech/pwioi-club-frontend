@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 interface AddPolicyModalProps {
@@ -12,6 +12,7 @@ interface AddPolicyModalProps {
     version: string;
     centerLocation: string;
   }) => void;
+  prefillLocation?: string;
 }
 
 interface FormData {
@@ -24,10 +25,10 @@ interface FormData {
 }
 
 const centerLocations = [
-  { value: "bangalore", label: "Bangalore" },
-  { value: "lucknow", label: "Lucknow" },
-  { value: "pune", label: "Pune" },
-  { value: "noida", label: "Noida" },
+  { value: "Bangalore", label: "Bangalore" },
+  { value: "Lucknow", label: "Lucknow" },
+  { value: "Pune", label: "Pune" },
+  { value: "Noida", label: "Noida" },
 ];
 
 const activeStatus = [
@@ -50,6 +51,7 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
   isOpen,
   onClose,
   onPolicyCreated,
+  prefillLocation,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     policyName: "",
@@ -62,19 +64,26 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
-      setFormData({
-        policyName: "",
-        pdfUrl: "",
-        effectiveDate: "",
-        isActive: "true",
-        version: "",
-        centerLocation: "",
-      });
+      if (prefillLocation) {
+        setFormData((prev) => ({
+          ...prev,
+          centerLocation: prefillLocation,
+        }));
+      } else {
+        setFormData({
+          policyName: "",
+          pdfUrl: "",
+          effectiveDate: "",
+          isActive: "true",
+          version: "",
+          centerLocation: "",
+        });
+      }
       setFormErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, prefillLocation]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -82,7 +91,6 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error when user starts typing/selecting
     if (formErrors[name]) {
       setFormErrors((prev) => {
         const newErrors = { ...prev };
@@ -103,7 +111,7 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
 
     if (!formData.pdfUrl.trim()) {
       errors.pdfUrl = "PDF URL is required";
-    } else if (!/^https?:\/\/.+\.(pdf)$/i.test(formData.pdfUrl)) {
+    } else if (!/^https?:\/\/.+\.(pdf)$/i.test(formData.pdfUrl.trim())) {
       errors.pdfUrl = "Please enter a valid PDF URL (must end with .pdf)";
     }
 
@@ -134,23 +142,18 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
-
-    // Call the parent component's callback to add the policy
     onPolicyCreated(formData);
 
-    // Reset form
     setFormData({
       policyName: "",
       pdfUrl: "",
       effectiveDate: "",
       isActive: "true",
       version: "",
-      centerLocation: "",
+      centerLocation: prefillLocation || "",
     });
     setFormErrors({});
     setIsSubmitting(false);
@@ -171,11 +174,7 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
     }
   };
 
-  // Get today's date in YYYY-MM-DD format for min date
-  const getTodaysDate = () => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  };
+  const getTodaysDate = () => new Date().toISOString().split("T")[0];
 
   if (!isOpen) return null;
 
@@ -311,9 +310,9 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
                   disabled={isSubmitting}
                 >
                   <option value="">Select Version</option>
-                  {versions.map((version) => (
-                    <option key={version.value} value={version.value}>
-                      {version.label}
+                  {versions.map((v) => (
+                    <option key={v.value} value={v.value}>
+                      {v.label}
                     </option>
                   ))}
                 </select>
@@ -338,32 +337,34 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
                   name="centerLocation"
                   value={formData.centerLocation}
                   onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
+                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none ${
                     formErrors.centerLocation
                       ? "border-red-500"
                       : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting}
+                  } ${prefillLocation ? "bg-gray-50 cursor-not-allowed" : ""}`}
+                  disabled={!!prefillLocation || isSubmitting}
                 >
-                  <option value="">Select Center Location</option>
-                  {centerLocations.map((location) => (
-                    <option key={location.value} value={location.value}>
-                      {location.label}
+                  <option value="">Select Location</option>
+                  {centerLocations.map((loc) => (
+                    <option key={loc.value} value={loc.value}>
+                      {loc.label}
                     </option>
                   ))}
                 </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                  size={18}
-                />
+                {!prefillLocation && !isSubmitting && (
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
+                    size={18}
+                  />
+                )}
               </div>
-              {formErrors.centerLocation && (
+              {formErrors.centerLocation && !prefillLocation && (
                 <p className="mt-1 text-sm text-red-600">
                   {formErrors.centerLocation}
                 </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Select the center where this policy applies
+                This will apply to the selected center
               </p>
             </div>
           </div>
@@ -372,20 +373,20 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 border border-gray-300 rounded-sm text-slate-900 hover:bg-gray-100 disabled:opacity-50 cursor-pointer"
+              className="px-4 py-2 border border-gray-300 rounded-sm text-slate-900 hover:bg-gray-100 disabled:opacity-50"
               disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 cursor-pointer duration-200 ease-in-out transition-transform"
+              className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 duration-200 transition-transform"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
                   <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    className="animate-spin -ml-1 mr-2 h-4 w-4"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"

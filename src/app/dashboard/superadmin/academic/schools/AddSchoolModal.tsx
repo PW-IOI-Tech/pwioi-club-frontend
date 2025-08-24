@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 interface AddSchoolModalProps {
@@ -8,6 +8,7 @@ interface AddSchoolModalProps {
     location: string;
     schoolName: string;
   }) => void;
+  prefillLocation?: string;
 }
 
 interface FormData {
@@ -32,6 +33,7 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
   isOpen,
   onClose,
   onSchoolCreated,
+  prefillLocation,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     location: "",
@@ -40,15 +42,19 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
-      setFormData({
-        location: "",
-        schoolName: "",
-      });
+      if (prefillLocation) {
+        setFormData((prev) => ({
+          ...prev,
+          location: prefillLocation.toLowerCase(),
+        }));
+      } else {
+        setFormData({ location: "", schoolName: "" });
+      }
       setFormErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, prefillLocation]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -134,24 +140,29 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
                   name="location"
                   value={formData.location}
                   onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
+                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none ${
                     formErrors.location ? "border-red-500" : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting}
+                  } ${prefillLocation ? "bg-gray-50 cursor-not-allowed" : ""}`}
+                  disabled={isSubmitting || !!prefillLocation}
                 >
-                  <option value="">Select Location</option>
+                  <option value="">
+                    {prefillLocation ? "" : "Select Location"}
+                  </option>
                   {locations.map((location) => (
                     <option key={location.value} value={location.value}>
                       {location.label}
                     </option>
                   ))}
                 </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                  size={18}
-                />
+                {!prefillLocation && !isSubmitting && (
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
+                    size={18}
+                  />
+                )}
               </div>
-              {formErrors.location && (
+
+              {formErrors.location && !prefillLocation && (
                 <p className="mt-1 text-sm text-red-600">
                   {formErrors.location}
                 </p>
