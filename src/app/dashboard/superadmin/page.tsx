@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation"; // Add useRouter
 import {
   Users,
   GraduationCap,
@@ -21,9 +22,36 @@ import {
 } from "lucide-react";
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
   const userName = "John Anderson";
+
+  const routeMap: Record<string, string> = {
+    // People Management
+    admins: "/dashboard/superadmin/people/admins",
+    teachers: "/dashboard/superadmin/people/teachers",
+    students: "/dashboard/superadmin/people/students",
+    mentors: "/dashboard/superadmin/people/mentors",
+
+    // Academic Structure
+    centers: "/dashboard/superadmin/academic/centers",
+    schools: "/dashboard/superadmin/academic/schools",
+    batches: "/dashboard/superadmin/academic/batches",
+    divisions: "/dashboard/superadmin/academic/divisions",
+    semester: "/dashboard/superadmin/academic/divisions",
+    subjects: "/dashboard/superadmin/academic/subjects",
+    classes: "/dashboard/superadmin/academic/classes",
+    cohorts: "/dashboard/superadmin/academic/cohorts",
+
+    // Operations & Events
+    jobs: "/dashboard/superadmin/operations/jobs",
+    events: "/dashboard/superadmin/operations/events",
+    exams: "/dashboard/superadmin/academic/exams",
+
+    // Resources & Governance
+    rooms: "/dashboard/superadmin/resources/rooms",
+    policies: "/dashboard/superadmin/resources/policies",
+    flags: "/dashboard/superadmin/resources/flags",
+  };
 
   const managementSections = [
     {
@@ -83,7 +111,7 @@ export default function AdminDashboard() {
           description: "Academic division structure management",
         },
         {
-          id: "semesters",
+          id: "semester",
           label: "Semester Management",
           icon: Calendar,
           description: "Academic calendar and semester planning",
@@ -159,6 +187,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto">
+        {/* Welcome Section */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-lg shadow-sm border border-gray-400 p-6 py-8 mb-8">
           <h1 className="text-2xl md:text-3xl text-white mb-2">
             Welcome back, <br className="block sm:hidden" />
@@ -171,13 +200,12 @@ export default function AdminDashboard() {
           </p>
         </div>
 
+        {/* Management Cards */}
         <div className="space-y-6">
           {managementSections.map((section, sectionIndex) => (
             <div key={sectionIndex} className="space-y-4">
               <div className="flex items-center space-x-3">
-                <div
-                  className={`w-1 h-8 bg-gradient-to-b bg-slate-900 rounded-full`}
-                ></div>
+                <div className="w-1 h-8 bg-slate-900 rounded-full"></div>
                 <h2 className="text-xl font-bold text-gray-900">
                   {section.category}
                 </h2>
@@ -190,16 +218,17 @@ export default function AdminDashboard() {
                   return (
                     <div
                       key={item.id}
-                      onClick={() => setActiveTab(item.id)}
-                      className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 shadow-sm  cursor-pointer transition-all duration-200 group"
+                      onClick={() => {
+                        const path = routeMap[item.id];
+                        if (path) router.push(path);
+                      }}
+                      className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 shadow-sm cursor-pointer transition-all duration-200 group hover:shadow-md hover:scale-105"
                     >
                       <div className="flex items-start justify-between mb-4">
-                        <div
-                          className={`p-3 rounded-sm bg-gradient-to-br bg-slate-900 shadow-sm`}
-                        >
+                        <div className="p-3 rounded-sm bg-slate-900 shadow-sm">
                           <Icon className="h-6 w-6 text-white" />
                         </div>
-                        <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors group-hover:scale-110" />
+                        <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all" />
                       </div>
 
                       <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-900 transition-colors">

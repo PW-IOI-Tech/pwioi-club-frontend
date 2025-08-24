@@ -12,7 +12,6 @@ import {
   User,
   FileImage,
 } from "lucide-react";
-import Image from "next/image";
 
 interface User {
   teacherId: string;
@@ -32,7 +31,7 @@ interface Post {
   }[];
   likes: number;
   comments: number;
-  _count:any;
+  _count: any;
   timestamp: string;
   assignedBy: string | null;
 }
@@ -128,8 +127,6 @@ interface ClassData {
   subject: string;
 }
 
-
-
 const AttendanceCards: React.FC<any> = ({ counts }) => {
   const getThemeColors = (percentage: number) => {
     if (percentage > 75) {
@@ -156,49 +153,50 @@ const AttendanceCards: React.FC<any> = ({ counts }) => {
     }
   };
 
-return (
-  <>
-    {counts?.length > 0 && (
-      <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-sm shadow-sm border border-gray-400">
-        <h3 className="text-lg font-semibold text-slate-700 mb-3">
-          Class Attendance Overview
-        </h3>
-        <div className="grid grid-cols-2 gap-3">
-          {counts.map((classItem: any) => {
-            const theme = getThemeColors(classItem.attendancePercentage);
+  return (
+    <>
+      {counts?.length > 0 && (
+        <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-sm shadow-sm border border-gray-400">
+          <h3 className="text-lg font-semibold text-slate-700 mb-3">
+            Class Attendance Overview
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            {counts.map((classItem: any) => {
+              const theme = getThemeColors(classItem.attendancePercentage);
 
-            return (
-              <div
-                key={classItem.id}
-                className={`bg-gradient-to-br ${theme.gradient} rounded-lg p-3 border ${theme.border} shadow-sm`}
-              >
-                <div className="flex items-center space-x-1.5 mb-2">
-                  <span className="text-xs underline font-semibold text-slate-600">
-                    {classItem.name}
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-bold text-slate-800 leading-tight">
-                    {classItem.subject}
-                  </p>
-                  <div className="flex flex-col">
-                    <span className={`text-2xl font-bold ${theme.percentage}`}>
-                      {classItem.attendancePercentage}%
-                    </span>
-                    <span className="text-xs font-medium text-slate-500">
-                      Attendance
+              return (
+                <div
+                  key={classItem.id}
+                  className={`bg-gradient-to-br ${theme.gradient} rounded-lg p-3 border ${theme.border} shadow-sm`}
+                >
+                  <div className="flex items-center space-x-1.5 mb-2">
+                    <span className="text-xs underline font-semibold text-slate-600">
+                      {classItem.name}
                     </span>
                   </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-slate-800 leading-tight">
+                      {classItem.subject}
+                    </p>
+                    <div className="flex flex-col">
+                      <span
+                        className={`text-2xl font-bold ${theme.percentage}`}
+                      >
+                        {classItem.attendancePercentage}%
+                      </span>
+                      <span className="text-xs font-medium text-slate-500">
+                        Attendance
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
-    )}
-  </>
-);
-
+      )}
+    </>
+  );
 };
 
 const sampleClasses: ClassData[] = [
@@ -218,7 +216,6 @@ const sampleClasses: ClassData[] = [
   },
 ];
 
-
 interface CreatePostProps {
   userInitial: string;
 }
@@ -227,12 +224,13 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
   const [showModal, setShowModal] = useState(false);
   const [postText, setPostText] = useState("");
   const [mediaList, setMediaList] = useState<any[]>([]);
-  const [previewFiles, setPreviewFiles] = useState<{ url: string; type: "image" | "video"; key: string }[]>([]);
+  const [previewFiles, setPreviewFiles] = useState<
+    { url: string; type: "image" | "video"; key: string }[]
+  >([]);
   const [showToast, setShowToast] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
-
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -252,11 +250,18 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
 
       await fetch(uploadUrl, { method: "PUT", body: file });
 
-      setMediaList((prev) => [...prev,{ type, mime_type: file.type, storage_url: publicUrl, key },]);
+      setMediaList((prev) => [
+        ...prev,
+        { type, mime_type: file.type, storage_url: publicUrl, key },
+      ]);
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        setPreviewFiles((prev) => [...prev,{ url: e.target?.result as string, type, key },])};
+        setPreviewFiles((prev) => [
+          ...prev,
+          { url: e.target?.result as string, type, key },
+        ]);
+      };
       reader.readAsDataURL(file);
 
       setShowModal(true);
@@ -505,7 +510,7 @@ const PostHeader: React.FC<any> = ({ post, getRoleBadgeColor }) => (
             <h3 className="font-semibold text-gray-900 text-sm">
               {post?.userInfo?.name}
             </h3>
-           <span
+            <span
               className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
                 post?.author_type
               )}`}
@@ -569,17 +574,18 @@ const PostActions: React.FC<PostActionsProps> = ({
 
       const newCommentObj: Comment = {
         id: createdComment.id,
-        userInfo:{
-          name:"You"
-        } ,
+        userInfo: {
+          name: "You",
+        },
         content: createdComment.content,
         createdAt: new Date(createdComment.createdAt).toLocaleString("en-IN", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true}),
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }),
         avatar: "👤",
       };
 
@@ -606,8 +612,8 @@ const PostActions: React.FC<PostActionsProps> = ({
     onShare?.(post.id);
   };
 
-const handleCommentModal = async (postId:string) => {
-        setShowCommentsModal(true)
+  const handleCommentModal = async (postId: string) => {
+    setShowCommentsModal(true);
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/comments/get/${postId}`,
@@ -689,7 +695,7 @@ const handleCommentModal = async (postId:string) => {
       {comments.length > 0 && (
         <div className="px-4 py-3 border-t border-gray-50">
           <div className="space-y-3">
-            {comments?.slice(0,2)?.map((comment: any) => (
+            {comments?.slice(0, 2)?.map((comment: any) => (
               <div key={comment.id} className="flex space-x-3">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm">
@@ -706,15 +712,15 @@ const handleCommentModal = async (postId:string) => {
                     </div>
                   </div>
                   <div className="mt-1 text-xs text-gray-500">
-                   {comment?.createdAt &&
-                        new Date(comment.createdAt).toLocaleString("en-IN", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
+                    {comment?.createdAt &&
+                      new Date(comment.createdAt).toLocaleString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
                   </div>
                 </div>
               </div>
@@ -948,9 +954,8 @@ const Feed: React.FC<FeedProps> = ({
 );
 
 const ProfileHeader: React.FC<any> = ({ user }) => {
-const storedUser = localStorage.getItem("user");
-const userDetail = storedUser ? JSON.parse(storedUser) : null;
-
+  const storedUser = localStorage.getItem("user");
+  const userDetail = storedUser ? JSON.parse(storedUser) : null;
 
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5 overflow-hidden">
@@ -961,7 +966,9 @@ const userDetail = storedUser ? JSON.parse(storedUser) : null;
           </span>
         </div>
         <div className="flex-1">
-          <h3 className="font-bold text-lg tracking-wide">{userDetail?.name}</h3>
+          <h3 className="font-bold text-lg tracking-wide">
+            {userDetail?.name}
+          </h3>
           <p className="text-xs font-medium mb-1 text-blue-900 line-clamp-1">
             {user?.about}
           </p>
@@ -1174,7 +1181,7 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
     }
   };
 
-const fetchAttendence = async () => {
+  const fetchAttendence = async () => {
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/me/active-subject-attendance`,
@@ -1189,8 +1196,6 @@ const fetchAttendence = async () => {
   useEffect(() => {
     fetchAttendence();
   }, []);
-
-
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">
@@ -1213,8 +1218,7 @@ const fetchAttendence = async () => {
           <div className="lg:col-span-3 space-y-4 hidden sm:block">
             <ProfileHeader user={userDetails} />
             <CreatePost userInitial={user?.name?.charAt(0).toUpperCase()} />
-                        <AttendanceCards counts={counts} />
-
+            <AttendanceCards counts={counts} />
           </div>
         </div>
       </div>

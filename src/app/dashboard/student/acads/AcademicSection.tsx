@@ -61,30 +61,36 @@ export default function AcademicsSection() {
   const [studentProfile, _setStudentProfile] = useState<StudentProfile | null>({
     batch: { name: "2023-2027" },
     semesterNo: 1,
-    id: "Computer Science"
+    id: "Computer Science",
   });
   const [academicData, setAcademicData] = useState<AcademicData | null>(null);
   const [activeFilters, setActiveFilters] = useState<FilterState | null>(null);
-  const [pendingFilters, setPendingFilters] = useState<FilterState | null>(null);
+  const [pendingFilters, setPendingFilters] = useState<FilterState | null>(
+    null
+  );
   const [isLeaderboardModalOpen, setIsLeaderboardModalOpen] = useState(false);
-  const [leaderboardType, setLeaderboardType] = useState<"class" | "overall">("class");
+  const [leaderboardType, setLeaderboardType] = useState<"class" | "overall">(
+    "class"
+  );
   const [semesterFilter, setSemesterFilter] = useState<number | "all">("all");
   const [showCompletedCourses, setShowCompletedCourses] = useState(false);
   const [chartData, setChartData] = useState<any[]>([]);
-   const [exams, setExams] = useState<any[]>([]);
   const [leaderboardData, setLeaderboardData] = useState<any>({
     class: [],
-    overall: []
+    overall: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-   const fetchExams = useCallback(async (subjectId:string) => {
+  const fetchExams = useCallback(async (subjectId: string) => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${subjectId}`, {
-        withCredentials: true
-      });
-      
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${subjectId}`,
+        {
+          withCredentials: true,
+        }
+      );
+
       if (response.data.success) {
         return response.data.data;
       }
@@ -96,10 +102,13 @@ export default function AcademicsSection() {
 
   const fetchCurrentSemester = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_BASE}/academics/current-semester`, {
-        withCredentials: true
-      });
-      
+      const response = await axios.get(
+        `${API_BASE}/academics/current-semester`,
+        {
+          withCredentials: true,
+        }
+      );
+
       if (response.data.success) {
         return response.data.data;
       }
@@ -112,9 +121,9 @@ export default function AcademicsSection() {
   const fetchPastSemesters = useCallback(async () => {
     try {
       const response = await axios.get(`${API_BASE}/academics/past-semesters`, {
-        withCredentials: true
+        withCredentials: true,
       });
-      
+
       if (response.data.success) {
         return response.data.data;
       }
@@ -124,75 +133,96 @@ export default function AcademicsSection() {
     }
   }, []);
 
-  const fetchPerformanceTrends = useCallback(async (semesterId: string, subjectId: string, examType: string, examName: string) => {
-    try {
-      const response = await axios.get(`${API_BASE}/performance/trends`, {
-        params: {
-          semester_id: semesterId,
-          subject_id: subjectId,
-          exam_type: examType,
-          exam_name: examName,
-        },
-        withCredentials: true,
-      });
+  const fetchPerformanceTrends = useCallback(
+    async (
+      semesterId: string,
+      subjectId: string,
+      examType: string,
+      examName: string
+    ) => {
+      try {
+        const response = await axios.get(`${API_BASE}/performance/trends`, {
+          params: {
+            semester_id: semesterId,
+            subject_id: subjectId,
+            exam_type: examType,
+            exam_name: examName,
+          },
+          withCredentials: true,
+        });
 
-      if (response.data.success) {
-        const trends = response.data.data.trends || [];
-        const formatted = trends.map((t: any) => ({
-          test: t.exam_name,
-          percentage: Math.round(t.percentage),
-        }));
-        setChartData(formatted);
+        if (response.data.success) {
+          const trends = response.data.data.trends || [];
+          const formatted = trends.map((t: any) => ({
+            test: t.exam_name,
+            percentage: Math.round(t.percentage),
+          }));
+          setChartData(formatted);
+        }
+      } catch (err) {
+        console.error("Error fetching performance trends:", err);
+        // Set sample data when no trends are available
+        setChartData([
+          { test: "Test 1", percentage: 0 },
+          { test: "Test 2", percentage: 0 },
+          { test: "Test 3", percentage: 0 },
+        ]);
       }
-    } catch (err) {
-      console.error("Error fetching performance trends:", err);
-      // Set sample data when no trends are available
-      setChartData([
-        { test: "Test 1", percentage: 0 },
-        { test: "Test 2", percentage: 0 },
-        { test: "Test 3", percentage: 0 }
-      ]);
-    }
-  }, []);
+    },
+    []
+  );
 
-  const fetchLeaderboard = useCallback(async (type: "class" | "overall", semesterId: string, subjectId: string, examType: string, examName: string) => {
-    try {
-      const endpoint = type === "class" ? "/leaderboard/division" : "/leaderboard/overall";
-      const response = await axios.get(`${API_BASE}${endpoint}`, {
-        params: {
-          semester_id: semesterId,
-          subject_id: subjectId,
-          exam_type: examType,
-          exam_name: examName,
-        },
-        withCredentials: true,
-      });
+  const fetchLeaderboard = useCallback(
+    async (
+      type: "class" | "overall",
+      semesterId: string,
+      subjectId: string,
+      examType: string,
+      examName: string
+    ) => {
+      try {
+        const endpoint =
+          type === "class" ? "/leaderboard/division" : "/leaderboard/overall";
+        const response = await axios.get(`${API_BASE}${endpoint}`, {
+          params: {
+            semester_id: semesterId,
+            subject_id: subjectId,
+            exam_type: examType,
+            exam_name: examName,
+          },
+          withCredentials: true,
+        });
 
-      if (response.data.success) {
-        const leaderboardEntries = response.data.data.leaderboard.map((entry: any) => ({
-          rank: entry.rank,
-          name: entry.student_name,
-          marks: entry.marks_obtained,
-          percentage: entry.percentage,
-          avatar: entry.student_name.charAt(0).toUpperCase(),
-          isCurrentUser: entry.is_current_user,
-          location: type === "overall" ? entry.center_name : entry.division_code,
-        }));
+        if (response.data.success) {
+          const leaderboardEntries = response.data.data.leaderboard.map(
+            (entry: any) => ({
+              rank: entry.rank,
+              name: entry.student_name,
+              marks: entry.marks_obtained,
+              percentage: entry.percentage,
+              avatar: entry.student_name.charAt(0).toUpperCase(),
+              isCurrentUser: entry.is_current_user,
+              location:
+                type === "overall" ? entry.center_name : entry.division_code,
+            })
+          );
 
-        setLeaderboardData((prev:any) => ({
+          setLeaderboardData((prev: any) => ({
+            ...prev,
+            [type]: leaderboardEntries,
+          }));
+        }
+      } catch (err) {
+        console.error(`Error fetching ${type} leaderboard:`, err);
+        // Set empty leaderboard data on error
+        setLeaderboardData((prev: any) => ({
           ...prev,
-          [type]: leaderboardEntries
+          [type]: [],
         }));
       }
-    } catch (err) {
-      console.error(`Error fetching ${type} leaderboard:`, err);
-      // Set empty leaderboard data on error
-      setLeaderboardData((prev:any) => ({
-        ...prev,
-        [type]: []
-      }));
-    }
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     const initializeAcademicData = async () => {
@@ -200,14 +230,14 @@ export default function AcademicsSection() {
 
       try {
         setLoading(true);
-        
+
         const [currentSemester, pastSemesters] = await Promise.all([
           fetchCurrentSemester(),
-          fetchPastSemesters()
+          fetchPastSemesters(),
         ]);
 
         const allCourses: any[] = [];
-        
+
         // Handle current semester subjects
         if (currentSemester?.subjects) {
           currentSemester.subjects.forEach((subject: any) => {
@@ -218,13 +248,16 @@ export default function AcademicsSection() {
               credits: subject.credits,
               semester: currentSemester.semester_info.semester_number,
               teacher_name: subject.teacher_name,
-              teacher_email: subject.teacher_email
+              teacher_email: subject.teacher_email,
             });
           });
         }
 
         // Handle past semesters subjects (if any exist)
-        if (pastSemesters?.past_semesters && pastSemesters.past_semesters.length > 0) {
+        if (
+          pastSemesters?.past_semesters &&
+          pastSemesters.past_semesters.length > 0
+        ) {
           pastSemesters.past_semesters.forEach((semester: any) => {
             if (semester.subjects) {
               semester.subjects.forEach((subject: any) => {
@@ -235,7 +268,7 @@ export default function AcademicsSection() {
                   credits: subject.credits,
                   semester: semester.semester_number,
                   teacher_name: subject.teacher_name,
-                  teacher_email: subject.teacher_email
+                  teacher_email: subject.teacher_email,
                 });
               });
             }
@@ -245,7 +278,7 @@ export default function AcademicsSection() {
         const academicData = {
           current_semester: currentSemester,
           past_semesters: pastSemesters?.past_semesters || [],
-          courses: allCourses
+          courses: allCourses,
         };
 
         setAcademicData(academicData);
@@ -257,13 +290,12 @@ export default function AcademicsSection() {
             semester: firstCourse.semester,
             course: firstCourse.code,
             testType: "FORTNIGHTLY",
-            testNumber: "1"
+            testNumber: "1",
           };
-          
+
           setActiveFilters(initialFilters);
           setPendingFilters(initialFilters);
         }
-
       } catch (err) {
         console.error("Error initializing academic data:", err);
         setError("Failed to load academic data");
@@ -280,35 +312,64 @@ export default function AcademicsSection() {
     const updateData = async () => {
       if (!activeFilters || !academicData) return;
 
-      const selectedCourse = academicData.courses.find(c => c.code === activeFilters.course);
+      const selectedCourse = academicData.courses.find(
+        (c) => c.code === activeFilters.course
+      );
       if (!selectedCourse) return;
 
       let semesterId = "";
-      
+
       // Find semester ID based on the selected semester
-      if (academicData.current_semester?.semester_info.semester_number === activeFilters.semester) {
+      if (
+        academicData.current_semester?.semester_info.semester_number ===
+        activeFilters.semester
+      ) {
         semesterId = academicData.current_semester.semester_info.semester_id;
       } else {
-        const pastSemester = academicData.past_semesters?.find((s: any) => s.semester_number === activeFilters.semester);
+        const pastSemester = academicData.past_semesters?.find(
+          (s: any) => s.semester_number === activeFilters.semester
+        );
         if (pastSemester) {
           semesterId = pastSemester.semester_id;
         }
       }
-      
+
       if (!semesterId) {
-        console.warn("No semester ID found for semester:", activeFilters.semester);
+        console.warn(
+          "No semester ID found for semester:",
+          activeFilters.semester
+        );
         return;
       }
 
-      const examName = `${getTestTypeLabel(activeFilters.testType)} ${activeFilters.testNumber}`;
+      const examName = `${getTestTypeLabel(activeFilters.testType)} ${
+        activeFilters.testNumber
+      }`;
 
       // Fetch performance trends
-      await fetchPerformanceTrends(semesterId, selectedCourse.id, activeFilters.testType, examName);
-      
+      await fetchPerformanceTrends(
+        semesterId,
+        selectedCourse.id,
+        activeFilters.testType,
+        examName
+      );
+
       // Fetch both leaderboards
       await Promise.all([
-        fetchLeaderboard("class", semesterId, selectedCourse.id, activeFilters.testType, examName),
-        fetchLeaderboard("overall", semesterId, selectedCourse.id, activeFilters.testType, examName)
+        fetchLeaderboard(
+          "class",
+          semesterId,
+          selectedCourse.id,
+          activeFilters.testType,
+          examName
+        ),
+        fetchLeaderboard(
+          "overall",
+          semesterId,
+          selectedCourse.id,
+          activeFilters.testType,
+          examName
+        ),
       ]);
     };
 
@@ -336,7 +397,7 @@ export default function AcademicsSection() {
         semester: firstCourse.semester,
         course: firstCourse.code,
         testType: "FORTNIGHTLY",
-        testNumber: "1"
+        testNumber: "1",
       };
       setPendingFilters(resetFilters);
       setActiveFilters(resetFilters);
@@ -354,7 +415,9 @@ export default function AcademicsSection() {
 
   const getAvailableCourses = () => {
     if (!academicData || !pendingFilters) return [];
-    return academicData.courses.filter(course => course.semester === pendingFilters.semester);
+    return academicData.courses.filter(
+      (course) => course.semester === pendingFilters.semester
+    );
   };
 
   const getTestTypes = () => {
@@ -364,10 +427,10 @@ export default function AcademicsSection() {
       { value: "MID_SEM", label: "Mid Semester" },
       { value: "END_SEM", label: "End Semester" },
       { value: "INTERVIEW", label: "Interview" },
-      { value: "PROJECT", label: "Projects" }
+      { value: "PROJECT", label: "Projects" },
     ];
   };
-  
+
   const getTestNumbers = () => {
     return ["1", "2", "3", "4", "5"];
   };
@@ -379,7 +442,7 @@ export default function AcademicsSection() {
       MID_SEM: "Mid Semester Exam",
       END_SEM: "End Semester Exam",
       INTERVIEW: "Interview",
-      PROJECT: "Project"
+      PROJECT: "Project",
     };
     return typeMap[type] || type;
   };
@@ -419,12 +482,12 @@ export default function AcademicsSection() {
   const getFilteredCompletedCourses = () => {
     const completed = getCompletedCourses();
     if (semesterFilter === "all") return completed;
-    return completed.filter(course => course.semester === semesterFilter);
+    return completed.filter((course) => course.semester === semesterFilter);
   };
 
   const getUniqueSemesters = () => {
     const completed = getCompletedCourses();
-    const semesters = [...new Set(completed.map(course => course.semester))];
+    const semesters = [...new Set(completed.map((course) => course.semester))];
     return semesters.sort((a, b) => a - b);
   };
 
@@ -436,7 +499,11 @@ export default function AcademicsSection() {
     return leaderboardData[type] || [];
   };
 
-  const LeaderboardTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  const LeaderboardTooltip = ({
+    active,
+    payload,
+    label,
+  }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white border border-gray-200 rounded-sm shadow-lg p-3">
@@ -550,7 +617,7 @@ export default function AcademicsSection() {
                       return {
                         ...prev,
                         semester: parseInt(e.target.value),
-                        course: "", 
+                        course: "",
                       };
                     })
                   }
@@ -573,9 +640,7 @@ export default function AcademicsSection() {
                 <select
                   className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
                   value={pendingFilters.course}
-                  onChange={(e) =>
-                    fetchExams(e.target.value)
-                  }
+                  onChange={(e) => fetchExams(e.target.value)}
                 >
                   <option value="">Select Course</option>
                   {availableCourses.map((course: any, idx: number) => (
@@ -693,8 +758,13 @@ export default function AcademicsSection() {
               <div className="h-80 flex items-center justify-center">
                 <div className="text-center">
                   <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <h4 className="text-lg font-semibold text-gray-600 mb-2">No Performance Data</h4>
-                  <p className="text-gray-500">Performance trends will appear here once exam results are available.</p>
+                  <h4 className="text-lg font-semibold text-gray-600 mb-2">
+                    No Performance Data
+                  </h4>
+                  <p className="text-gray-500">
+                    Performance trends will appear here once exam results are
+                    available.
+                  </p>
                 </div>
               </div>
             ) : (
@@ -1033,10 +1103,9 @@ export default function AcademicsSection() {
                       No completed courses found
                     </h4>
                     <p className="text-gray-500">
-                      {semesterFilter === "all" 
+                      {semesterFilter === "all"
                         ? "You haven't completed any courses yet."
-                        : "No courses match the selected semester filter."
-                      }
+                        : "No courses match the selected semester filter."}
                     </p>
                   </div>
                 ) : (
@@ -1125,7 +1194,8 @@ export default function AcademicsSection() {
                       No data available
                     </h3>
                     <p className="text-gray-500">
-                      Leaderboard data will appear here once results are published.
+                      Leaderboard data will appear here once results are
+                      published.
                     </p>
                   </div>
                 ) : (

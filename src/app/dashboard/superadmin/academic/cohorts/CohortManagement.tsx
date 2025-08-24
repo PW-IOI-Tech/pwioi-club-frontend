@@ -1,87 +1,101 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
-import { Users, Plus, ChevronDown } from "lucide-react";
+import { Plus, ChevronDown, Users, Component } from "lucide-react";
 import Table from "../../Table";
-import AddBatchModal from "./AddBatchModal";
+import AddCohortModal from "./AddCohortModal";
 
-interface TableBatch {
+interface TableCohort {
   id: string;
-  name: string;
-  department: string;
+  cohortName: string;
+  startDate: string;
+  endDate: string;
+  teacherCount: number;
+  studentCount: number;
   center: string;
+  school: string;
 }
-
-const initialBatches: TableBatch[] = [
-  {
-    id: "1",
-    name: "SOT24BAN",
-    department: "SOT",
-    center: "Bangalore",
-  },
-  {
-    id: "2",
-    name: "SOM24LUC",
-    department: "SOM",
-    center: "Lucknow",
-  },
-  {
-    id: "3",
-    name: "SOH24PUN",
-    department: "SOH",
-    center: "Pune",
-  },
-];
 
 const LOCATIONS = ["Bangalore", "Lucknow", "Pune", "Noida"] as const;
 
-export default function BatchManagement() {
-  const [batches, setBatches] = useState<TableBatch[]>(initialBatches);
+const schoolOptions = [
+  { value: "SOT", label: "School of Technology" },
+  { value: "SOM", label: "School of Management" },
+  { value: "SOD", label: "School of Design" },
+];
+
+const initialCohorts: TableCohort[] = [
+  {
+    id: "1",
+    cohortName: "Web Dev Cohort A",
+    startDate: "2025-01-10",
+    endDate: "2025-06-15",
+    teacherCount: 2,
+    studentCount: 35,
+    center: "Bangalore",
+    school: "SOT",
+  },
+  {
+    id: "2",
+    cohortName: "MBA Leadership Batch",
+    startDate: "2025-02-01",
+    endDate: "2025-07-30",
+    teacherCount: 3,
+    studentCount: 42,
+    center: "Noida",
+    school: "SOM",
+  },
+];
+
+export default function CohortManagement() {
+  const [cohorts, setCohorts] = useState<TableCohort[]>(initialCohorts);
   const [selectedLocation, setSelectedLocation] = useState<string>("");
-  const [isAddBatchModalOpen, setIsAddBatchModalOpen] = useState(false);
+  const [isAddCohortModalOpen, setIsAddCohortModalOpen] = useState(false);
   const [showContent, setShowContent] = useState(false);
 
-  const filteredBatches = useMemo(() => {
+  const filteredCohorts = useMemo(() => {
     if (!selectedLocation) return [];
-    return batches.filter((batch) => batch.center === selectedLocation);
-  }, [batches, selectedLocation]);
+    return cohorts.filter((c) => c.center === selectedLocation);
+  }, [cohorts, selectedLocation]);
 
   const statistics = useMemo(() => {
-    const filtered = batches.filter((b) => b.center === selectedLocation);
+    const filtered = cohorts.filter((c) => c.center === selectedLocation);
     return {
-      totalBatches: filtered.length,
+      totalCohorts: filtered.length,
+      totalStudents: filtered.reduce((sum, c) => sum + c.studentCount, 0),
+      totalTeachers: filtered.reduce((sum, c) => sum + c.teacherCount, 0),
     };
-  }, [batches, selectedLocation]);
+  }, [cohorts, selectedLocation]);
 
-  const handleUpdateBatch = useCallback((updatedItem: any) => {
-    const batchItem = updatedItem as TableBatch;
-    setBatches((prev) =>
-      prev.map((batch) =>
-        batch.id === batchItem.id ? { ...batch, ...batchItem } : batch
-      )
+  const handleUpdateCohort = useCallback((updatedItem: any) => {
+    const cohort = updatedItem as TableCohort;
+    setCohorts((prev) =>
+      prev.map((c) => (c.id === cohort.id ? { ...c, ...cohort } : c))
     );
   }, []);
 
-  const handleDeleteBatch = useCallback((id: string | number) => {
+  const handleDeleteCohort = useCallback((id: string | number) => {
     const deleteId = typeof id === "number" ? id.toString() : id;
-    setBatches((prev) => prev.filter((batch) => batch.id !== deleteId));
+    setCohorts((prev) => prev.filter((c) => c.id !== deleteId));
   }, []);
 
-  const handleAddBatch = useCallback(
-    (newBatchData: {
-      centerName: string;
-      depName: string;
-      batchName: string;
+  const handleAddCohort = useCallback(
+    (newCohortData: {
+      cohortName: string;
+      startDate: string;
+      endDate: string;
+      school: string;
     }) => {
-      const newBatch: TableBatch = {
+      const newCohort: TableCohort = {
         id: Date.now().toString(),
-        name: newBatchData.batchName,
-        department: newBatchData.depName,
+        ...newCohortData,
         center: selectedLocation,
+        teacherCount: 0,
+        studentCount: 0,
       };
 
-      setBatches((prev) => [...prev, newBatch]);
-      setIsAddBatchModalOpen(false);
+      setCohorts((prev) => [...prev, newCohort]);
+      setIsAddCohortModalOpen(false);
     },
     [selectedLocation]
   );
@@ -91,11 +105,11 @@ export default function BatchManagement() {
       alert("Please select a center location first.");
       return;
     }
-    setIsAddBatchModalOpen(true);
+    setIsAddCohortModalOpen(true);
   }, [selectedLocation]);
 
   const handleCloseAddModal = useCallback(() => {
-    setIsAddBatchModalOpen(false);
+    setIsAddCohortModalOpen(false);
   }, []);
 
   const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -114,7 +128,7 @@ export default function BatchManagement() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
-        <h2 className="text-3xl font-bold text-slate-900">Batch Management</h2>
+        <h2 className="text-3xl font-bold text-slate-900">Cohort Management</h2>
 
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
           <label
@@ -149,12 +163,20 @@ export default function BatchManagement() {
           <ShimmerSkeleton />
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 text-center">
-                <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
-                <h4 className="text-lg text-slate-900 mb-1">Total Batches</h4>
+                <Component className="w-8 h-8 text-slate-900 mx-auto mb-2" />
+                <h4 className="text-lg text-slate-900 mb-1">Total Cohorts</h4>
                 <p className="text-5xl font-bold text-[#1B3A6A]">
-                  {statistics.totalBatches}
+                  {statistics.totalCohorts}
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-white to-green-50 rounded-sm border border-gray-400 p-6 text-center">
+                <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
+                <h4 className="text-lg text-slate-900 mb-1">Total Students</h4>
+                <p className="text-5xl font-bold text-green-600">
+                  {statistics.totalStudents}
                 </p>
               </div>
 
@@ -166,34 +188,39 @@ export default function BatchManagement() {
                   <div className="bg-gray-200 rounded-full p-3 mb-2 hover:bg-gray-300 transition-colors">
                     <Plus size={24} />
                   </div>
-                  <h3 className="text-lg font-semibold">Add New Batch</h3>
+                  <h3 className="text-lg font-semibold">Add New Cohort</h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    Create a new batch record
+                    Create a new cohort
                   </p>
                 </button>
               </div>
             </div>
 
             <Table
-              data={filteredBatches}
-              title={`Batches in ${selectedLocation}`}
-              filterField="department"
-              badgeFields={["department"]}
+              data={filteredCohorts}
+              title={`Cohorts in ${selectedLocation}`}
+              filterField="cohortName"
+              badgeFields={["teacherCount", "studentCount"]}
               selectFields={{
-                department: ["SOT", "SOM", "SOH"],
+                school: schoolOptions.map((opt) => opt.value),
               }}
-              nonEditableFields={["id", "center"]}
-              onDelete={handleDeleteBatch}
-              onEdit={handleUpdateBatch}
-              hiddenColumns={["id"]}
+              nonEditableFields={[
+                "id",
+                "center",
+                "teacherCount",
+                "studentCount",
+              ]}
+              onDelete={handleDeleteCohort}
+              onEdit={handleUpdateCohort}
+              hiddenColumns={["id", "center"]}
             />
           </>
         )}
 
-        <AddBatchModal
-          isOpen={isAddBatchModalOpen}
+        <AddCohortModal
+          isOpen={isAddCohortModalOpen}
           onClose={handleCloseAddModal}
-          onBatchCreated={handleAddBatch}
+          onCohortCreated={handleAddCohort}
           prefillLocation={selectedLocation}
         />
       </div>
@@ -204,8 +231,8 @@ export default function BatchManagement() {
 function ShimmerSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[...Array(2)].map((_, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
           <div
             key={i}
             className="bg-white p-6 rounded-sm border border-gray-300 text-center"
