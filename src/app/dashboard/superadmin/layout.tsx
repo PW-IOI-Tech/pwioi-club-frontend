@@ -159,6 +159,11 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
           label: "Flag Management",
           href: "/dashboard/superadmin/resources/flags",
         },
+        {
+          id: "cpr",
+          label: "CPR Management",
+          href: "/dashboard/superadmin/resources/cpr",
+        },
       ],
     },
   ];
