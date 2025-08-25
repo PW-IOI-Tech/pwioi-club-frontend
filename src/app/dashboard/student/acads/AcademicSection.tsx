@@ -81,24 +81,27 @@ export default function AcademicsSection() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exams, setExams] = useState<any[]>([]);
 
-  const fetchExams = useCallback(async (subjectId: string) => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${subjectId}`,
-        {
-          withCredentials: true,
-        }
-      );
 
-      if (response.data.success) {
-        return response.data.data;
-      }
-    } catch (err) {
-      console.error("Error fetching current semester:", err);
-      throw err;
+const fetchExams = useCallback(async (subjectId: string, examType: string) => {
+  try {
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${subjectId}`,
+      { exam_type: examType },
+      { withCredentials: true }
+    );
+
+    if (response.data.success) {
+      setExams(response.data.data.exams || []);
+      return response.data.data.exams;
     }
-  }, []);
+  } catch (err) {
+    console.error("Error fetching exams:", err);
+    setExams([]);
+  }
+}, []);
+
 
   const fetchCurrentSemester = useCallback(async () => {
     try {
@@ -161,7 +164,6 @@ export default function AcademicsSection() {
         }
       } catch (err) {
         console.error("Error fetching performance trends:", err);
-        // Set sample data when no trends are available
         setChartData([
           { test: "Test 1", percentage: 0 },
           { test: "Test 2", percentage: 0 },
@@ -632,26 +634,47 @@ export default function AcademicsSection() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Course
-              </label>
-              <div className="relative">
-                <select
-                  className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
-                  value={pendingFilters.course}
-                  onChange={(e) => fetchExams(e.target.value)}
-                >
-                  <option value="">Select Course</option>
-                  {availableCourses.map((course: any, idx: number) => (
-                    <option key={course.id || idx} value={course.code}>
-                      {course.code?.toUpperCase?.() || ""}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
+           <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Course
+  </label>
+  <div className="relative">
+    <select
+      className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
+      value={pendingFilters.course}
+      onChange={(e) => {
+        const selectedCourse = e.target.value;
+
+        setPendingFilters((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            course: selectedCourse, // ✅ update filter
+          };
+        });
+
+        // ✅ fetch exams only if we have testType
+        if (selectedCourse && pendingFilters?.testType) {
+          const selectedCourseObj = availableCourses.find(
+            (c: any) => c.code === selectedCourse
+          );
+          if (selectedCourseObj) {
+            fetchExams(selectedCourseObj.id, pendingFilters.testType);
+          }
+        }
+      }}
+    >
+      <option value="">Select Course</option>
+      {availableCourses.map((course: any, idx: number) => (
+        <option key={course.id || idx} value={course.code}>
+          {course.code?.toUpperCase?.() || ""}
+        </option>
+      ))}
+    </select>
+    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+  </div>
+</div>
+
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -698,9 +721,9 @@ export default function AcademicsSection() {
                     })
                   }
                 >
-                  {getTestNumbers().map((test) => (
+                  {exams.map((test) => (
                     <option key={test} value={test}>
-                      Test {test}
+                       {test?.name}
                     </option>
                   ))}
                 </select>

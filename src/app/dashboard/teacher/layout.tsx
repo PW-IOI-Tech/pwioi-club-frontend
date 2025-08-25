@@ -24,23 +24,50 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  designation?: string;
+  teacherId?: string;
+  course?: string;
+  ttlStudents?: string;
+  ttlBatches?: string;
+}
+
 const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
+  const [userDetails, setUserDetails] = useState<UserData | null>(null);
+
   const pathname = usePathname();
   const router = useRouter();
 
-  const userData = {
-    name: "John Doe",
-    email: "john.doe@example.com",
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUserDetails(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Invalid user in localStorage", e);
+      }
+    }
+  }, []);
+
+    const userData = {
+    name: userDetails?.name,
+    email: userDetails?.email,
     profilePicture: "/api/placeholder/120/120",
     teacherId: "TCHR2024001",
-    course: "Computer Science & Engineering",
-    phone: "+1 (555) 123-4567",
+    course: userDetails?.designation,
+    phone: userDetails?.phone,
     ttlStudents: "120",
     ttlBatches: "4",
   };
+
 
   const menuItems = [
     { id: "home", label: "Home", icon: House, href: "/dashboard/teacher" },
@@ -129,13 +156,17 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   }, [isMobileMenuOpen, isProfileSidebarOpen]);
 
   const handleLogout = () => {
-    console.log("Logout clicked");
+    localStorage.removeItem("user");
     router.push("/auth/login/student");
   };
 
   const handleCodingPlatformRedirect = () => {
     window.open("https://your-coding-platform.com", "_blank");
   };
+
+  if (!userData) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -495,3 +526,4 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default TeacherLayout;
+

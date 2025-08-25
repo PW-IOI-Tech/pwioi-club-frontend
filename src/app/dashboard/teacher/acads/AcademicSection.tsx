@@ -67,61 +67,7 @@ interface SelectedFilters {
 type SortField = "enrollmentId" | "name" | "marks" | "percentage" | "rank";
 type SortOrder = "asc" | "desc";
 
-// Mock data
-const mockOngoingCourses: Course[] = [
-  {
-    class: "SOT23B1",
-    semester: 3,
-    subject: "Data Structures",
-    totalStudents: 118,
-  },
-  {
-    class: "SOT23B2",
-    semester: 3,
-    subject: "Database Management",
-    totalStudents: 115,
-  },
-];
 
-const mockCompletedCourses: Course[] = [
-  {
-    class: "SOT22B1",
-    semester: 4,
-    subject: "Operating Systems",
-    totalStudents: 110,
-  },
-  {
-    class: "SOT22B2",
-    semester: 4,
-    subject: "Computer Networks",
-    totalStudents: 105,
-  },
-  {
-    class: "SOM23B1",
-    semester: 2,
-    subject: "Object Oriented Programming",
-    totalStudents: 112,
-  },
-  {
-    class: "SOT21B1",
-    semester: 6,
-    subject: "Machine Learning",
-    totalStudents: 98,
-  },
-  {
-    class: "SOT21B2",
-    semester: 6,
-    subject: "Web Development",
-    totalStudents: 102,
-  },
-];
-
-const mockPerformanceData: PerformanceData[] = [
-  { test: "Test 1", percentage: 78 },
-  { test: "Test 2", percentage: 82 },
-  { test: "Test 3", percentage: 75 },
-  { test: "Mid-term", percentage: 85 },
-];
 
 const mockStudentMarks: StudentMark[] = [
   {
@@ -202,6 +148,18 @@ const DashboardHeader: React.FC = () => {
 };
 
 const OngoingCoursesTable: React.FC = () => {
+  const [ongoingCourses, setOngoingCourses] = useState<Course[]>([]);
+
+  useEffect(() => {
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teacher-courses/active-subject`,
+        { withCredentials: true }
+      )
+      .then((res) => setOngoingCourses(res.data))
+      .catch((err) => console.error("Error fetching ongoing courses:", err));
+  }, []);
+
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
       <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
@@ -213,68 +171,77 @@ const OngoingCoursesTable: React.FC = () => {
             Ongoing Courses
           </h3>
           <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-            {mockOngoingCourses.length} courses
+            {ongoingCourses.length} courses
           </span>
         </div>
       </div>
       <div className="p-6">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b-2 border-gray-100">
-                <th className="text-left py-4 font-semibold text-gray-800">
-                  Class
-                </th>
-                <th className="text-left py-4 font-semibold text-gray-800">
-                  Semester
-                </th>
-                <th className="text-left py-4 font-semibold text-gray-800">
-                  Subject
-                </th>
-                <th className="text-left py-4 font-semibold text-gray-800">
-                  Total Students
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockOngoingCourses.map((course, index) => (
-                <tr
-                  key={index}
-                  className="border-b border-gray-50 hover:bg-gray-25 transition-colors"
-                >
-                  <td className="py-4 font-medium text-gray-900">
-                    {course.class}
-                  </td>
-                  <td className="py-4 text-gray-600">{course.semester}</td>
-                  <td className="py-4 text-gray-600">{course.subject}</td>
-                  <td className="py-4 text-gray-600">{course.totalStudents}</td>
+        {ongoingCourses.length === 0 ? (
+          <p className="text-gray-500">No ongoing courses available</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b-2 border-gray-100">
+                  <th className="text-left py-4 font-semibold text-gray-800">
+                    Class
+                  </th>
+                  <th className="text-left py-4 font-semibold text-gray-800">
+                    Semester
+                  </th>
+                  <th className="text-left py-4 font-semibold text-gray-800">
+                    Subject
+                  </th>
+                  <th className="text-left py-4 font-semibold text-gray-800">
+                    Total Students
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {ongoingCourses.map((course, index) => (
+                  <tr key={index} className="border-b border-gray-50">
+                    <td className="py-4 font-medium text-gray-900">
+                      {course.class}
+                    </td>
+                    <td className="py-4 text-gray-600">{course.semester}</td>
+                    <td className="py-4 text-gray-600">{course.subject}</td>
+                    <td className="py-4 text-gray-600">
+                      {course.totalStudents}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
+
 const CompletedCoursesTable: React.FC = () => {
-  const [showCompletedCourses, setShowCompletedCourses] =
-    useState<boolean>(false);
+  const [completedCourses, setCompletedCourses] = useState<Course[]>([]);
+  const [showCompletedCourses, setShowCompletedCourses] = useState(false);
   const [classFilter, setClassFilter] = useState<string | "all">("all");
 
-  const getFilteredCompletedCourses = (): Course[] => {
-    if (classFilter === "all") return mockCompletedCourses;
-    return mockCompletedCourses.filter(
-      (course) => course.class === classFilter
-    );
-  };
+  useEffect(() => {
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teacher-courses/completedSubject`,
+        { withCredentials: true }
+      )
+      .then((res) => setCompletedCourses(res.data))
+      .catch((err) => console.error("Error fetching completed courses:", err));
+  }, []);
 
-  const getUniqueClasses = (): string[] => {
-    return [
-      ...new Set(mockCompletedCourses.map((course) => course.class)),
-    ].sort();
-  };
+  const getFilteredCompletedCourses = () =>
+    classFilter === "all"
+      ? completedCourses
+      : completedCourses.filter((c) => c.class === classFilter);
+
+  const getUniqueClasses = () =>
+    [...new Set(completedCourses.map((c) => c.class))].sort();
 
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
@@ -354,18 +321,11 @@ const CompletedCoursesTable: React.FC = () => {
                 </thead>
                 <tbody>
                   {getFilteredCompletedCourses().map((course, index) => (
-                    <tr
-                      key={index}
-                      className="border-b border-gray-50 hover:bg-gray-25 transition-colors"
-                    >
-                      <td className="py-4 font-medium text-gray-900">
-                        {course.class}
-                      </td>
-                      <td className="py-4 text-gray-600">{course.semester}</td>
-                      <td className="py-4 text-gray-600">{course.subject}</td>
-                      <td className="py-4 text-gray-600">
-                        {course.totalStudents}
-                      </td>
+                    <tr key={index} className="border-b border-gray-50">
+                      <td className="py-4">{course.class}</td>
+                      <td className="py-4">{course.semester}</td>
+                      <td className="py-4">{course.subject}</td>
+                      <td className="py-4">{course.totalStudents}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -377,6 +337,7 @@ const CompletedCoursesTable: React.FC = () => {
     </div>
   );
 };
+
 
 interface MarksSelectionFormProps {
   onShowAnalysis: (filters: SelectedFilters) => void;
@@ -837,75 +798,45 @@ interface PerformanceChartProps {
   selectedFilters: SelectedFilters;
 }
 
-const PerformanceChart: React.FC<PerformanceChartProps> = ({
+const PerformanceChart: React.FC<{ selectedFilters: SelectedFilters }> = ({
   selectedFilters,
 }) => {
-  const CustomTooltip = ({
-    active,
-    payload,
-    label,
-  }: {
-    active?: boolean;
-    payload?: Array<{
-      value: number;
-      name: string;
-    }>;
-    label?: string;
-  }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{`${label}`}</p>
-          <p className="text-blue-600">{`Average: ${payload[0].value}%`}</p>
-        </div>
-      );
-    }
-    return null;
-  };
+  const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
+
+  useEffect(() => {
+    if (!selectedFilters.subject || !selectedFilters.testType) return;
+
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teacher-courses/exam-type/average-marks`,
+        {
+          params: {
+            subjectId: selectedFilters.subject,
+            examType: selectedFilters.testType,
+          },
+          withCredentials: true,
+        }
+      )
+      .then((res) => setPerformanceData(res.data))
+      .catch((err) => console.error("Error fetching performance data:", err));
+  }, [selectedFilters]);
 
   return (
-    <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
-      <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 px-6 py-4 drop-shadow-sm">
-        <h3 className="text-xl font-semibold text-slate-900">
-          {selectedFilters.subject} -{" "}
-          {/* {testTypes.find((t) => t.value === selectedFilters.testType)?.label}{" "} */}
-          Performance Trend
-        </h3>
-      </div>
-      <div className="p-6">
-        <div className="h-80 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={mockPerformanceData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis
-                dataKey="test"
-                tick={{ fontSize: 12 }}
-                stroke="#6b7280"
-                tickLine={{ stroke: "#6b7280" }}
-              />
-              <YAxis
-                domain={[0, 100]}
-                tick={{ fontSize: 12 }}
-                stroke="#6b7280"
-                tickLine={{ stroke: "#6b7280" }}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar
-                dataKey="percentage"
-                fill="#1c398e"
-                radius={[6, 6, 0, 0]}
-                name="Performance"
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+    <div className="bg-white border p-4 rounded-sm">
+      <h3 className="text-lg font-semibold mb-2">Performance Trend</h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={performanceData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="test" />
+          <YAxis domain={[0, 100]} />
+          <Tooltip />
+          <Bar dataKey="percentage" fill="#1c398e" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 };
+
 
 interface StudentMarksTableProps {
   selectedFilters: SelectedFilters;
