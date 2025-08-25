@@ -10,8 +10,7 @@ import {
   Menu,
   X,
   Settings,
-  Code,
-  ExternalLink,
+  MessageCircle,
   Phone,
   Mail,
   House,
@@ -169,6 +168,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
   ];
 
   const getActiveSection = () => {
+    if (pathname === "/dashboard/superadmin/feed") return "feed";
     if (pathname.includes("/people/")) return "people";
     if (pathname.includes("/academic/")) return "academic";
     if (pathname.includes("/operations/")) return "operations";
@@ -236,8 +236,8 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
     router.push("/auth/login/student");
   };
 
-  const handleCodingPlatformRedirect = () => {
-    window.open("https://your-coding-platform.com", "_blank");
+  const goToFeed = () => {
+    router.push("/dashboard/superadmin/feed");
   };
 
   return (
@@ -265,6 +265,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
         />
       )}
 
+      {/* Desktop Sidebar */}
       <div
         className={`hidden lg:flex sticky top-0 h-screen bg-slate-900 border-r border-slate-700/50 shadow-2xl transition-all duration-300 ease-in-out max-h-screen overflow-y-scroll ${
           isSidebarExpanded ? "w-64" : "w-20"
@@ -293,23 +294,24 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
             )}
           </div>
 
+          {/* Feed Button */}
           <div className="p-5 border-b border-slate-700/50 bg-slate-800/30">
             <button
-              onClick={handleCodingPlatformRedirect}
+              onClick={goToFeed}
               className={`w-full flex items-center hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer ${
                 isSidebarExpanded ? "space-x-3" : "justify-center"
               }`}
             >
-              <div className="p-3 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-xl shadow-lg border border-blue-500/20 hover:shadow-xl transition-all duration-200">
-                <Code className="w-5 h-5 text-white" />
+              <div className="p-3 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-xl shadow-lg border border-blue-500/20 hover:shadow-xl transition-all duration-200">
+                <MessageCircle className="w-5 h-5 text-white" />
               </div>
               {isSidebarExpanded && (
                 <div className="text-left">
                   <p className="text-white font-semibold text-sm tracking-wide">
-                    CodeLab Pro
+                    Feed
                   </p>
                   <p className="text-slate-400 text-xs font-medium">
-                    Coding Platform
+                    Social Updates
                   </p>
                 </div>
               )}
@@ -413,6 +415,33 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
                 </a>
               );
             })}
+
+            <a
+              href="/dashboard/superadmin/feed"
+              className={`flex items-center space-x-3 px-3 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border ${
+                activeSection === "feed"
+                  ? "bg-blue-600/20 text-blue-400 shadow-lg border-blue-500/30 backdrop-blur-sm"
+                  : "text-slate-300 hover:bg-slate-700/50 hover:text-white border-transparent hover:border-slate-600/30"
+              }`}
+              title={!isSidebarExpanded ? "Feed" : undefined}
+            >
+              <MessageCircle
+                className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
+                  activeSection === "feed" ? "text-blue-400" : ""
+                }`}
+              />
+              {isSidebarExpanded && (
+                <span className="font-medium text-sm whitespace-nowrap tracking-wide">
+                  Feed
+                </span>
+              )}
+              {!isSidebarExpanded && (
+                <div className="absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-2xl border border-slate-600/50 scale-95 group-hover:scale-100">
+                  Feed
+                  <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-slate-800 border-l border-t border-slate-600/50 rotate-45"></div>
+                </div>
+              )}
+            </a>
           </nav>
 
           <div className="p-4 border-t border-slate-700/50 bg-gradient-to-r from-slate-800/30 to-slate-700/20">
@@ -447,6 +476,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
 
+      {/* Profile Sidebar */}
       <div
         id="profile-sidebar"
         className={`fixed inset-y-0 right-0 z-50 w-80 h-screen bg-white shadow-xl flex flex-col transition-transform duration-400 ease-in-out border-l border-slate-200 overflow-y-auto ${
@@ -494,7 +524,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
             Academic Overview
           </h3>
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gradient-to-br from-white to-blue-50 rounded-lg p-3 border border-blue-100 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 ">
+            <div className="bg-gradient-to-br from-white to-blue-50 rounded-lg p-3 border border-blue-100 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200">
               <div className="flex items-center space-x-1.5">
                 <School className="w-3.5 h-3.5 text-blue-600" />
                 <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
@@ -505,7 +535,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
                 {userData.ttlBatches}
               </p>
             </div>
-            <div className="bg-gradient-to-br from-white to-indigo-50 rounded-lg p-3 border border-indigo-100 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 ">
+            <div className="bg-gradient-to-br from-white to-indigo-50 rounded-lg p-3 border border-indigo-100 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200">
               <div className="flex items-center space-x-1.5">
                 <Users className="w-3.5 h-3.5 text-indigo-600" />
                 <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
@@ -532,14 +562,17 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
               <span className="font-medium">My Profile</span>
             </a>
 
-            <button
-              onClick={handleCodingPlatformRedirect}
-              className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-indigo-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md text-sm cursor-pointer group"
+            <a
+              href="/dashboard/superadmin/feed"
+              className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-green-200 shadow-sm hover:shadow-md text-sm cursor-pointer group"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push("/dashboard/superadmin/feed");
+              }}
             >
-              <Code className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
-              <span className="font-medium">Coding Platform</span>
-              <ExternalLink className="w-3.5 h-3.5 ml-auto group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
-            </button>
+              <MessageCircle className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
+              <span className="font-medium">View Feed</span>
+            </a>
           </nav>
         </div>
 
@@ -574,6 +607,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
 
+      {/* Mobile Sidebar */}
       <div
         id="mobile-sidebar"
         className={`lg:hidden fixed inset-y-0 right-0 z-40 w-72 h-screen bg-slate-900 border-l border-slate-700/50 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
@@ -591,26 +625,27 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
 
+        {/* Mobile Feed Button */}
         <div className="p-5 border-b border-slate-700/50 bg-slate-800/30">
           <button
-            onClick={handleCodingPlatformRedirect}
+            onClick={goToFeed}
             className="w-full flex items-center space-x-3 hover:bg-slate-700/30 hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer"
           >
-            <div className="p-3 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-xl shadow-lg border border-blue-500/20 hover:shadow-xl transition-all duration-200">
-              <Code className="w-5 h-5 text-white" />
+            <div className="p-3 bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 rounded-xl shadow-lg border border-green-500/20 hover:shadow-xl transition-all duration-200">
+              <MessageCircle className="w-5 h-5 text-white" />
             </div>
             <div>
               <p className="text-white font-semibold text-sm tracking-wide">
-                CodeLab Pro
+                Feed
               </p>
               <p className="text-slate-400 text-xs font-medium">
-                Coding Platform
+                Social Updates
               </p>
             </div>
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600/50 scrollbar-track-transparent">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
@@ -646,7 +681,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
                   </button>
 
                   {isExpanded && (
-                    <div className="ml-8 space-y-1 border-l border-slate-700/50 pl-4 max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600/50 scrollbar-track-transparent">
+                    <div className="ml-8 space-y-1 border-l border-slate-700/50 pl-4">
                       {item.subItems.map((subItem) => (
                         <a
                           key={subItem.id}
@@ -685,6 +720,23 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
               </a>
             );
           })}
+
+          {/* Mobile Feed Link */}
+          <a
+            href="/dashboard/superadmin/feed"
+            className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer border ${
+              activeSection === "feed"
+                ? "bg-green-600/20 text-green-400 shadow-lg border-green-500/30 backdrop-blur-sm"
+                : "text-slate-300 hover:bg-slate-700/50 hover:text-white border-transparent hover:border-slate-600/30"
+            }`}
+          >
+            <MessageCircle
+              className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
+                activeSection === "feed" ? "text-green-400" : ""
+              }`}
+            />
+            <span className="font-medium tracking-wide">Feed</span>
+          </a>
         </nav>
 
         <div className="p-4 border-t border-slate-700/50 bg-gradient-to-r from-slate-800/30 to-slate-700/20">
@@ -703,6 +755,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
 
+      {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out">
         <div
           className={`p-1 lg:p-8 ${
