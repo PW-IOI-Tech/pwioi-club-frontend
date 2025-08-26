@@ -156,7 +156,7 @@ const OngoingCoursesTable: React.FC = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teacher-courses/active-subject`,
         { withCredentials: true }
       )
-      .then((res) => setOngoingCourses(res.data))
+      .then((res) => setOngoingCourses(res.data.data))
       .catch((err) => console.error("Error fetching ongoing courses:", err));
   }, []);
 
@@ -198,7 +198,7 @@ const OngoingCoursesTable: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {ongoingCourses.map((course, index) => (
+                {ongoingCourses?.map((course, index) => (
                   <tr key={index} className="border-b border-gray-50">
                     <td className="py-4 font-medium text-gray-900">
                       {course.class}

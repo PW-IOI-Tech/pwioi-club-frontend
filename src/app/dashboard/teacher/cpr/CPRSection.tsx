@@ -1,6 +1,59 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { ChevronDown, Save, Loader2 } from "lucide-react";
+import axios from "axios";
+
+interface TeachingDetailsResponse {
+  success: boolean;
+  teacher: {
+    id: string;
+    name: string;
+    email: string;
+    designation: string;
+  };
+  schools: {
+    id: string;
+    name: string;
+    batches: {
+      id: string;
+      name: string;
+      divisions: {
+        id: string;
+        code: string;
+        total_students: number;
+        semesters: {
+          id: string;
+          number: number;
+          start_date: string;
+          end_date: string;
+          is_current: boolean;
+          subjects: {
+            id: string;
+            name: string;
+            code: string;
+            credits: number;
+            exam_types: any;
+            total_exam_types: number;
+            total_exams: number;
+          }[];
+          total_subjects: number;
+        }[];
+        total_semesters: number;
+      }[];
+      total_divisions: number;
+    }[];
+    total_batches: number;
+  }[];
+  summary: {
+    total_schools: number;
+    total_batches: number;
+    total_divisions: number;
+    total_semesters: number;
+    total_subjects: number;
+    total_exams: number;
+    exam_type_breakdown: Record<string, number>;
+  };
+}
 
 const centers = [
   { value: "center-bangalore", label: "Bangalore" },
@@ -110,6 +163,14 @@ const dummyCPRData: CPRRow[] = [
 ];
 
 export default function CPRManagement() {
+  const [teachingDetails, setTeachingDetails] =
+    useState<TeachingDetailsResponse | null>(null);
+  const [selectedSchool, setSelectedSchool] = useState<string>("");
+  const [selectedBatch, setSelectedBatch] = useState<string>("");
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
+  const [selectedSemester, setSelectedSemester] = useState<string>("");
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
+
   const [center, setCenter] = useState("");
   const [school, setSchool] = useState("");
   const [batch, setBatch] = useState("");
@@ -133,27 +194,46 @@ export default function CPRManagement() {
     }
   };
 
-  const handleStatusChange = (id: string, newStatus: CPRRow["status"]) => {
-    const now = new Date().toISOString();
+const handleStatusChange = async (id: string, newStatus: CPRRow["status"]) => {
+  const now = new Date().toISOString();
+
+  setCprData((prev) =>
+    prev.map((row) => {
+      if (row.id !== id) return row;
+
+      let updated = { ...row, status: newStatus };
+
+      if (row.status === "Pending" && newStatus === "In Progress") {
+        updated.actualStartDate = now;
+      }
+
+      if (row.status === "In Progress" && newStatus === "Completed") {
+        updated.actualCompletionDate = now;
+      }
+
+      return updated;
+    })
+  );
+
+  try {
+    await axios.patch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/sub-topics/${id}/status`,
+      { status: newStatus },
+      { withCredentials: true }
+    );
+  } catch (error) {
+    console.error("Error updating status:", error);
 
     setCprData((prev) =>
-      prev.map((row) => {
-        if (row.id !== id) return row;
-
-        let updated = { ...row, status: newStatus };
-
-        if (row.status === "Pending" && newStatus === "In Progress") {
-          updated.actualStartDate = now;
-        }
-
-        if (row.status === "In Progress" && newStatus === "Completed") {
-          updated.actualCompletionDate = now;
-        }
-
-        return updated;
-      })
+      prev.map((row) =>
+        row.id === id ? { ...row, status: row.status } : row
+      )
     );
-  };
+
+    alert("Failed to update status. Please try again.");
+  }
+};
+
 
   const saveChanges = () => {
     setIsSaving(true);
@@ -164,6 +244,88 @@ export default function CPRManagement() {
       alert("CPR changes saved successfully!");
     }, 800);
   };
+  const schoolOptions =
+    teachingDetails?.schools.map((s: any) => ({
+      value: s.id,
+      label: s.name,
+    })) || [];
+
+  const getBatchOptions = (schoolId: string) => {
+    const school = teachingDetails?.schools.find((s: any) => s.id === schoolId);
+    return (
+      school?.batches.map((b: any) => ({
+        value: b.id,
+        label: b.name,
+      })) || []
+    );
+  };
+
+  const getDivisionOptions = (schoolId: string, batchId: string) => {
+    const batch = teachingDetails?.schools
+      .find((s: any) => s.id === schoolId)
+      ?.batches.find((b: any) => b.id === batchId);
+
+    return (
+      batch?.divisions.map((d: any) => ({
+        value: d.id,
+        label: d.code,
+      })) || []
+    );
+  };
+
+  const getSemesterOptions = (
+    schoolId: string,
+    batchId: string,
+    divisionId: string
+  ) => {
+    const division = teachingDetails?.schools
+      .find((s: any) => s.id === schoolId)
+      ?.batches.find((b: any) => b.id === batchId)
+      ?.divisions.find((d: any) => d.id === divisionId);
+
+    return (
+      division?.semesters.map((sem: any) => ({
+        value: sem.id,
+        label: `Semester ${sem.number}`,
+      })) || []
+    );
+  };
+
+  const getSubjectOptions = (
+    schoolId: string,
+    batchId: string,
+    divisionId: string,
+    semesterId: string
+  ) => {
+    const semester = teachingDetails?.schools
+      .find((s: any) => s.id === schoolId)
+      ?.batches.find((b: any) => b.id === batchId)
+      ?.divisions.find((d: any) => d.id === divisionId)
+      ?.semesters.find((sem: any) => sem.id === semesterId);
+
+    return (
+      semester?.subjects.map((subj: any) => ({
+        value: subj.id,
+        label: subj.name,
+      })) || []
+    );
+  };
+
+  const getTeachingDetails = async () => {
+    try {
+      const response = await axios.get<TeachingDetailsResponse>(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/teaching-details`,
+        { withCredentials: true }
+      );
+      setTeachingDetails(response.data);
+    } catch (error) {
+      console.error("Error fetching teaching details:", error);
+    }
+  };
+
+  useEffect(() => {
+    getTeachingDetails();
+  }, []);
 
   useEffect(() => {
     if (originalCprData.length > 0 && cprData.length > 0) {
@@ -186,176 +348,188 @@ export default function CPRManagement() {
           </p>
         </div>
 
-        <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">Filters</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6 text-sm">
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Center
-              </label>
-              <div className="relative">
-                <select
-                  value={center}
-                  onChange={(e) => setCenter(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none cursor-pointer"
-                >
-                  <option value="">Select Center</option>
-                  {centers.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                School
-              </label>
-              <div className="relative">
-                <select
-                  value={school}
-                  onChange={(e) => setSchool(e.target.value)}
-                  disabled={!center}
-                  className={`w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer
-                    ${!center ? "bg-gray-100 text-gray-400" : "bg-white"}
-                  `}
-                >
-                  <option value="">Select School</option>
-                  {schools.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Batch
-              </label>
-              <div className="relative">
-                <select
-                  value={batch}
-                  onChange={(e) => setBatch(e.target.value)}
-                  disabled={!school}
-                  className={`w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer
-                    ${!school ? "bg-gray-100 text-gray-400" : "bg-white"}
-                  `}
-                >
-                  <option value="">Select Batch</option>
-                  {batches.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Division
-              </label>
-              <div className="relative">
-                <select
-                  value={division}
-                  onChange={(e) => setDivision(e.target.value)}
-                  disabled={!batch}
-                  className={`w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer
-                    ${!batch ? "bg-gray-100 text-gray-400" : "bg-white"}
-                  `}
-                >
-                  <option value="">Select Division</option>
-                  {divisions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Semester
-              </label>
-              <div className="relative">
-                <select
-                  value={semester}
-                  onChange={(e) => setSemester(e.target.value)}
-                  disabled={!division}
-                  className={`w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer
-                    ${!division ? "bg-gray-100 text-gray-400" : "bg-white"}
-                  `}
-                >
-                  <option value="">Select Semester</option>
-                  {semesters.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Subject
-              </label>
-              <div className="relative">
-                <select
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  disabled={!semester}
-                  className={`w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer
-                    ${!semester ? "bg-gray-100 text-gray-400" : "bg-white"}
-                  `}
-                >
-                  <option value="">Select Subject</option>
-                  {subjects.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4 text-sm">
+          {/* School */}
+          <div>
+            <label className="block font-medium text-gray-700 mb-2">
+              School
+            </label>
+            <div className="relative">
+              <select
+                value={selectedSchool}
+                onChange={(e) => {
+                  setSelectedSchool(e.target.value);
+                  setSelectedBatch("");
+                  setSelectedDivision("");
+                  setSelectedSemester("");
+                  setSelectedSubject("");
+                }}
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
+                    focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
+                    appearance-none bg-white cursor-pointer"
+              >
+                <option value="">Select School</option>
+                {schoolOptions.map((option: any) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={16}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+              />
             </div>
           </div>
 
-          <button
-            onClick={handleViewCPR}
-            disabled={!allSelected}
-            className="px-6 py-2 bg-slate-900 text-white rounded-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors cursor-pointer"
-          >
-            View CPR
-          </button>
+          {/* Batch */}
+          <div>
+            <label className="block font-medium text-gray-700 mb-2">
+              Batch
+            </label>
+            <div className="relative">
+              <select
+                value={selectedBatch}
+                onChange={(e) => {
+                  setSelectedBatch(e.target.value);
+                  setSelectedDivision("");
+                  setSelectedSemester("");
+                  setSelectedSubject("");
+                }}
+                disabled={!selectedSchool}
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
+                    focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
+                    disabled:bg-gray-100 disabled:cursor-not-allowed 
+                    appearance-none bg-white cursor-pointer"
+              >
+                <option value="">Select Batch</option>
+                {getBatchOptions(selectedSchool).map((batch: any) => (
+                  <option key={batch.value} value={batch.value}>
+                    {batch.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={16}
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                  !selectedSchool ? "text-gray-300" : "text-gray-400"
+                }`}
+              />
+            </div>
+          </div>
+
+          {/* Division */}
+          <div>
+            <label className="block font-medium text-gray-700 mb-2">
+              Division
+            </label>
+            <div className="relative">
+              <select
+                value={selectedDivision}
+                onChange={(e) => {
+                  setSelectedDivision(e.target.value);
+                  setSelectedSemester("");
+                  setSelectedSubject("");
+                }}
+                disabled={!selectedBatch}
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
+                    focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
+                    disabled:bg-gray-100 disabled:cursor-not-allowed 
+                    appearance-none bg-white cursor-pointer"
+              >
+                <option value="">Select Division</option>
+                {getDivisionOptions(selectedSchool, selectedBatch).map(
+                  (division: any) => (
+                    <option key={division.value} value={division.value}>
+                      {division.label}
+                    </option>
+                  )
+                )}
+              </select>
+              <ChevronDown
+                size={16}
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                  !selectedBatch ? "text-gray-300" : "text-gray-400"
+                }`}
+              />
+            </div>
+          </div>
+
+          {/* Semester */}
+          <div>
+            <label className="block font-medium text-gray-700 mb-2">
+              Semester
+            </label>
+            <div className="relative">
+              <select
+                value={selectedSemester}
+                onChange={(e) => {
+                  setSelectedSemester(e.target.value);
+                  setSelectedSubject("");
+                }}
+                disabled={!selectedDivision}
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
+                    focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
+                    disabled:bg-gray-100 disabled:cursor-not-allowed 
+                    appearance-none bg-white cursor-pointer"
+              >
+                <option value="">Select Semester</option>
+                {getSemesterOptions(
+                  selectedSchool,
+                  selectedBatch,
+                  selectedDivision
+                ).map((sem: any) => (
+                  <option key={sem.value} value={sem.value}>
+                    {sem.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={16}
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                  !selectedDivision ? "text-gray-300" : "text-gray-400"
+                }`}
+              />
+            </div>
+          </div>
+
+          {/* Subject */}
+          <div>
+            <label className="block font-medium text-gray-700 mb-2">
+              Subject
+            </label>
+            <div className="relative">
+              <select
+                value={selectedSubject}
+                onChange={(e) => {
+                  setSelectedSubject(e.target.value);
+                }}
+                disabled={!selectedSemester}
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
+                    focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
+                    disabled:bg-gray-100 disabled:cursor-not-allowed 
+                    appearance-none bg-white cursor-pointer"
+              >
+                <option value="">Select Subject</option>
+                {getSubjectOptions(
+                  selectedSchool,
+                  selectedBatch,
+                  selectedDivision,
+                  selectedSemester
+                ).map((subj: any) => (
+                  <option key={subj.value} value={subj.value}>
+                    {subj.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={16}
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                  !selectedSemester ? "text-gray-300" : "text-gray-400"
+                }`}
+              />
+            </div>
+          </div>
         </div>
 
         {showTable && (
