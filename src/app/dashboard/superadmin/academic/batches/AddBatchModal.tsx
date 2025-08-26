@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import axios from "axios";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 interface AddBatchModalProps {
   isOpen: boolean;
@@ -8,27 +11,29 @@ interface AddBatchModalProps {
     centerName: string;
     depName: string;
     batchName: string;
+    schoolId: string;
   }) => void;
   prefillLocation?: string;
+  centerId?: string;
 }
 
 interface FormData {
   centerName: string;
   depName: string;
   batchName: string;
+  schoolId: string;
+}
+
+interface School {
+  id: string;
+  name: string;
 }
 
 const centers = [
-  { value: "Bangalore", label: "Bangalore" },
+  { value: "Bengaluru", label: "Bengaluru" },
   { value: "Lucknow", label: "Lucknow" },
   { value: "Pune", label: "Pune" },
   { value: "Noida", label: "Noida" },
-];
-
-const departments = [
-  { value: "SOT", label: "School of Technology (SOT)" },
-  { value: "SOM", label: "School of Management (SOM)" },
-  { value: "SOH", label: "School of Humanities (SOH)" },
 ];
 
 const AddBatchModal: React.FC<AddBatchModalProps> = ({
@@ -36,14 +41,48 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
   onClose,
   onBatchCreated,
   prefillLocation,
+  centerId,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     centerName: "",
     depName: "",
     batchName: "",
+    schoolId: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [schools, setSchools] = useState<School[]>([]);
+  const [loadingSchools, setLoadingSchools] = useState(false);
+
+  // Fetch schools when centerId is available
+  useEffect(() => {
+    const fetchSchools = async () => {
+      if (!centerId) return;
+      
+      setLoadingSchools(true);
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/schools/${centerId}`, {
+          withCredentials: true,
+        });
+
+        const fetchedSchools: School[] = res.data.data.map((school: any) => ({
+          id: school.id,
+          name: school.name,
+        }));
+
+        setSchools(fetchedSchools);
+      } catch (err) {
+        console.error("Error fetching schools:", err);
+        setSchools([]);
+      } finally {
+        setLoadingSchools(false);
+      }
+    };
+
+    if (isOpen && centerId) {
+      fetchSchools();
+    }
+  }, [isOpen, centerId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -53,12 +92,14 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
           centerName: prefillLocation,
           depName: "",
           batchName: "",
+          schoolId: "",
         }));
       } else {
         setFormData({
           centerName: "",
           depName: "",
           batchName: "",
+          schoolId: "",
         });
       }
       setFormErrors({});
@@ -69,7 +110,18 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    if (name === "depName") {
+      // Find the selected school and update both depName and schoolId
+      const selectedSchool = schools.find(school => school.name === value);
+      setFormData((prev) => ({ 
+        ...prev, 
+        [name]: value,
+        schoolId: selectedSchool?.id || ""
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
 
     if (formErrors[name]) {
       setFormErrors((prev) => {
@@ -91,6 +143,10 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
       errors.depName = "School is required";
     }
 
+    if (!formData.schoolId.trim()) {
+      errors.depName = "School selection is required";
+    }
+
     if (!formData.batchName.trim()) {
       errors.batchName = "Batch name is required";
     } else if (formData.batchName.length < 3) {
@@ -101,22 +157,27 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
     setIsSubmitting(true);
 
-    onBatchCreated(formData);
-
-    setFormData({
-      centerName: prefillLocation || "",
-      depName: "",
-      batchName: "",
-    });
-    setFormErrors({});
-    setIsSubmitting(false);
+    try {
+      await onBatchCreated(formData);
+      setFormData({
+        centerName: prefillLocation || "",
+        depName: "",
+        batchName: "",
+        schoolId: "",
+      });
+      setFormErrors({});
+    } catch (err) {
+      console.error("Error in handleSubmit:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
@@ -125,6 +186,7 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
         centerName: "",
         depName: "",
         batchName: "",
+        schoolId: "",
       });
       setFormErrors({});
       onClose();
@@ -216,12 +278,14 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
                   className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
                     formErrors.depName ? "border-red-500" : "border-gray-300"
                   }`}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || loadingSchools}
                 >
-                  <option value="">Select School</option>
-                  {departments.map((dept) => (
-                    <option key={dept.value} value={dept.value}>
-                      {dept.label}
+                  <option value="">
+                    {loadingSchools ? "Loading schools..." : "Select School"}
+                  </option>
+                  {schools.map((school) => (
+                    <option key={school.id} value={school.name}>
+                      {school.name}
                     </option>
                   ))}
                 </select>
