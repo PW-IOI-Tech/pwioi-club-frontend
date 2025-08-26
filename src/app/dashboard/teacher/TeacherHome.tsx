@@ -12,6 +12,7 @@ import {
   User,
   FileImage,
 } from "lucide-react";
+import Image from "next/image";
 
 interface User {
   teacherId: string;
@@ -232,6 +233,17 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
+  const getVideoDuration = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const video = document.createElement("video");
+      video.src = URL.createObjectURL(file);
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(video.src);
+        resolve(video.duration.toString());
+      };
+    });
+  };
+
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
     type: "image" | "video"
@@ -246,13 +258,23 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         { withCredentials: true }
       );
 
-      const { uploadUrl, publicUrl, key } = data;
-
+      const { uploadUrl, key } = data;
       await fetch(uploadUrl, { method: "PUT", body: file });
 
+      // Calculate duration for videos
+      let duration = null;
+      if (type === "video") {
+        duration = await getVideoDuration(file);
+      }
       setMediaList((prev) => [
         ...prev,
-        { type, mime_type: file.type, storage_url: publicUrl, key },
+        {
+          type: type.toUpperCase(),
+          mime_type: file.type,
+          s3_key: key, // Changed from 'key' to 's3_key'
+          thumbnail_url: null,
+          duration: duration,
+        },
       ]);
 
       const reader = new FileReader();
@@ -276,11 +298,11 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/media/remove`,
         {
           withCredentials: true,
-          data: { key },
+          data: { key:key },
         }
       );
 
-      setMediaList((prev) => prev.filter((m) => m.key !== key));
+      setMediaList((prev) => prev.filter((m) => m.s3_key !== key));
       setPreviewFiles((prev) => prev.filter((p) => p.key !== key));
     } catch (error) {
       console.error("Remove file error:", error);
@@ -674,7 +696,7 @@ const PostActions: React.FC<PostActionsProps> = ({
             </button>
 
             <button
-              onClick={() => handleShare()}
+              onClick={handleShare}
               className="flex items-center space-x-1 py-2 rounded-md transition-colors hover:bg-gray-50 text-gray-600 cursor-pointer"
             >
               <Share2 className="w-4 h-4" />
@@ -913,12 +935,24 @@ const Post: React.FC<any> = ({
       </div>
 
       {post?.media?.length > 0 && (
-        <div className="px-4 pb-3">
-          <img
-            src={post?.media[0]?.storage_url}
-            alt="Post media"
-            className="w-full h-64 object-cover rounded-sm bg-gray-100"
-          />
+        <div className="px-4 pb-3 grid grid-cols-1 gap-2">
+          {post.media.map((mediaItem:any) => (
+            <div key={mediaItem.id}>
+              {mediaItem.type === "IMAGE" ? (
+                <img
+                  src={mediaItem.signedUrl}
+                  alt="Post media"
+                  className="w-full max-h-96 object-contain rounded-sm bg-gray-100"
+                />
+              ) : (
+                <video
+                  src={mediaItem.signedUrl}
+                  controls
+                  className="w-full max-h-96 rounded-sm bg-gray-100"
+                />
+              )}
+            </div>
+          ))}
         </div>
       )}
 
@@ -1195,6 +1229,11 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
 
   useEffect(() => {
     fetchAttendence();
+  }, []);
+
+
+  useEffect(() => {
+    fetchPosts();
   }, []);
 
   return (

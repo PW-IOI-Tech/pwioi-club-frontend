@@ -363,7 +363,7 @@ export default function DivSemManagement() {
               data={filteredDivisions}
               title="Divisions"
               filterField="division"
-              badgeFields={["semesterCount", "currentSemester"]}
+              // badgeFields={["semesterCount", "currentSemester"]}
               selectFields={{
                 currentSemester: Array.from(
                   { length: 8 },
@@ -405,7 +405,7 @@ export default function DivSemManagement() {
                 )}
                 title="Semesters"
                 filterField="division"
-                badgeFields={["semesterNumber"]}
+                // badgeFields={["semesterNumber"]}
                 selectFields={{}}
                 nonEditableFields={["id"]}
                 onDelete={handleDeleteSemester}

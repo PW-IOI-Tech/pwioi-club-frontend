@@ -1,8 +1,7 @@
 "use client";
 
-
 import React, { useState, useCallback, useMemo, useEffect } from "react";
-import { Users, Plus, School, UserRoundPen } from "lucide-react";
+import { Users, Plus, School, UserRoundPen, ChevronDown } from "lucide-react";
 import Table from "../../Table";
 import AddSchoolModal from "./AddSchoolModal";
 import axios from "axios";
@@ -17,24 +16,23 @@ interface TableSchool {
   teachersCount: number;
 }
 
-
 export default function SchoolManagement() {
   const [schools, setSchools] = useState<TableSchool[]>([]);
-  const [centers,setCenters] = useState<any>();
+  const [centers, setCenters] = useState<any[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [isAddSchoolModalOpen, setIsAddSchoolModalOpen] = useState(false);
   const [showContent, setShowContent] = useState(false);
 
-
   const api = axios.create({
     baseURL: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools`,
   });
 
-  const fetchSchools = async () => {
+  const fetchSchools = async (centerId: string) => {
     try {
       setLoading(true);
-      const res = await api.get(`/${centerId}`,{withCredentials:true});
+      const res = await api.get(`/${centerId}`, { withCredentials: true });
       const schoolsData = res.data.data;
 
       const schoolsWithStats = await Promise.all(
@@ -46,7 +44,8 @@ export default function SchoolManagement() {
             const stats = statsRes.data.data;
             return {
               id: school.id,
-              location: "N/A",
+              location:
+                centers.find((c) => c.id === selectedLocation)?.name || "",
               schoolName: school.name,
               divisionsCount: stats.divisions,
               batchesCount: stats.batches,
@@ -55,8 +54,7 @@ export default function SchoolManagement() {
             };
           } catch {
             return {
-              id: school.id,
-              location: "N/A",
+              location: selectedLocation,
               schoolName: school.name,
               divisionsCount: 0,
               batchesCount: 0,
@@ -75,15 +73,32 @@ export default function SchoolManagement() {
     }
   };
 
+  // Fetch centers & auto-select the first one
   useEffect(() => {
-    fetchSchools();
+    (async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+          { withCredentials: true }
+        );
+        const data = res.data.data || [];
+        setCenters(data);
+        if (data.length > 0) {
+          setSelectedLocation(data[0].id); // auto-select first
+          setShowContent(true);
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch centers:", err);
+      }
+    })();
   }, []);
 
-  useEffect(()=>{
-      const res = axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,{withCredentials:true});
-      setCenters(res?.data?.data)
-
-  },[])
+  // Fetch schools whenever location changes
+  useEffect(() => {
+    if (selectedLocation) {
+      fetchSchools(selectedLocation);
+    }
+  }, [selectedLocation]);
 
   const handleAddSchool = async (newSchoolData: {
     location: string;
@@ -93,12 +108,12 @@ export default function SchoolManagement() {
       await api.post(
         "/create",
         {
-          centerId,
+          centerId: selectedLocation,
           schoolNames: [newSchoolData.schoolName],
         },
         { withCredentials: true }
       );
-      fetchSchools();
+      fetchSchools(selectedLocation);
       setIsAddSchoolModalOpen(false);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to add school");
@@ -109,12 +124,10 @@ export default function SchoolManagement() {
     try {
       await api.patch(
         `/${updatedItem.id}`,
-        {
-          name: updatedItem.schoolName,
-        },
+        { name: updatedItem.schoolName },
         { withCredentials: true }
       );
-      fetchSchools();
+      fetchSchools(selectedLocation);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to update school");
     }
@@ -123,7 +136,7 @@ export default function SchoolManagement() {
   const handleDeleteSchool = async (id: string | number) => {
     try {
       await api.delete(`/${id}`, { withCredentials: true });
-      fetchSchools();
+      fetchSchools(selectedLocation);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to delete school");
     }
@@ -132,27 +145,34 @@ export default function SchoolManagement() {
   const statistics = useMemo(
     () => ({
       totalSchools: schools.length,
-      totalStudents: schools.reduce((sum, school) => sum + school.stdCount, 0),
-      totalTeachers: schools.reduce(
-        (sum, school) => sum + school.teachersCount,
-        0
-      ),
+      totalStudents: schools.reduce((sum, s) => sum + s.stdCount, 0),
+      totalTeachers: schools.reduce((sum, s) => sum + s.teachersCount, 0),
     }),
     [schools]
   );
 
+  const handleOpenAddModal = useCallback(() => {
+    if (!selectedLocation) {
+      alert("Please select a center location first.");
+      return;
+    }
+    setIsAddSchoolModalOpen(true);
+  }, [selectedLocation]);
 
-  const handleOpenAddModal = useCallback(
-    () => setIsAddSchoolModalOpen(true),
-    []
-  );
   const handleCloseAddModal = useCallback(
     () => setIsAddSchoolModalOpen(false),
     []
   );
 
-
-  if (loading) return <p className="p-6">Loading schools...</p>;
+  const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setSelectedLocation(value);
+    if (value) {
+      setTimeout(() => setShowContent(true), 400);
+    } else {
+      setShowContent(false);
+    }
+  };
 
   if (error) {
     return (
@@ -162,7 +182,7 @@ export default function SchoolManagement() {
         <button
           onClick={() => {
             setError("");
-            fetchSchools();
+            if (selectedLocation) fetchSchools(selectedLocation);
           }}
           className="mt-2 px-4 py-2 bg-[#1B3A6A] text-white rounded-lg hover:bg-[#122A4E]"
         >
@@ -173,72 +193,25 @@ export default function SchoolManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
-      <div className="max-w-7xl mx-auto space-y-4">
-        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
-          School Management
-        </h2>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
-            <div className="p-6 text-center">
-              <School className="w-8 h-8 text-slate-900 mx-auto mb-2" />
-              <h4 className="text-lg text-slate-900 mb-1">Total Schools</h4>
-              <p className="text-5xl font-bold text-[#1B3A6A]">
-                {statistics.totalSchools}
-              </p>
-            </div>
-          </div>
-
-  const handleOpenAddModal = useCallback(() => {
-    if (!selectedLocation) {
-      alert("Please select a center location first.");
-      return;
-    }
-    setIsAddSchoolModalOpen(true);
-  }, [selectedLocation]);
-
-  const handleCloseAddModal = useCallback(() => {
-    setIsAddSchoolModalOpen(false);
-  }, []);
-
-  const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setSelectedLocation(value);
-
-    if (value) {
-      setTimeout(() => {
-        setShowContent(true);
-      }, 400);
-    } else {
-      setShowContent(false);
-    }
-  };
-
-  return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         <h2 className="text-3xl font-bold text-slate-900">School Management</h2>
 
+        {/* Location Dropdown */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
-          <label
-            htmlFor="location"
-            className="block text-sm font-medium text-gray-100 mb-2"
-          >
+          <label className="block text-sm font-medium text-gray-100 mb-2">
             Select Center Location
           </label>
           <div className="relative">
             <select
-              id="location"
               value={selectedLocation}
               onChange={handleLocationChange}
-              className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer appearance-none text-sm"
+              className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer text-sm"
             >
               <option value="">Select Location to Proceed</option>
-              {LOCATIONS.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
+              {centers.map((center: any) => (
+                <option key={center.id} value={center.id}>
+                  {center.name}
                 </option>
               ))}
             </select>
@@ -248,64 +221,36 @@ export default function SchoolManagement() {
           </div>
         </div>
 
-        {!selectedLocation ? (
+        {!selectedLocation || !showContent ? (
           <ShimmerSkeleton />
-        ) : !showContent ? (
-          <ShimmerSkeleton />
+        ) : loading ? (
+          <p className="p-6">Loading schools...</p>
         ) : (
           <>
+            {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 text-center">
-                <School className="w-8 h-8 text-slate-900 mx-auto mb-2" />
-                <h4 className="text-lg text-slate-900 mb-1">Total Schools</h4>
-                <p className="text-5xl font-bold text-[#1B3A6A]">
-                  {statistics.totalSchools}
-                </p>
-              </div>
-
-              <div className="bg-gradient-to-br from-white to-green-50 rounded-sm border border-gray-400 p-6 text-center">
-                <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
-                <h4 className="text-lg text-slate-900 mb-1">Total Students</h4>
-                <p className="text-5xl font-bold text-green-600">
-                  {statistics.totalStudents.toLocaleString()}
-                </p>
-              </div>
-
-        {/* Table */}
-        <Table
-          data={schools}
-          title="Schools Overview"
-          filterField="location"
-          badgeFields={["location", "schoolName"]}
-          selectFields={{
-            location: ["bangalore", "lucknow", "pune", "noida"],
-            schoolName: ["SOT", "SOM", "SOH"],
-          }}
-          nonEditableFields={[
-            "id",
-            "location",
-            "divisionsCount",
-            "batchesCount",
-            "stdCount",
-            "teachersCount",
-          ]}
-          onDelete={handleDeleteSchool}
-          onEdit={handleUpdateSchool}
-          hiddenColumns={["id"]}
-        />
-
-              <div className="bg-gradient-to-br from-white to-blue-50 rounded-sm border border-gray-400 p-6 text-center">
-                <UserRoundPen className="w-8 h-8 text-slate-900 mx-auto mb-2" />
-                <h4 className="text-lg text-slate-900 mb-1">Total Teachers</h4>
-                <p className="text-5xl font-bold text-blue-600">
-                  {statistics.totalTeachers}
-                </p>
-              </div>
-
+              <StatCard
+                icon={<School />}
+                label="Total Schools"
+                value={statistics.totalSchools}
+                color="text-[#1B3A6A]"
+              />
+              <StatCard
+                icon={<Users />}
+                label="Total Students"
+                value={statistics.totalStudents.toLocaleString()}
+                color="text-green-600"
+              />
+              <StatCard
+                icon={<UserRoundPen />}
+                label="Total Teachers"
+                value={statistics.totalTeachers}
+                color="text-blue-600"
+              />
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 flex items-center justify-center p-6">
                 <button
                   onClick={handleOpenAddModal}
-                  className="flex flex-col items-center justify-center w-full h-full text-slate-900 hover:text-slate-700 transition-colors cursor-pointer"
+                  className="flex flex-col items-center justify-center w-full h-full text-slate-900 hover:text-slate-700 transition-colors"
                 >
                   <div className="bg-gray-200 rounded-full p-3 mb-2 hover:bg-gray-300 transition-colors">
                     <Plus size={24} />
@@ -319,15 +264,14 @@ export default function SchoolManagement() {
             </div>
 
             <Table
-              data={filteredSchools}
-              title={`Schools in ${selectedLocation}`}
+              data={schools}
+              title={`Schools in ${
+                centers.find((c) => c.id === selectedLocation)?.name || ""
+              }`}
               filterField="schoolName"
               badgeFields={["location", "schoolName"]}
-              selectFields={{
-                schoolName: ["SOT", "SOM", "SOH"],
-              }}
               nonEditableFields={[
-                "id",
+                "selectedLocation",
                 "location",
                 "divisionsCount",
                 "batchesCount",
@@ -341,7 +285,6 @@ export default function SchoolManagement() {
           </>
         )}
 
-
         {/* Modal */}
         <AddSchoolModal
           isOpen={isAddSchoolModalOpen}
@@ -350,6 +293,26 @@ export default function SchoolManagement() {
           prefillLocation={selectedLocation}
         />
       </div>
+    </div>
+  );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  color: string;
+}) {
+  return (
+    <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 text-center">
+      <div className="w-8 h-8 text-slate-900 mx-auto mb-2">{icon}</div>
+      <h4 className="text-lg text-slate-900 mb-1">{label}</h4>
+      <p className={`text-5xl font-bold ${color}`}>{value}</p>
     </div>
   );
 }

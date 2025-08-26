@@ -12,6 +12,9 @@ import {
   User,
   FileImage,
 } from "lucide-react";
+import Image from "next/image";
+
+// --- INTERFACES ---
 
 interface User {
   batch: string;
@@ -30,14 +33,32 @@ interface Post {
   role: string;
   content: string;
   media: {
-    type: "image" | "video";
-    url: string;
+    id: string;
+    type: "IMAGE" | "VIDEO";
+    mime_type: string;
+    s3_key: string;
+    signedUrl: string;
   }[];
   likes: number;
-  comments: number;
-  _count: any;
+  comments: Comment[];
+  _count: {
+    comments: number;
+  };
+  userInfo: {
+    name: string;
+  };
+  author_type: string;
   timestamp: string;
   assignedBy: string | null;
+  likedBy?: Array<{ id: string; name: string; avatar?: string }>;
+}
+
+interface Comment {
+  id: string;
+  userInfo: any;
+  content: string;
+  createdAt: string;
+  avatar?: string;
 }
 
 interface ReportModalState {
@@ -49,43 +70,12 @@ interface WelcomeMessageProps {
   userName: string;
 }
 
-interface PostHeaderProps {
-  post: Post;
-  getRoleBadgeColor: (role: string) => string;
-}
-
-interface Comment {
-  id: string;
-  userInfo: any;
-  content: string;
-  createdAt: string;
-  avatar?: string;
-}
-
-interface Post {
-  id: string;
-  likes: number;
-  comments: number;
-  likedBy?: Array<{ id: string; name: string; avatar?: string }>;
-  topComments?: Comment[];
-  allComments?: Comment[];
-}
-
 interface PostActionsProps {
   post: Post;
   likedPosts: Set<string>;
   onLike: (postId: string) => void;
   onFlag: (postId: string) => void;
-  onComment?: (postId: string, comment: string) => void;
   onShare?: (postId: string) => void;
-}
-
-interface PostProps {
-  post: Post;
-  likedPosts: Set<string>;
-  onLike: (postId: string) => void;
-  onFlag: (postId: string) => void;
-  getRoleBadgeColor: (role: string) => string;
 }
 
 interface FeedProps {
@@ -109,6 +99,8 @@ interface ReportModalProps {
   setReportDetails: (details: string) => void;
   onSubmit: () => void;
 }
+
+// --- COMPONENTS ---
 
 const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ userName }) => (
   <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-sm border border-gray-400 p-6 py-8">
@@ -136,6 +128,17 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
+  const getVideoDuration = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const video = document.createElement("video");
+      video.src = URL.createObjectURL(file);
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(video.src);
+        resolve(video.duration.toString());
+      };
+    });
+  };
+
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
     type: "image" | "video"
@@ -150,13 +153,24 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         { withCredentials: true }
       );
 
-      const { uploadUrl, publicUrl, key } = data;
-
+      const { uploadUrl, key } = data;
       await fetch(uploadUrl, { method: "PUT", body: file });
+
+      // Calculate duration for videos
+      let duration = null;
+      if (type === "video") {
+        duration = await getVideoDuration(file);
+      }
 
       setMediaList((prev) => [
         ...prev,
-        { type, mime_type: file.type, storage_url: publicUrl, key },
+        {
+          type: type.toUpperCase(),
+          mime_type: file.type,
+          s3_key: key, // Changed from 'key' to 's3_key'
+          thumbnail_url: null,
+          duration: duration,
+        },
       ]);
 
       const reader = new FileReader();
@@ -180,11 +194,11 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/media/remove`,
         {
           withCredentials: true,
-          data: { key },
+          data: { key:key },
         }
       );
 
-      setMediaList((prev) => prev.filter((m) => m.key !== key));
+      setMediaList((prev) => prev.filter((m) => m.s3_key !== key));
       setPreviewFiles((prev) => prev.filter((p) => p.key !== key));
     } catch (error) {
       console.error("Remove file error:", error);
@@ -384,7 +398,6 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         </div>
       )}
 
-      {/* Toast */}
       {showToast && (
         <div className="fixed top-4 right-4 z-50">
           <div className="bg-slate-900 text-white text-sm px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
@@ -397,7 +410,8 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
   );
 };
 
-const PostHeader: React.FC<any> = ({ post, getRoleBadgeColor }) => (
+// ... rest of the frontend code remains the same ...
+const PostHeader: React.FC<any> = ({ post,getRoleBadgeColor }) => (
   <div className="p-4 pb-3">
     <div className="flex items-start justify-between">
       <div className="flex items-center space-x-3">
@@ -414,13 +428,9 @@ const PostHeader: React.FC<any> = ({ post, getRoleBadgeColor }) => (
             <h3 className="font-semibold text-gray-900 text-sm">
               {post?.userInfo?.name}
             </h3>
-             <span
-              className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
+            {/* <span  className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
                 post?.author_type
-              )}`}
-            >
-              {post?.author_type}
-            </span>
+              )}`}>{post?.author_type}</span> */}
             {post.assignedBy && (
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-br from-white to-indigo-50 text-slate-800 border border-slate-400">
                 📌 {post?.author_type}
@@ -439,7 +449,6 @@ const PostActions: React.FC<PostActionsProps> = ({
   likedPosts,
   onLike,
   onFlag,
-  onComment,
   onShare,
 }) => {
   const [showLikesModal, setShowLikesModal] = useState(false);
@@ -456,8 +465,6 @@ const PostActions: React.FC<PostActionsProps> = ({
   const mockLikedBy = post.likedBy || [
     { id: "1", name: "John Doe", avatar: "👤" },
     { id: "2", name: "Jane Smith", avatar: "👩" },
-    { id: "3", name: "Mike Johnson", avatar: "👨" },
-    { id: "4", name: "Sarah Wilson", avatar: "👩‍💼" },
   ];
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
@@ -475,30 +482,21 @@ const PostActions: React.FC<PostActionsProps> = ({
       );
 
       const createdComment = response.data.data;
-
-      // update UI instantly
       const newCommentObj: Comment = {
         id: createdComment.id,
         userInfo: {
           name: "You",
         },
         content: createdComment.content,
-        createdAt: new Date(createdComment.createdAt).toLocaleString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }),
+        createdAt: new Date(createdComment.createdAt).toLocaleString(),
         avatar: "👤",
       };
 
       setComments((prev: any) => [...prev, newCommentObj]);
+      setAllComments((prev: any) => [...prev, newCommentObj]);
       setNewComment("");
     } catch (error: any) {
       console.error("Error posting comment:", error.response?.data || error);
-      alert(error.response?.data?.message || "Failed to post comment");
     }
   };
 
@@ -527,7 +525,6 @@ const PostActions: React.FC<PostActionsProps> = ({
       setAllComments(response.data.data);
     } catch (error: any) {
       console.error("Error fetching comment:", error.response?.data || error);
-      alert(error.response?.data?.message || "Failed to fetch comment");
     }
   };
 
@@ -549,8 +546,7 @@ const PostActions: React.FC<PostActionsProps> = ({
                 onClick={() => handleCommentModal(post?.id)}
                 className="underline cursor-pointer"
               >
-                {totalComments}{" "}
-                {comments?.length === 1 ? "comment" : "comments"}
+                {totalComments} {totalComments === 1 ? "comment" : "comments"}
               </button>
             )}
           </div>
@@ -579,7 +575,7 @@ const PostActions: React.FC<PostActionsProps> = ({
             </button>
 
             <button
-              onClick={() => handleShare()}
+              onClick={handleShare}
               className="flex items-center space-x-1 py-2 rounded-md transition-colors hover:bg-gray-50 text-gray-600 cursor-pointer"
             >
               <Share2 className="w-4 h-4" />
@@ -603,8 +599,10 @@ const PostActions: React.FC<PostActionsProps> = ({
             {comments?.slice(0, 2)?.map((comment: any) => (
               <div key={comment.id} className="flex space-x-3">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm">
-                    {comment.avatar || "👤"}
+                  <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm text-white">
+                    {comment.avatar ||
+                      comment?.userInfo?.name?.charAt(0) ||
+                      "👤"}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -632,7 +630,7 @@ const PostActions: React.FC<PostActionsProps> = ({
             ))}
             {comments.length > 2 && (
               <button
-                onClick={() => setShowCommentsModal(true)}
+                onClick={() => handleCommentModal(post.id)}
                 className="text-sm text-slate-900 hover:text-slate-700 font-medium cursor-pointer underline"
               >
                 View all {totalComments} comments
@@ -643,7 +641,7 @@ const PostActions: React.FC<PostActionsProps> = ({
       )}
 
       {showLikesModal && (
-        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 max-h-96 overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold">Likes</h3>
@@ -675,7 +673,7 @@ const PostActions: React.FC<PostActionsProps> = ({
 
       {showCommentsModal && (
         <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full mx-4 max-h-96 overflow-hidden flex flex-col">
+          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold">Comments</h3>
               <button
@@ -690,14 +688,16 @@ const PostActions: React.FC<PostActionsProps> = ({
               {AllComments?.map((comment: any) => (
                 <div key={comment.id} className="flex space-x-3">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm">
-                      {comment?.avatar || "👤"}
+                    <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm text-white">
+                      {comment?.avatar ||
+                        comment?.userInfo?.name?.charAt(0) ||
+                        "👤"}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
                       <div className="font-medium text-sm text-gray-900">
-                        {comment?.userInfo?.username}
+                        {comment?.userInfo?.name}
                       </div>
                       <div className="text-sm text-gray-700">
                         {comment.content}
@@ -750,7 +750,7 @@ const PostActions: React.FC<PostActionsProps> = ({
 
       {showToast && (
         <div className="fixed top-4 right-4 z-50">
-          <div className="bg-slate-900 text-white test-sm  px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
+          <div className="bg-slate-900 text-white test-sm px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
             <Check className="w-4 h-4" />
             <span>Link copied to clipboard!</span>
           </div>
@@ -760,13 +760,12 @@ const PostActions: React.FC<PostActionsProps> = ({
   );
 };
 
-const Post: React.FC<any> = ({
-  post,
-  likedPosts,
-  onLike,
-  onFlag,
-  getRoleBadgeColor,
-}) => {
+const Post: React.FC<{
+  post: Post;
+  likedPosts: Set<string>;
+  onLike: (postId: string) => void;
+  onFlag: (postId: string) => void;
+}> = ({ post, likedPosts, onLike, onFlag }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const contentLines = post.content.split("\n");
@@ -786,24 +785,22 @@ const Post: React.FC<any> = ({
 
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
-      <PostHeader post={post} getRoleBadgeColor={post?.author_type} />
+      <PostHeader post={post} />
 
       <div className="px-4 py-3">
         <div className="text-gray-800 text-sm">
           <pre className="whitespace-pre-wrap font-inherit">
             {displayContent}
+            {shouldTruncate && !isExpanded && "..."}
           </pre>
 
           {shouldTruncate && !isExpanded && (
-            <>
-              {post.content.length > 200 && contentLines.length <= 2 && "..."}
-              <button
-                onClick={() => setIsExpanded(true)}
-                className="text-blue-600 hover:text-blue-900 font-medium ml-1 cursor-pointer text-xs underline"
-              >
-                more
-              </button>
-            </>
+            <button
+              onClick={() => setIsExpanded(true)}
+              className="text-blue-600 hover:text-blue-900 font-medium ml-1 cursor-pointer text-xs underline"
+            >
+              more
+            </button>
           )}
 
           {isExpanded && shouldTruncate && (
@@ -818,12 +815,24 @@ const Post: React.FC<any> = ({
       </div>
 
       {post?.media?.length > 0 && (
-        <div className="px-4 pb-3">
-          <img
-            src={post?.media[0]?.storage_url}
-            alt="Post media"
-            className="w-full h-64 object-cover rounded-sm bg-gray-100"
-          />
+        <div className="px-4 pb-3 grid grid-cols-1 gap-2">
+          {post.media.map((mediaItem) => (
+            <div key={mediaItem.id}>
+              {mediaItem.type === "IMAGE" ? (
+                <img
+                  src={mediaItem.signedUrl}
+                  alt="Post media"
+                  className="w-full max-h-96 object-contain rounded-sm bg-gray-100"
+                />
+              ) : (
+                <video
+                  src={mediaItem.signedUrl}
+                  controls
+                  className="w-full max-h-96 rounded-sm bg-gray-100"
+                />
+              )}
+            </div>
+          ))}
         </div>
       )}
 
@@ -852,7 +861,6 @@ const Feed: React.FC<FeedProps> = ({
         likedPosts={likedPosts}
         onLike={onLike}
         onFlag={onFlag}
-        getRoleBadgeColor={getRoleBadgeColor}
       />
     ))}
   </div>
@@ -969,9 +977,11 @@ const ReportModal: React.FC<ReportModalProps> = ({
   );
 };
 
+// --- MAIN PAGE COMPONENT ---
+
 const StudentHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
   const [user, setUser] = useState<any>(null);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
@@ -991,73 +1001,6 @@ const StudentHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
     }
   }, []);
 
-  const handleLike = async (postId: string) => {
-    try {
-      setLikedPosts((prev) => {
-        const newLiked = new Set(prev);
-        if (newLiked.has(postId)) {
-          newLiked.delete(postId);
-        } else {
-          newLiked.add(postId);
-        }
-        return newLiked;
-      });
-
-      if (likedPosts.has(postId)) {
-        await axios.post(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/likes/unlike/${postId}`,
-          {},
-          { withCredentials: true }
-        );
-      } else {
-        await axios.put(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/likes/like/${postId}`,
-          {},
-          { withCredentials: true }
-        );
-      }
-    } catch (error) {
-      console.error("Error liking/unliking:", error);
-    }
-  };
-
-  const handleFlag = (postId: string): void => {
-    setReportModal({ isOpen: true, postId });
-  };
-
-  const handleReportSubmit = (): void => {
-    console.log(
-      "Reporting post:",
-      reportModal.postId,
-      "Reason:",
-      reportReason,
-      "Details:",
-      reportDetails
-    );
-    setReportModal({ isOpen: false, postId: null });
-    setReportReason("");
-    setReportDetails("");
-  };
-
-  const handleReportClose = (): void => {
-    setReportModal({ isOpen: false, postId: null });
-    setReportReason("");
-    setReportDetails("");
-  };
-
-  const getRoleBadgeColor = (role: string): string => {
-    switch (role) {
-      case "Admin":
-        return "bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white border-blue-300";
-      case "Student":
-        return "bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 text-white border-blue-300";
-      case "Faculty":
-        return "bg-gradient-to-br from-blue-700 via-blue-800 to-slate-900 text-white border-blue-400";
-      default:
-        return "bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 text-white border-slate-400";
-    }
-  };
-
   const getPosts = async (
     cursor?: string,
     limit: number = 10,
@@ -1071,6 +1014,7 @@ const StudentHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
   };
 
   const fetchPosts = async (cursor?: string) => {
+    if (loading) return;
     setLoading(true);
     try {
       const data = await getPosts(cursor, 10);
@@ -1087,12 +1031,83 @@ const StudentHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
     fetchPosts();
   }, []);
 
+  const handleLike = async (postId: string) => {
+    const originalLikedPosts = new Set(likedPosts);
+    const isCurrentlyLiked = likedPosts.has(postId);
+
+    setLikedPosts((prev) => {
+      const newLiked = new Set(prev);
+      if (newLiked.has(postId)) {
+        newLiked.delete(postId);
+      } else {
+        newLiked.add(postId);
+      }
+      return newLiked;
+    });
+
+    try {
+      if (isCurrentlyLiked) {
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/likes/unlike/${postId}`,
+          {},
+          { withCredentials: true }
+        );
+      } else {
+        await axios.put(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/likes/like/${postId}`,
+          {},
+          { withCredentials: true }
+        );
+      }
+    } catch (error) {
+      console.error("Error liking/unliking:", error);
+      // Revert UI on error
+      setLikedPosts(originalLikedPosts);
+    }
+  };
+
+  const handleFlag = (postId: string): void => {
+    setReportModal({ isOpen: true, postId });
+  };
+
+  const handleReportSubmit = (): void => {
+    console.log(
+      "Reporting post:",
+      reportModal.postId,
+      "Reason:",
+      reportReason,
+      "Details:",
+      reportDetails
+    );
+    // Add actual API call to submit report here
+    handleReportClose();
+  };
+
+  const handleReportClose = (): void => {
+    setReportModal({ isOpen: false, postId: null });
+    setReportReason("");
+    setReportDetails("");
+  };
+
+  const getRoleBadgeColor = (role: string): string => {
+    switch (role) {
+      case "Admin":
+        return "bg-red-500 text-white";
+      case "Student":
+        return "bg-blue-500 text-white";
+      case "Faculty":
+        return "bg-green-500 text-white";
+      default:
+        return "bg-gray-500 text-white";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
           <div className="lg:col-span-7 space-y-4">
-            <WelcomeMessage userName={user?.name} />
+            <WelcomeMessage userName={user?.name || "User"} />
             <div className="block sm:hidden">
               <CreatePost userInitial={user?.name?.charAt(0).toUpperCase()} />
             </div>
@@ -1103,6 +1118,7 @@ const StudentHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
               onFlag={handleFlag}
               getRoleBadgeColor={getRoleBadgeColor}
             />
+            {/* Add logic for infinite scroll trigger here if needed */}
           </div>
 
           <div className="lg:col-span-3 space-y-4 hidden sm:block">
