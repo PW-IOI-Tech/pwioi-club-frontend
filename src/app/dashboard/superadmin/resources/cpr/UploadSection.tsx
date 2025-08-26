@@ -13,40 +13,28 @@ import {
   ChevronDown,
 } from "lucide-react";
 import SchemaHelpModal from "./SchemaHelpModal";
-
-const centers = ["Bangalore", "Noida", "Lucknow", "Pune"];
-
-const schoolsByCenter: Record<string, string[]> = {
-  Bangalore: ["SOT", "SOH", "SOM"],
-  Noida: ["SOT", "SOH"],
-  Lucknow: ["SOH", "SOM"],
-  Pune: ["SOT", "SOM"],
-};
-
-const subjects = [
-  "Programming Fundamentals",
-  "Data Structures",
-  "Algorithms",
-  "Web Development",
-  "Database Systems",
-  "Operating Systems",
-  "Computer Networks",
-  "Software Engineering",
-  "Artificial Intelligence",
-  "Machine Learning",
-];
+import axios from "axios";
 
 export default function CPRUploadSection() {
-  const [center, setCenter] = useState("");
-  const [school, setSchool] = useState("");
-  const [division, setDivision] = useState("");
-  const [batch, setBatch] = useState("");
-  const [semester, setSemester] = useState("");
-  const [subject, setSubject] = useState("");
-  const [showSchemaHelp, setShowSchemaHelp] = useState(false);
+  const [centers, setCenters] = useState<any[]>([]);
+  const [schools, setSchools] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
+  const [divisions, setDivisions] = useState<any[]>([]);
+  const [semesters, setSemesters] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
+const [cprData, setCprData] = useState<any | null>(null);
+const [loadingCpr, setLoadingCpr] = useState(false);
+  const [selectedCenter, setSelectedCenter] = useState<string>("");
+  const [selectedSchool, setSelectedSchool] = useState<string>("");
+  const [selectedBatch, setSelectedBatch] = useState<string>("");
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
+  const [selectedSemester, setSelectedSemester] = useState<string>("");
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
 
   const [showCPRTable, setShowCPRTable] = useState(false);
-  const [cprList, setCprList] = useState<
+  const [showSchemaHelp, setShowSchemaHelp] = useState(false);
+
+    const [cprList, setCprList] = useState<
     Array<{
       id: string;
       teacher: string;
@@ -58,6 +46,7 @@ export default function CPRUploadSection() {
     }>
   >([]);
 
+
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<
@@ -67,84 +56,148 @@ export default function CPRUploadSection() {
   const [successMessage, setSuccessMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const getBatchOptions = () => {
-    if (!school || !division) return [];
-    return [`${school}${division}B1`, `${school}${division}B2`];
-  };
+  // ✅ Fetch Centers
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`, {
+          withCredentials: true,
+        });
+        if (res.data.success) {
+          setCenters(
+            res.data.data.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              location: c.location,
+              code: c.code,
+            }))
+          );
+        }
+      } catch (err: any) {
+        console.error(err.response?.data?.message || "Failed to fetch centers");
+      }
+    };
+    fetchCenters();
+  }, []);
 
-  const getSemesterOptions = () => Array.from({ length: 8 }, (_, i) => i + 1);
+  // ✅ Fetch Schools when Center selected
+  useEffect(() => {
+    if (!selectedCenter) return;
+    const fetchSchools = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${selectedCenter}`,
+          { withCredentials: true }
+        );
+        setSchools(res.data?.data || []);
+      } catch (err) {
+        console.error("Failed to fetch schools");
+      }
+    };
+    fetchSchools();
+  }, [selectedCenter]);
 
-  const loadCPRsForDivision = () => {
-    if (!center || !school || !division || !semester) return;
+  // ✅ Fetch Batches when School selected
+  useEffect(() => {
+    if (!selectedSchool) return;
+    const fetchBatches = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
+          { withCredentials: true }
+        );
+        setBatches(res.data?.data || []);
+      } catch {
+        console.error("Failed to fetch batches");
+      }
+    };
+    fetchBatches();
+  }, [selectedSchool]);
 
-    const selectedSem = Number(semester);
-    const mockCPRs = [];
+  // ✅ Fetch Divisions when Batch selected
+  useEffect(() => {
+    if (!selectedBatch) return;
+    const fetchDivisions = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/by-batch/${selectedBatch}`,
+          { withCredentials: true }
+        );
+        setDivisions(res.data?.data || []);
+      } catch {
+        console.error("Failed to fetch divisions");
+      }
+    };
+    fetchDivisions();
+  }, [selectedBatch]);
 
-    const numSubjects = Math.min(3, subjects.length);
-    const shuffled = [...subjects].sort(() => 0.5 - Math.random());
-    const selectedSubjects = shuffled.slice(0, numSubjects);
+  // ✅ Fetch Semesters when Division selected
+  useEffect(() => {
+    if (!selectedDivision) return;
+    const fetchSemesters = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${selectedDivision}`,
+          { withCredentials: true }
+        );
+        setSemesters(res.data?.data || []);
+      } catch {
+        console.error("Failed to fetch semesters");
+      }
+    };
+    fetchSemesters();
+  }, [selectedDivision]);
 
-    for (const subj of selectedSubjects) {
-      mockCPRs.push({
-        id: `${division}-${selectedSem}-${subj.slice(0, 3)}-${Math.random()
-          .toString(36)
-          .substr(2, 4)}`,
-        teacher: ["Prof. A.", "Dr. B.", "Ms. C.", "Mr. D."][
-          Math.floor(Math.random() * 4)
-        ],
-        semester: selectedSem,
-        subject: subj,
-        uploadedOn: ["2024-05-10", "2024-04-22", "2024-03-15"][
-          Math.floor(Math.random() * 3)
-        ],
-        status: ["Approved", "Pending", "Rejected"][
-          Math.floor(Math.random() * 3)
-        ] as any,
-        file: `${subj.replace(/\s+/g, "_")}_CPR_Sem${selectedSem}.xlsx`,
-      });
+  // ✅ Fetch Subjects when Semester selected
+  useEffect(() => {
+    if (!selectedSemester) return;
+    const fetchSubjects = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/semesters/${selectedSemester}`,
+          { withCredentials: true }
+        );
+        setSubjects(res.data?.data || []);
+      } catch {
+        console.error("Failed to fetch subjects");
+      }
+    };
+    fetchSubjects();
+  }, [selectedSemester]);
+
+  const fetchCPR = async () => {
+  if (!selectedSubject) return;
+  setLoadingCpr(true);
+  try {
+    const res = await axios.get(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/subject/${selectedSubject}`,
+      { withCredentials: true }
+    );
+    if (res.data.success) {
+      setCprData(res.data.data);
     }
+  } catch (err: any) {
+    console.error(err.response?.data?.message || "Failed to fetch CPR");
+  } finally {
+    setLoadingCpr(false);
+  }
+};
 
-    setCprList(mockCPRs);
-    setShowCPRTable(true);
-  };
 
-  useEffect(() => {
-    setSchool("");
-    setDivision("");
-    setBatch("");
-    setSemester("");
-    setSubject("");
-    setShowCPRTable(false);
-  }, [center]);
+const canShowViewButton = selectedCenter &&
+    selectedSchool &&
+    selectedBatch &&
+    selectedDivision &&
+    selectedSemester &&
+    selectedSubject
 
-  useEffect(() => {
-    setDivision("");
-    setBatch("");
-    setSemester("");
-    setSubject("");
-    setShowCPRTable(false);
-  }, [school]);
-
-  useEffect(() => {
-    setBatch("");
-    setSemester("");
-    setSubject("");
-    setShowCPRTable(false);
-  }, [division]);
-
-  useEffect(() => {
-    setSubject("");
-    setShowCPRTable(false);
-  }, [batch]);
-
-  const canShowViewButton = semester;
   const canUpload =
-    center &&
-    school &&
-    division &&
-    batch &&
-    semester &&
-    subject &&
+  selectedCenter &&
+    selectedSchool &&
+    selectedBatch &&
+    selectedDivision &&
+    selectedSemester &&
+    selectedSubject &&
     uploadedFile;
 
   const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
@@ -213,29 +266,50 @@ export default function CPRUploadSection() {
     }
   };
 
-  const uploadFile = () => {
-    if (!canUpload) return;
+const uploadFile = async () => {
+  if (!canUpload) return;
 
-    setUploadStatus("uploading");
-    setErrorMessage("");
-    setSuccessMessage("");
+  setUploadStatus("uploading");
+  setErrorMessage("");
+  setSuccessMessage("");
 
-    setTimeout(() => {
-      setSuccessMessage(`CPR for ${subject} uploaded successfully!`);
+  try {
+    const formData = new FormData();
+    formData.append("file", uploadedFile!);
+    formData.append("subject_id", selectedSubject); // ✅ send subject_id to backend
+
+    const res = await axios.post(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/upload`,
+      formData,
+      {
+        withCredentials: true, // so JWT cookie goes along
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+
+    if (res.data.success) {
+      setSuccessMessage(res.data.message || "Upload successful!");
       setUploadStatus("success");
 
       const newCPR = {
         id: Date.now().toString(),
         teacher: "You (Admin)",
-        semester: Number(semester),
-        subject,
+        semester: Number(selectedSemester),
+        subject: subjects.find((s) => s.id === selectedSubject)?.name || selectedSubject,
         uploadedOn: new Date().toISOString().split("T")[0],
         status: "Pending" as const,
         file: uploadedFile?.name || "uploaded_cpr.xlsx",
       };
       setCprList((prev) => [newCPR, ...prev]);
-    }, 1500);
-  };
+    } else {
+      throw new Error(res.data.message || "Upload failed.");
+    }
+  } catch (err: any) {
+    setUploadStatus("error");
+    setErrorMessage(err.response?.data?.message || err.message || "Upload failed.");
+  }
+};
+
 
   const resetUpload = () => {
     setUploadStatus("idle");
@@ -267,6 +341,7 @@ export default function CPRUploadSection() {
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-lg border border-gray-200 p-4 mb-6 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-2">
             <div className="flex items-center gap-3">
@@ -287,249 +362,227 @@ export default function CPRUploadSection() {
           </div>
         </div>
 
-        <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8 mb-6">
+              <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8 mb-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
             Select CPR Details
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-4 text-sm">
+            {/* Center */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
                 Center
               </label>
               <div className="relative">
                 <select
-                  value={center}
-                  onChange={(e) => setCenter(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
+                  value={selectedCenter}
+                  onChange={(e) => {
+                    setSelectedCenter(e.target.value);
+                    setSelectedSchool("");
+                    setSelectedBatch("");
+                    setSelectedDivision("");
+                    setSelectedSemester("");
+                    setSelectedSubject("");
+                  }}
+                  className="w-full px-3 py-2 pr-10 border rounded-sm"
                 >
                   <option value="">Select Center</option>
                   {centers.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
+                    <option key={c.id} value={c.id}>
+                      {c.location || c.name}
                     </option>
                   ))}
                 </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
               </div>
             </div>
 
+            {/* School */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
                 School
               </label>
-              <div className="relative">
-                <select
-                  value={school}
-                  onChange={(e) => setSchool(e.target.value)}
-                  disabled={!center}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select School</option>
-                  {schoolsByCenter[center]?.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !center ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
+              <select
+                value={selectedSchool}
+                disabled={!selectedCenter}
+                onChange={(e) => {
+                  setSelectedSchool(e.target.value);
+                  setSelectedBatch("");
+                  setSelectedDivision("");
+                  setSelectedSemester("");
+                  setSelectedSubject("");
+                }}
+                className="w-full px-3 py-2 border rounded-sm"
+              >
+                <option value="">Select School</option>
+                {schools.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Division
-              </label>
-              <div className="relative">
-                <select
-                  value={division}
-                  onChange={(e) => setDivision(e.target.value)}
-                  disabled={!school}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Division</option>
-                  {["23", "24", "25"].map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !school ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
-
+            {/* Batch */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
                 Batch
               </label>
-              <div className="relative">
-                <select
-                  value={batch}
-                  onChange={(e) => setBatch(e.target.value)}
-                  disabled={!division || !school}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Batch</option>
-                  {getBatchOptions().map((b) => (
-                    <option key={b} value={b}>
-                      {b}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !division || !school ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
+              <select
+                value={selectedBatch}
+                disabled={!selectedSchool}
+                onChange={(e) => {
+                  setSelectedBatch(e.target.value);
+                  setSelectedDivision("");
+                  setSelectedSemester("");
+                  setSelectedSubject("");
+                }}
+                className="w-full px-3 py-2 border rounded-sm"
+              >
+                <option value="">Select Batch</option>
+                {batches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
+            {/* Division */}
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Division
+              </label>
+              <select
+                value={selectedDivision}
+                disabled={!selectedBatch}
+                onChange={(e) => {
+                  setSelectedDivision(e.target.value);
+                  setSelectedSemester("");
+                  setSelectedSubject("");
+                }}
+                className="w-full px-3 py-2 border rounded-sm"
+              >
+                <option value="">Select Division</option>
+                {divisions.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.code}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Semester */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
                 Semester
               </label>
-              <div className="relative">
-                <select
-                  value={semester}
-                  onChange={(e) => setSemester(e.target.value)}
-                  disabled={!batch}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Semester</option>
-                  {getSemesterOptions().map((sem) => (
-                    <option key={sem} value={sem}>
-                      {sem}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !batch ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
+              <select
+                value={selectedSemester}
+                disabled={!selectedDivision}
+                onChange={(e) => {
+                  setSelectedSemester(e.target.value);
+                  setSelectedSubject("");
+                }}
+                className="w-full px-3 py-2 border rounded-sm"
+              >
+                <option value="">Select Semester</option>
+                {semesters.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    Semester {s.number}
+                  </option>
+                ))}
+              </select>
             </div>
 
+            {/* Subject */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
                 Subject
               </label>
-              <div className="relative">
-                <select
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  disabled={!semester}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Subject</option>
-                  {subjects.map((sub) => (
-                    <option key={sub} value={sub}>
-                      {sub}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !semester ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
+              <select
+                value={selectedSubject}
+                disabled={!selectedSemester}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                className="w-full px-3 py-2 border rounded-sm"
+              >
+                <option value="">Select Subject</option>
+                {subjects.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
           {canShowViewButton && (
-            <div className="mb-6">
-              <button
-                onClick={loadCPRsForDivision}
-                className="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors font-medium cursor-pointer group"
-              >
-                <ClipboardList size={16} className="group-hover:scale-110" />
-                View CPR Table
-              </button>
-            </div>
-          )}
+  <button
+    onClick={() => {
+      setShowCPRTable(true);
+      fetchCPR();
+    }}
+    className="px-6 py-2 bg-slate-900 text-white rounded-sm flex items-center gap-2"
+  >
+    <ClipboardList size={16} /> View CPR Table
+  </button>
+)}
+
         </div>
 
         {showCPRTable && (
           <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8 mb-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              CPR Records - Semester {semester}
+              CPR Records 
             </h3>
 
-            <div className="border border-gray-300 rounded-sm overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left">Subject</th>
-                    <th className="px-4 py-2 text-left">Teacher</th>
-                    <th className="px-4 py-2 text-left">Uploaded On</th>
-                    <th className="px-4 py-2 text-left">Status</th>
-                    <th className="px-4 py-2 text-left">Download</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cprList.length > 0 ? (
-                    cprList.map((cpr) => (
-                      <tr
-                        key={cpr.id}
-                        className="border-t border-gray-200 hover:bg-gray-50"
-                      >
-                        <td className="px-4 py-2">{cpr.subject}</td>
-                        <td className="px-4 py-2">{cpr.teacher}</td>
-                        <td className="px-4 py-2">{cpr.uploadedOn}</td>
-                        <td className="px-4 py-2">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              cpr.status === "Approved"
-                                ? "bg-green-100 text-green-800"
-                                : cpr.status === "Pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {cpr.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2">
-                          <a
-                            href="#"
-                            className="text-blue-600 hover:underline"
-                            onClick={(e) => e.preventDefault()}
-                          >
-                            {cpr.file}
-                          </a>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="px-4 py-6 text-center text-gray-500"
-                      >
-                        No CPRs found for Semester {semester}.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+           <div className="border border-gray-300 rounded-sm overflow-hidden">
+  <table className="w-full text-sm">
+    <thead className="bg-gray-50">
+      <tr>
+        <th className="px-4 py-2 text-left">Subject</th>
+        <th className="px-4 py-2 text-left">Code</th>
+        <th className="px-4 py-2 text-left">Modules</th>
+        <th className="px-4 py-2 text-left">Topics</th>
+        <th className="px-4 py-2 text-left">Subtopics</th>
+        <th className="px-4 py-2 text-left">Completion %</th>
+      </tr>
+    </thead>
+    <tbody>
+      {cprData ? (
+        <tr className="border-t border-gray-200 hover:bg-gray-50">
+          <td className="px-4 py-2">{cprData.subject?.name}</td>
+          <td className="px-4 py-2">{cprData.subject?.code}</td>
+          <td className="px-4 py-2">{cprData.summary?.total_modules}</td>
+          <td className="px-4 py-2">{cprData.summary?.total_topics}</td>
+          <td className="px-4 py-2">{cprData.summary?.total_sub_topics}</td>
+          <td className="px-4 py-2">
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                cprData.summary?.completion_percentage === 100
+                  ? "bg-green-100 text-green-800"
+                  : cprData.summary?.completion_percentage > 0
+                  ? "bg-yellow-100 text-yellow-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
+              {cprData.summary?.completion_percentage}%
+            </span>
+          </td>
+        </tr>
+      ) : (
+        <tr>
+          <td
+            colSpan={6}
+            className="px-4 py-6 text-center text-gray-500"
+          >
+            No CPR found for selected subject.
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
+
             <p className="text-sm text-gray-600 mt-2">
               Showing {cprList.length} record(s) • Data is mock for demo
             </p>
@@ -549,12 +602,12 @@ export default function CPRUploadSection() {
                 : uploadStatus === "success"
                 ? "border-green-300 bg-green-50"
                 : !(
-                    center &&
-                    school &&
-                    division &&
-                    batch &&
-                    semester &&
-                    subject
+                    selectedCenter &&
+                    selectedSchool &&
+                    selectedDivision &&
+                    selectedBatch &&
+                    selectedSemester &&
+                    selectedSubject
                   )
                 ? "border-gray-200 bg-gray-100 opacity-70"
                 : "border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100"
@@ -564,7 +617,7 @@ export default function CPRUploadSection() {
             onDragOver={handleDrag}
             onDrop={handleDrop}
           >
-            {!(center && school && division && batch && semester && subject) ? (
+            {!(selectedCenter && selectedSchool && selectedDivision && selectedBatch && selectedSemester && selectedSubject) ? (
               <div className="space-y-4">
                 <AlertCircle className="text-gray-400 mx-auto" size={40} />
                 <p className="text-gray-500">

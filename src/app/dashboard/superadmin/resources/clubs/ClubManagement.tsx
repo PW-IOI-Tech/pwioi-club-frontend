@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Users, Plus } from "lucide-react";
 import Table from "../../Table";
 import AddClubModal from "./AddClubModal";
+import axios from "axios";
 
 interface Club {
   id: string;
@@ -22,83 +23,121 @@ interface GenericTableItem {
   [key: string]: any;
 }
 
-const centers = ["Bangalore", "Lucknow", "Pune", "Noida"];
-
 const mockFaculties: Record<string, string[]> = {
-  Bangalore: [
-    "FAC001 - Dr. Priya Sharma",
-    "FAC002 - Prof. Rajesh Kumar",
-    "FAC003 - Dr. Anjali Patel",
-    "FAC004 - Prof. Vikram Singh",
-  ],
-  Lucknow: [
-    "FAC101 - Dr. Meena Verma",
-    "FAC102 - Prof. Arvind Mishra",
-    "FAC103 - Dr. Sunita Yadav",
-  ],
-  Pune: [
-    "FAC201 - Prof. Deepak Joshi",
-    "FAC202 - Dr. Neha Deshmukh",
-    "FAC203 - Prof. Sandeep Reddy",
-  ],
-  Noida: [
-    "FAC301 - Dr. Ravi Malhotra",
-    "FAC302 - Prof. Pooja Bansal",
-    "FAC303 - Dr. Amit Khanna",
-  ],
+  Bangalore: ["FAC001 - Dr. Priya Sharma", "FAC002 - Prof. Rajesh Kumar"],
+  Lucknow: ["FAC101 - Dr. Meena Verma", "FAC102 - Prof. Arvind Mishra"],
+  Pune: ["FAC201 - Prof. Deepak Joshi", "FAC202 - Dr. Neha Deshmukh"],
+  Noida: ["FAC301 - Dr. Ravi Malhotra", "FAC302 - Prof. Pooja Bansal"],
 };
 
 const mockStudents: Record<string, string[]> = {
-  Bangalore: [
-    "STD001 - Aditya Rao",
-    "STD002 - Sneha Iyer",
-    "STD003 - Arjun Menon",
-    "STD004 - Kavya Nair",
-  ],
-  Lucknow: [
-    "STD101 - Aman Pandey",
-    "STD102 - Divya Tiwari",
-    "STD103 - Rohit Srivastava",
-  ],
-  Pune: [
-    "STD201 - Omkar Kulkarni",
-    "STD202 - Shruti Joshi",
-    "STD203 - Pranav Desai",
-  ],
-  Noida: [
-    "STD301 - Karan Mehta",
-    "STD302 - Tanvi Chawla",
-    "STD303 - Vedant Agarwal",
-  ],
+  Bangalore: ["STD001 - Aditya Rao", "STD002 - Sneha Iyer"],
+  Lucknow: ["STD101 - Aman Pandey", "STD102 - Divya Tiwari"],
+  Pune: ["STD201 - Omkar Kulkarni", "STD202 - Shruti Joshi"],
+  Noida: ["STD301 - Karan Mehta", "STD302 - Tanvi Chawla"],
 };
 
 const categories = ["Tech", "Social", "Sports", "Arts", "Academic", "Cultural"];
 
 export default function ClubManagement() {
   const [clubs, setClubs] = useState<Club[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [centers, setCenters] = useState<any[]>([]);
 
-  const handleAddClub = (newClubData: Omit<Club, "id">) => {
-    const newClub: Club = {
-      ...newClubData,
-      id: `club_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    };
-    setClubs((prev) => [...prev, newClub]);
-    setIsAddModalOpen(false);
-  };
-
-  const handleDeleteClub = (id: string | number) => {
-    const stringId = typeof id === "number" ? id.toString() : id;
-    setClubs((prev) => prev.filter((club) => club.id !== stringId));
-  };
-
-  const handleUpdateClub = (updatedItem: GenericTableItem) => {
-    if (isValidClub(updatedItem)) {
-      const updatedClub = updatedItem as Club;
-      setClubs((prev) =>
-        prev.map((club) => (club.id === updatedClub.id ? updatedClub : club))
+  // ✅ Add Club
+  const handleAddClub = async (newClubData: Omit<Club, "id">) => {
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/club`,
+        {
+          name: newClubData.clubName,
+          category: newClubData.category,
+          description: newClubData.description,
+          center_id: newClubData.centerLocation,
+          leader_enrollment_id: newClubData.leaderId,
+          established_date: newClubData.establishedDate,
+          official_ids: newClubData.clubOfficials.map((id) => ({
+            id,
+            type: "teacher",
+          })),
+          core_team_enrollment_ids: newClubData.coreMembers,
+        },
+        { withCredentials: true }
       );
+
+      const createdClub = res.data.data;
+      setClubs((prev) => [
+        ...prev,
+        {
+          id: createdClub.id,
+          clubName: createdClub.name,
+          category: createdClub.category,
+          leaderId: createdClub.leader_enrollment_id,
+          description: createdClub.description,
+          establishedDate: createdClub.established_date,
+          centerLocation: createdClub.center_id,
+          clubOfficials: createdClub.officials?.map((o: any) => o.id) || [],
+          coreMembers: createdClub.core_team_enrollment_ids || [],
+        },
+      ]);
+      setIsAddModalOpen(false);
+    } catch (err) {
+      console.error("Failed to add club:", err);
+    }
+  };
+
+  // ✅ Delete Club
+  const handleDeleteClub = async (id: string | number) => {
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/club/${id}`,
+        { withCredentials: true }
+      );
+      setClubs((prev) => prev.filter((club) => club.id !== id));
+    } catch (err) {
+      console.error("Failed to delete club:", err);
+    }
+  };
+
+  // ✅ Update Club
+  const handleUpdateClub = async (updatedItem: GenericTableItem) => {
+    if (!isValidClub(updatedItem)) return;
+    const updatedClub = updatedItem as Club;
+
+    try {
+      const res = await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/club/${updatedClub.id}`,
+        {
+          name: updatedClub.clubName,
+          category: updatedClub.category,
+          description: updatedClub.description,
+          established_date: updatedClub.establishedDate,
+          leader_enrollment_id: updatedClub.leaderId,
+        },
+        { withCredentials: true }
+      );
+
+      const savedClub = res.data.data;
+      setClubs((prev) =>
+        prev.map((club) =>
+          club.id === updatedClub.id
+            ? {
+                id: savedClub.id,
+                clubName: savedClub.name,
+                category: savedClub.category,
+                leaderId: savedClub.leader_enrollment_id,
+                description: savedClub.description,
+                establishedDate: savedClub.established_date,
+                centerLocation: savedClub.center_id,
+                clubOfficials: savedClub.officials?.map((o: any) => o.id) || [],
+                coreMembers: savedClub.core_team_enrollment_ids || [],
+              }
+            : club
+        )
+      );
+    } catch (err) {
+      console.error("Failed to update club:", err);
     }
   };
 
@@ -117,11 +156,13 @@ export default function ClubManagement() {
     );
   };
 
+  // ✅ Filter clubs for selected center
   const filteredClubs = useMemo(() => {
     if (!selectedLocation) return [];
-    return clubs.filter((club) => club.centerLocation === selectedLocation);
+    return clubs.filter((club) => club.centerLocation === selectedLocation.id);
   }, [clubs, selectedLocation]);
 
+  // ✅ Stats
   const stats = useMemo(() => {
     return {
       totalClubs: filteredClubs.length,
@@ -130,6 +171,53 @@ export default function ClubManagement() {
     };
   }, [filteredClubs]);
 
+  // ✅ Fetch centers
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+          { withCredentials: true }
+        );
+        setCenters(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch centers:", err);
+      }
+    };
+    fetchCenters();
+  }, []);
+
+  // ✅ Fetch clubs when center changes
+  useEffect(() => {
+    if (!selectedLocation) return;
+
+    const fetchClubs = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/club/center/${selectedLocation.id}`,
+          { withCredentials: true }
+        );
+
+        const mappedClubs: Club[] = res.data.data.map((club: any) => ({
+          id: club.id,
+          clubName: club.name,
+          category: club.category,
+          leaderId: club.leader_enrollment_id,
+          description: club.description,
+          establishedDate: club.established_date,
+          centerLocation: club.center_id,
+          clubOfficials: club.officials?.map((o: any) => o.id) || [],
+          coreMembers: club.core_team_enrollment_ids || [],
+        }));
+        setClubs(mappedClubs);
+      } catch (err) {
+        console.error("Failed to fetch clubs:", err);
+      }
+    };
+
+    fetchClubs();
+  }, [selectedLocation]);
+
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -137,39 +225,28 @@ export default function ClubManagement() {
           Club Management
         </h2>
 
+        {/* ✅ Dropdown Fix */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
           <label className="text-sm font-medium text-gray-100 mb-2 flex items-center gap-1">
             Select Center Location
           </label>
           <div className="relative">
             <select
-              value={selectedLocation}
-              onChange={(e) => setSelectedLocation(e.target.value)}
+              value={selectedLocation?.id || ""}
+              onChange={(e) =>
+                setSelectedLocation(
+                  centers.find((c) => c.id === e.target.value) || null
+                )
+              }
               className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer appearance-none text-sm font-medium"
             >
               <option value="">Select a center to begin</option>
-              {centers.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
+              {centers?.map((loc) => (
+                <option key={loc?.id} value={loc?.id}>
+                  {loc?.name}
                 </option>
               ))}
             </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
           </div>
         </div>
 
@@ -200,7 +277,6 @@ export default function ClubManagement() {
                 bgColor="from-white to-green-50"
                 textColor="text-green-600"
               />
-
               <div
                 className="bg-white border border-gray-400 rounded-sm p-6 flex items-center justify-center cursor-pointer group"
                 onClick={() => setIsAddModalOpen(true)}
@@ -221,12 +297,12 @@ export default function ClubManagement() {
 
             <Table
               data={filteredClubs as GenericTableItem[]}
-              title={`Clubs in ${selectedLocation}`}
+              title={`Clubs in ${selectedLocation?.name}`}
               filterField="clubName"
               badgeFields={["category", "leaderId"]}
               selectFields={{
                 category: categories,
-                leaderId: mockStudents[selectedLocation] || [],
+                leaderId: mockStudents[selectedLocation?.name] || [],
               }}
               nonEditableFields={["id", "centerLocation"]}
               onDelete={handleDeleteClub}
@@ -240,9 +316,9 @@ export default function ClubManagement() {
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onClubCreated={handleAddClub}
-          prefillLocation={selectedLocation}
-          faculties={mockFaculties[selectedLocation] || []}
-          students={mockStudents[selectedLocation] || []}
+          prefillLocation={selectedLocation?.location}
+          faculties={mockFaculties[selectedLocation?.name] || []}
+          students={mockStudents[selectedLocation?.name] || []}
         />
       </div>
     </div>

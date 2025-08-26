@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Flag, Users, AlertTriangle, CheckCircle, X, Eye } from "lucide-react";
 import Table from "../../Table";
 import FlaggedByModal from "./FlaggedByModal";
+import axios from "axios";
 
 interface FlaggedUser {
   userId: string;
@@ -35,14 +36,10 @@ interface ToastProps {
 
 const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 3000);
-
+    const timer = setTimeout(() => onClose(), 3000);
     return () => clearTimeout(timer);
   }, [onClose]);
 
-  const bgColor = "bg-slate-900";
   const icon =
     type === "success" ? (
       <CheckCircle size={20} />
@@ -53,9 +50,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
     );
 
   return (
-    <div
-      className={`fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-50 animate-in slide-in-from-top-2`}
-    >
+    <div className="fixed top-4 right-4 bg-slate-900 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-50 animate-in slide-in-from-top-2">
       {icon}
       <span>{message}</span>
       <button
@@ -68,174 +63,85 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
   );
 };
 
-const initialFlaggedPosts: FlaggedPost[] = [
-  {
-    id: "1",
-    postId: "post_123",
-    postContent:
-      "This is an inappropriate post that violates community guidelines...",
-    postAuthor: "John Doe",
-    postAuthorEmail: "john.doe@company.com",
-    postCreatedAt: "2024-08-20",
-    flagCount: 3,
-    flaggedBy: [
-      {
-        userId: "user1",
-        userName: "Alice Smith",
-        userEmail: "alice@company.com",
-        flagReason: "Inappropriate content",
-        flaggedAt: "2024-08-21",
-      },
-      {
-        userId: "user2",
-        userName: "Bob Johnson",
-        userEmail: "bob@company.com",
-        flagReason: "Spam",
-        flaggedAt: "2024-08-21",
-      },
-      {
-        userId: "user3",
-        userName: "Carol Wilson",
-        userEmail: "carol@company.com",
-        flagReason: "Harassment",
-        flaggedAt: "2024-08-22",
-      },
-    ],
-    status: "pending",
-    createdAt: "2024-08-21",
-  },
-  {
-    id: "2",
-    postId: "post_456",
-    postContent: "Another flagged post with offensive language",
-    postAuthor: "Jane Smith",
-    postAuthorEmail: "jane.smith@company.com",
-    postCreatedAt: "2024-08-19",
-    mediaUrl: "https://example.com/image.jpg",
-    flagCount: 1,
-    flaggedBy: [
-      {
-        userId: "user4",
-        userName: "David Brown",
-        userEmail: "david@company.com",
-        flagReason: "Offensive language",
-        flaggedAt: "2024-08-21",
-      },
-    ],
-    status: "pending",
-    createdAt: "2024-08-21",
-  },
-  {
-    id: "3",
-    postId: "post_789",
-    postContent: "Spam content promoting external services",
-    postAuthor: "Mike Wilson",
-    postAuthorEmail: "mike@company.com",
-    postCreatedAt: "2024-08-18",
-    flagCount: 5,
-    flaggedBy: [
-      {
-        userId: "user5",
-        userName: "Emma Davis",
-        userEmail: "emma@company.com",
-        flagReason: "Spam",
-        flaggedAt: "2024-08-20",
-      },
-      {
-        userId: "user6",
-        userName: "Frank Miller",
-        userEmail: "frank@company.com",
-        flagReason: "Commercial content",
-        flaggedAt: "2024-08-20",
-      },
-      {
-        userId: "user7",
-        userName: "Grace Lee",
-        userEmail: "grace@company.com",
-        flagReason: "Spam",
-        flaggedAt: "2024-08-21",
-      },
-      {
-        userId: "user8",
-        userName: "Henry Clark",
-        userEmail: "henry@company.com",
-        flagReason: "Inappropriate content",
-        flaggedAt: "2024-08-21",
-      },
-      {
-        userId: "user9",
-        userName: "Ivy Taylor",
-        userEmail: "ivy@company.com",
-        flagReason: "Spam",
-        flaggedAt: "2024-08-22",
-      },
-    ],
-    status: "pending",
-    createdAt: "2024-08-20",
-  },
-];
-
 export default function FlagManagement() {
-  const [flaggedPosts, setFlaggedPosts] =
-    useState<FlaggedPost[]>(initialFlaggedPosts);
+  const [flaggedPosts, setFlaggedPosts] = useState<FlaggedPost[]>([]);
   const [error, setError] = useState("");
   const [selectedPost, setSelectedPost] = useState<FlaggedPost | null>(null);
   const [isFlaggedByModalOpen, setIsFlaggedByModalOpen] = useState(false);
-  const [toast, setToast] = useState<{
-    message: string;
-    type: "success" | "error" | "info";
-  } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
-  const statistics = useMemo(() => {
-    const pending = flaggedPosts.filter((post) => post.status === "pending");
-    const highPriority = pending.filter((post) => post.flagCount >= 3);
-    const totalFlags = flaggedPosts.reduce(
-      (sum, post) => sum + post.flagCount,
-      0
-    );
+  useEffect(() => {
+    const fetchFlags = async () => {
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags`, {withCredentials:true});
 
-    return {
-      totalFlagged: flaggedPosts.length,
-      pendingReview: pending.length,
-      highPriority: highPriority.length,
-      totalFlags: totalFlags,
+        const mapped: FlaggedPost[] = res.data.data.map((f: any) => ({
+          id: f.id,
+          postId: f.post_id,
+          postContent: f.post?.content || "",
+          postAuthor: f.post?.author?.name || "Unknown",
+          postAuthorEmail: f.post?.author?.email || "N/A",
+          postCreatedAt: f.post?.createdAt || "",
+          mediaUrl: f.post?.media?.[0]?.url || undefined,
+          flagCount: 1,
+          flaggedBy: [
+            {
+              userId: f.flagged_by,
+              userName: f.user?.name || "Unknown",
+              userEmail: f.user?.email || "N/A",
+              flagReason: f.content,
+              flaggedAt: f.createdAt,
+            },
+          ],
+          status: f.is_verified ? "rejected" : "pending",
+          createdAt: f.createdAt,
+        }));
+
+        setFlaggedPosts(mapped);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to fetch flags");
+      }
     };
-  }, [flaggedPosts]);
 
-  const showToast = useCallback(
-    (message: string, type: "success" | "error" | "info") => {
-      setToast({ message, type });
-    },
-    []
-  );
-
-  const hideToast = useCallback(() => {
-    setToast(null);
+    fetchFlags();
   }, []);
 
+  const showToast = useCallback((message: string, type: "success" | "error" | "info") => {
+    setToast({ message, type });
+  }, []);
+
+  const hideToast = useCallback(() => setToast(null), []);
+
   const handleApproveFlag = useCallback(
-    (postId: string) => {
-      setFlaggedPosts((prev) =>
-        prev.map((post) =>
-          post.id === postId ? { ...post, status: "approved" as const } : post
-        )
-      );
-      showToast(
-        "Flag approved successfully. Post has been deleted.",
-        "success"
-      );
+    async (flagId: string) => {
+      try {
+        await axios.patch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags/${flagId}/review`,
+          { action: "approve" },
+          {withCredentials:true}
+        );
+        setFlaggedPosts((prev) => prev.map((p) => (p.id === flagId ? { ...p, status: "approved" } : p)));
+        showToast("Flag approved successfully. Post has been deleted.", "success");
+      } catch (err: any) {
+        showToast(err.response?.data?.message || "Failed to approve flag", "error");
+      }
     },
     [showToast]
   );
 
   const handleRejectFlag = useCallback(
-    (postId: string) => {
-      setFlaggedPosts((prev) =>
-        prev.map((post) =>
-          post.id === postId ? { ...post, status: "rejected" as const } : post
-        )
-      );
-      showToast("Flag rejected successfully. Post has been unflagged.", "info");
+    async (flagId: string) => {
+      try {
+        await axios.patch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags/${flagId}/review`,
+          { action: "reject" },
+          {withCredentials:true}
+        );
+        setFlaggedPosts((prev) => prev.map((p) => (p.id === flagId ? { ...p, status: "rejected" } : p)));
+        showToast("Flag rejected successfully. Post has been unflagged.", "info");
+      } catch (err: any) {
+        showToast(err.response?.data?.message || "Failed to reject flag", "error");
+      }
     },
     [showToast]
   );
@@ -250,56 +156,53 @@ export default function FlagManagement() {
     setSelectedPost(null);
   }, []);
 
-  const tableData = useMemo(() => {
-    return flaggedPosts.map((post) => ({
-      id: post.id,
-      postId: post.postId,
-      postContent:
-        post.postContent.length > 50
-          ? post.postContent.substring(0, 50) + "..."
-          : post.postContent,
-      postAuthor: post.postAuthor,
-      postCreatedAt: post.postCreatedAt,
-      flagCount: post.flagCount,
-      status: post.status,
-      actions:
-        post.status === "pending" ? (
-          <div className="flex space-x-2">
-            <button
-              onClick={() => handleViewFlaggedBy(post)}
-              className="text-blue-600 hover:text-blue-800 p-1 cursor-pointer"
-              title="View flagged by users"
+  const statistics = useMemo(() => {
+    const pending = flaggedPosts.filter((post) => post.status === "pending");
+    const highPriority = pending.filter((post) => post.flagCount >= 3);
+    const totalFlags = flaggedPosts.reduce((sum, post) => sum + post.flagCount, 0);
+    return {
+      totalFlagged: flaggedPosts.length,
+      pendingReview: pending.length,
+      highPriority: highPriority.length,
+      totalFlags,
+    };
+  }, [flaggedPosts]);
+
+  const tableData = useMemo(
+    () =>
+      flaggedPosts.map((post) => ({
+        id: post.id,
+        postId: post.postId,
+        postContent: post.postContent.length > 50 ? post.postContent.substring(0, 50) + "..." : post.postContent,
+        postAuthor: post.postAuthor,
+        postCreatedAt: post.postCreatedAt,
+        flagCount: post.flagCount,
+        status: post.status,
+        actions:
+          post.status === "pending" ? (
+            <div className="flex space-x-2">
+              <button onClick={() => handleViewFlaggedBy(post)} className="text-blue-600 hover:text-blue-800 p-1">
+                <Eye size={16} />
+              </button>
+              <button onClick={() => handleApproveFlag(post.id)} className="text-green-600 hover:text-green-800 p-1">
+                <CheckCircle size={16} />
+              </button>
+              <button onClick={() => handleRejectFlag(post.id)} className="text-red-600 hover:text-red-800 p-1">
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <span
+              className={`px-2 py-1 rounded text-xs ${
+                post.status === "approved" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+              }`}
             >
-              <Eye size={16} />
-            </button>
-            <button
-              onClick={() => handleApproveFlag(post.id)}
-              className="text-green-600 hover:text-green-800 p-1 cursor-pointer"
-              title="Approve flag & delete post"
-            >
-              <CheckCircle size={16} />
-            </button>
-            <button
-              onClick={() => handleRejectFlag(post.id)}
-              className="text-red-600 hover:text-red-800 p-1 cursor-pointer"
-              title="Reject flag & restore post"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        ) : (
-          <span
-            className={`px-2 py-1 rounded text-xs ${
-              post.status === "approved"
-                ? "bg-green-100 text-green-800"
-                : "bg-gray-100 text-gray-800"
-            }`}
-          >
-            {post.status === "approved" ? "Deleted" : "Restored"}
-          </span>
-        ),
-    }));
-  }, [flaggedPosts, handleApproveFlag, handleRejectFlag, handleViewFlaggedBy]);
+              {post.status === "approved" ? "Deleted" : "Restored"}
+            </span>
+          ),
+      })),
+    [flaggedPosts, handleApproveFlag, handleRejectFlag, handleViewFlaggedBy]
+  );
 
   if (error) {
     return (
@@ -319,38 +222,28 @@ export default function FlagManagement() {
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
-        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
-          Flag Management
-        </h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">Flag Management</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="bg-gradient-to-br from-white to-blue-50 rounded-sm border border-gray-400">
             <div className="p-6 text-center">
               <Flag className="w-6 h-6 text-slate-900 mx-auto mb-1" />
               <h4 className="text-lg text-slate-900">Total Flagged</h4>
-              <p className="text-5xl font-bold text-[#1B3A6A]">
-                {statistics.totalFlagged}
-              </p>
+              <p className="text-5xl font-bold text-[#1B3A6A]">{statistics.totalFlagged}</p>
             </div>
           </div>
-
           <div className="bg-gradient-to-br from-white to-yellow-50 rounded-sm border border-gray-400">
             <div className="p-6 text-center">
               <AlertTriangle className="w-6 h-6 text-slate-900 mx-auto mb-1" />
               <h4 className="text-lg text-slate-900">Pending Review</h4>
-              <p className="text-5xl font-bold text-yellow-600">
-                {statistics.pendingReview}
-              </p>
+              <p className="text-5xl font-bold text-yellow-600">{statistics.pendingReview}</p>
             </div>
           </div>
-
           <div className="bg-gradient-to-br from-white to-red-50 rounded-sm border border-gray-400">
             <div className="p-6 text-center">
               <Users className="w-6 h-6 text-slate-900 mx-auto mb-1" />
               <h4 className="text-lg text-slate-900">High Priority</h4>
-              <p className="text-5xl font-bold text-red-600">
-                {statistics.highPriority}
-              </p>
+              <p className="text-5xl font-bold text-red-600">{statistics.highPriority}</p>
             </div>
           </div>
         </div>
@@ -360,36 +253,16 @@ export default function FlagManagement() {
           title="Flagged Posts"
           filterField="status"
           badgeFields={["status", "flagCount"]}
-          selectFields={{
-            status: ["pending", "approved", "rejected"],
-          }}
-          nonEditableFields={[
-            "id",
-            "postId",
-            "postContent",
-            "postAuthor",
-            "flagCount",
-            "lastFlaggedAt",
-            "actions",
-          ]}
+          selectFields={{ status: ["pending", "approved", "rejected"] }}
+          nonEditableFields={["id", "postId", "postContent", "postAuthor", "flagCount", "lastFlaggedAt", "actions"]}
           hiddenColumns={["id"]}
         />
 
         {selectedPost && (
-          <FlaggedByModal
-            isOpen={isFlaggedByModalOpen}
-            onClose={handleCloseFlaggedByModal}
-            post={selectedPost}
-          />
+          <FlaggedByModal isOpen={isFlaggedByModalOpen} onClose={handleCloseFlaggedByModal} post={selectedPost} />
         )}
 
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={hideToast}
-          />
-        )}
+        {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
       </div>
     </div>
   );

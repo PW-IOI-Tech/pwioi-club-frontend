@@ -1,4 +1,5 @@
 "use client";
+import axios from "axios";
 
 import React, { useState, useRef } from "react";
 import {
@@ -26,6 +27,8 @@ interface UploadSectionProps {
   fileSizeLimit?: number;
   validTypes?: string[];
   validExtensions?: string[];
+    extraData?: Record<string, any>;  
+
 }
 
 export default function UploadSection({
@@ -38,6 +41,7 @@ export default function UploadSection({
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ],
   validExtensions = [".xls", ".xlsx"],
+  extraData = {}, 
 }: UploadSectionProps) {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -116,47 +120,49 @@ export default function UploadSection({
     }
   };
 
-  const uploadFile = async () => {
-    if (!uploadedFile) return;
 
-    setUploadStatus("uploading");
-    setErrorMessage("");
-    setSuccessMessage("");
+const uploadFile = async () => {
+  if (!uploadedFile) return;
 
-    try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        throw new Error("Authentication required. Please log in again.");
-      }
+  setUploadStatus("uploading");
+  setErrorMessage("");
+  setSuccessMessage("");
 
-      const formData = new FormData();
-      formData.append("file", uploadedFile);
+  try {
+    const formData = new FormData();
+    formData.append("file", uploadedFile);
 
-      const response = await fetch(`${uploadUrl}`, {
-        method: "POST",
-        headers: {
-          token: token,
-        },
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        setUploadStatus("success");
-        setSuccessMessage(result.message || "Data uploaded successfully!");
-
-        if (onSuccess) {
-          onSuccess();
-        }
+    // ✅ append extraData fields dynamically
+    Object.entries(extraData).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((v) => formData.append(key, v));
       } else {
-        throw new Error(result.message || "Failed to upload data");
+        formData.append(key, value);
       }
-    } catch (error: any) {
-      setUploadStatus("error");
-      setErrorMessage(error.message || "An error occurred during upload");
+    });
+
+    const response = await axios.post(uploadUrl, formData, {
+      withCredentials: true,
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    if (response.data.success) {
+      setUploadStatus("success");
+      setSuccessMessage(response.data.message || "Data uploaded successfully!");
+      onSuccess?.();
+    } else {
+      throw new Error(response.data.message || "Failed to upload data");
     }
-  };
+  } catch (error: any) {
+    setUploadStatus("error");
+    setErrorMessage(
+      error.response?.data?.message || error.message || "An error occurred during upload"
+    );
+  }
+};
+
+
+
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();

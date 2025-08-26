@@ -1,6 +1,6 @@
 "use client";
-
-import React, { useState, useRef } from "react";
+import axios from "axios";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Heart,
   MessageCircle,
@@ -12,111 +12,97 @@ import {
   User,
   FileImage,
 } from "lucide-react";
+import Image from "next/image";
 
-// === Types ===
+// --- INTERFACES ---
+
 interface User {
+  batch: string;
+  studentId: string;
+  semester: string;
   name: string;
-  enrollmentId?: string;
-  batch?: { name: string };
-  school?: { name: string };
+  initial: string;
+  course: string;
+  gpa: string;
+  rank: string;
 }
 
 interface Post {
   id: string;
   author: string;
-  author_type: string;
+  role: string;
   content: string;
   media: {
-    type: "image" | "video";
-    storage_url: string;
+    id: string;
+    type: "IMAGE" | "VIDEO";
+    mime_type: string;
+    s3_key: string;
+    signedUrl: string;
   }[];
   likes: number;
+  comments: Comment[];
   _count: {
     comments: number;
   };
-  timestamp: string;
   userInfo: {
     name: string;
   };
+  author_type: string;
+  timestamp: string;
   assignedBy: string | null;
+  likedBy?: Array<{ id: string; name: string; avatar?: string }>;
 }
 
 interface Comment {
   id: string;
-  userInfo: {
-    name: string;
-    username?: string;
-  };
+  userInfo: any;
   content: string;
   createdAt: string;
   avatar?: string;
 }
 
-// === Mock Data ===
-const mockPosts: Post[] = [
-  {
-    id: "post_1",
-    author: "Alice Johnson",
-    author_type: "Student",
-    content:
-      "Just completed my final project on AI-powered chatbots! Learned so much about NLP and backend integration.\n\nCan't believe how far I've come in just one year!",
-    media: [
-      {
-        type: "image",
-        storage_url: "https://source.unsplash.com/random/800x600/?ai,project",
-      },
-    ],
-    likes: 24,
-    _count: { comments: 3 },
-    timestamp: "2 hours ago",
-    userInfo: { name: "Alice Johnson" },
-    assignedBy: null,
-  },
-  {
-    id: "post_2",
-    author: "Prof. David Miller",
-    author_type: "Faculty",
-    content:
-      "Reminder: Assignment 3 deadline is extended to Friday. Please ensure all team contributions are documented clearly.",
-    media: [],
-    likes: 15,
-    _count: { comments: 3 },
-    timestamp: "5 hours ago",
-    userInfo: { name: "Prof. David Miller" },
-    assignedBy: null,
-  },
-];
+interface ReportModalState {
+  isOpen: boolean;
+  postId: string | null;
+}
 
-const mockComments = {
-  post_1: [
-    {
-      id: "c1",
-      userInfo: { name: "Sarah Lee", username: "sarahlee" },
-      content: "Great work! Looking forward to seeing the demo.",
-      createdAt: "2024-04-05T10:30:00Z",
-      avatar: "👩",
-    },
-    {
-      id: "c2",
-      userInfo: { name: "Tom Wright", username: "tomwright" },
-      content: "Can you share the GitHub repo?",
-      createdAt: "2024-04-05T11:15:00Z",
-      avatar: "👨",
-    },
-  ],
-  post_2: [
-    {
-      id: "c3",
-      userInfo: { name: "Linda", username: "linda" },
-      content: "Thank you, Professor!",
-      createdAt: "2024-04-05T12:00:00Z",
-      avatar: "👩",
-    },
-  ],
-};
+interface WelcomeMessageProps {
+  userName: string;
+}
 
-// === Components ===
-const WelcomeMessage: React.FC<{ userName: string }> = ({ userName }) => (
+interface PostActionsProps {
+  post: Post;
+  likedPosts: Set<string>;
+  onLike: (postId: string) => void;
+  onFlag: (postId: string) => void;
+  onShare?: (postId: string) => void;
+}
+
+interface FeedProps {
+  posts: Post[];
+  likedPosts: Set<string>;
+  onLike: (postId: string) => void;
+  onFlag: (postId: string) => void;
+  getRoleBadgeColor: (role: string) => string;
+}
+
+interface ProfileHeaderProps {
+  user: User;
+}
+
+interface ReportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  reportReason: string;
+  setReportReason: (reason: string) => void;
+  reportDetails: string;
+  setReportDetails: (details: string) => void;
+  onSubmit: () => void;
+}
+
+// --- COMPONENTS ---
+
+const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ userName }) => (
   <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-sm border border-gray-400 p-6 py-8">
     <h1 className="text-2xl md:text-3xl text-white mb-2">
       Welcome back, <br className="block sm:hidden" />
@@ -130,61 +116,122 @@ const WelcomeMessage: React.FC<{ userName: string }> = ({ userName }) => (
   </div>
 );
 
-const CreatePost: React.FC<{ userInitial: string }> = ({ userInitial }) => {
+const CreatePost: React.FC<any> = ({ userInitial }) => {
   const [showModal, setShowModal] = useState(false);
   const [postText, setPostText] = useState("");
-  const [mediaList, setMediaList] = useState<
-    { file: File; preview: string; type: "image" | "video"; key: string }[]
+  const [mediaList, setMediaList] = useState<any[]>([]);
+  const [previewFiles, setPreviewFiles] = useState<
+    { url: string; type: "image" | "video"; key: string }[]
   >([]);
   const [showToast, setShowToast] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
+  const getVideoDuration = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const video = document.createElement("video");
+      video.src = URL.createObjectURL(file);
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(video.src);
+        resolve(video.duration.toString());
+      };
+    });
+  };
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
     type: "image" | "video"
   ) => {
-    const file = e.target.files?.[0];
+    const file = event.target.files?.[0];
     if (!file) return;
-    const key = `media_${Date.now()}`;
-    const preview = URL.createObjectURL(file);
-    setMediaList((prev) => [...prev, { file, preview, type, key }]);
-    setShowModal(true);
+
+    try {
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/media/signed-url`,
+        { fileName: file.name, fileType: file.type },
+        { withCredentials: true }
+      );
+
+      const { uploadUrl, key } = data;
+      await fetch(uploadUrl, { method: "PUT", body: file });
+
+      // Calculate duration for videos
+      let duration = null;
+      if (type === "video") {
+        duration = await getVideoDuration(file);
+      }
+
+      setMediaList((prev) => [
+        ...prev,
+        {
+          type: type.toUpperCase(),
+          mime_type: file.type,
+          s3_key: key, // Changed from 'key' to 's3_key'
+          thumbnail_url: null,
+          duration: duration,
+        },
+      ]);
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewFiles((prev) => [
+          ...prev,
+          { url: e.target?.result as string, type, key },
+        ]);
+      };
+      reader.readAsDataURL(file);
+
+      setShowModal(true);
+    } catch (error) {
+      console.error("File upload error:", error);
+    }
   };
 
-  const handleRemoveMedia = (key: string) => {
-    setMediaList((prev) => {
-      const item = prev.find((m) => m.key === key);
-      if (item) URL.revokeObjectURL(item.preview);
-      return prev.filter((m) => m.key !== key);
-    });
+  const handleRemoveMedia = async (key: string) => {
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/media/remove`,
+        {
+          withCredentials: true,
+          data: { key:key },
+        }
+      );
+
+      setMediaList((prev) => prev.filter((m) => m.s3_key !== key));
+      setPreviewFiles((prev) => prev.filter((p) => p.key !== key));
+    } catch (error) {
+      console.error("Remove file error:", error);
+    }
   };
 
-  const addMedia = (type: "image" | "video") => {
-    if (type === "image") fileInputRef.current?.click();
-    else videoInputRef.current?.click();
-  };
+  const handlePost = async () => {
+    try {
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/post/create`,
+        { content: postText, media: mediaList },
+        { withCredentials: true }
+      );
 
-  const handlePost = () => {
-    if (!postText.trim() && mediaList.length === 0) return;
-    setPostText("");
-    setMediaList((prev) => {
-      prev.forEach((m) => URL.revokeObjectURL(m.preview));
-      return [];
-    });
-    setShowModal(false);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2000);
+      console.log("Post created:", data);
+      handleCancel();
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    } catch (error) {
+      console.error("Post creation error:", error);
+    }
   };
 
   const handleCancel = () => {
-    setPostText("");
-    setMediaList((prev) => {
-      prev.forEach((m) => URL.revokeObjectURL(m.preview));
-      return [];
-    });
     setShowModal(false);
+    setPostText("");
+    setMediaList([]);
+    setPreviewFiles([]);
+  };
+
+  const handleMediaSelect = (type: "image" | "video") => {
+    if (type === "image") fileInputRef.current?.click();
+    else videoInputRef.current?.click();
   };
 
   return (
@@ -202,12 +249,31 @@ const CreatePost: React.FC<{ userInitial: string }> = ({ userInitial }) => {
           </div>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="w-full bg-gray-50 transition-all duration-200 rounded-sm px-4 py-3 text-left text-gray-600 text-sm border border-gray-400 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer"
-        >
-          Share your thoughts, projects, or achievements...
-        </button>
+        <div className="flex flex-col sm:space-y-4">
+          <button
+            onClick={() => setShowModal(true)}
+            className="w-full bg-gray-50 transition-all duration-200 rounded-sm px-4 py-3 text-left text-gray-600 text-sm border border-gray-400 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent cursor-pointer"
+          >
+            Share your thoughts, projects, or achievements...
+          </button>
+
+          <div className="grid-cols-2 gap-2 hidden sm:grid">
+            <button
+              onClick={() => handleMediaSelect("image")}
+              className="flex items-center justify-center space-x-2 p-2 text-white bg-slate-900 rounded-sm transition-all duration-200 text-sm font-semibold cursor-pointer hover:bg-slate-800"
+            >
+              <FileImage className="w-4 h-4" />
+              <span>Photo</span>
+            </button>
+            <button
+              onClick={() => handleMediaSelect("video")}
+              className="flex items-center justify-center space-x-2 p-2 text-white rounded-sm transition-all duration-200 text-sm bg-slate-900 font-semibold cursor-pointer hover:bg-slate-800"
+            >
+              <Video className="w-4 h-4" />
+              <span>Video</span>
+            </button>
+          </div>
+        </div>
 
         <div className="mt-4 pt-4 border-t border-gray-300 hidden sm:block">
           <div className="flex items-center justify-between text-xs text-gray-600">
@@ -265,26 +331,25 @@ const CreatePost: React.FC<{ userInitial: string }> = ({ userInitial }) => {
                 className="w-full border-none resize-none placeholder-gray-500 focus:outline-none min-h-[120px]"
                 autoFocus
               />
-
-              {mediaList.length > 0 ? (
+              {previewFiles.length > 0 ? (
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {mediaList.map((media) => (
-                    <div key={media.key} className="relative">
-                      {media.type === "image" ? (
+                  {previewFiles.map((file) => (
+                    <div key={file.key} className="relative">
+                      {file.type === "image" ? (
                         <img
-                          src={media.preview}
-                          alt="Preview"
+                          src={file.url}
+                          alt="Selected"
                           className="w-full max-h-60 object-cover rounded-lg"
                         />
                       ) : (
                         <video
-                          src={media.preview}
+                          src={file.url}
                           controls
                           className="w-full max-h-60 rounded-lg"
                         />
                       )}
                       <button
-                        onClick={() => handleRemoveMedia(media.key)}
+                        onClick={() => handleRemoveMedia(file.key)}
                         className="absolute top-2 right-2 bg-black bg-opacity-50 text-white p-1 rounded-full hover:bg-opacity-70 cursor-pointer"
                       >
                         <X className="w-4 h-4" />
@@ -297,14 +362,14 @@ const CreatePost: React.FC<{ userInitial: string }> = ({ userInitial }) => {
                   <p className="text-sm text-gray-600 mb-2">Add to your post</p>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => addMedia("image")}
+                      onClick={() => handleMediaSelect("image")}
                       className="flex items-center space-x-2 px-3 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors text-sm cursor-pointer"
                     >
                       <FileImage className="w-4 h-4" />
                       <span>Photo</span>
                     </button>
                     <button
-                      onClick={() => addMedia("video")}
+                      onClick={() => handleMediaSelect("video")}
                       className="flex items-center space-x-2 px-3 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors text-sm cursor-pointer"
                     >
                       <Video className="w-4 h-4" />
@@ -318,14 +383,14 @@ const CreatePost: React.FC<{ userInitial: string }> = ({ userInitial }) => {
             <div className="border-t border-gray-200 p-4 flex justify-end space-x-3">
               <button
                 onClick={handleCancel}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-sm hover:bg-gray-100 transition-colors font-medium cursor-pointer"
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-sm sm:rounded-lg hover:bg-gray-100 transition-colors font-medium cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handlePost}
-                disabled={!postText.trim() && mediaList.length === 0}
-                className="px-6 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
+                disabled={!postText.trim() && previewFiles.length === 0}
+                className="px-6 py-2 bg-slate-900 text-white rounded-sm sm:rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
               >
                 Post
               </button>
@@ -346,28 +411,32 @@ const CreatePost: React.FC<{ userInitial: string }> = ({ userInitial }) => {
   );
 };
 
-const PostHeader: React.FC<{
-  post: Post;
-  getRoleBadgeColor: (role: string) => string;
-}> = ({ post, getRoleBadgeColor }) => (
+// ... rest of the frontend code remains the same ...
+const PostHeader: React.FC<any> = ({ post,getRoleBadgeColor }) => (
   <div className="p-4 pb-3">
     <div className="flex items-start justify-between">
       <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white text-sm">
-          {post.userInfo.name.charAt(0).toUpperCase()}
+        <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center">
+          <span className="text-white font-medium text-sm">
+            {post?.userInfo?.name
+              .split(" ")
+              .map((n: any) => n[0])
+              .join("")}
+          </span>
         </div>
         <div>
           <div className="flex items-center space-x-2">
             <h3 className="font-semibold text-gray-900 text-sm">
-              {post.userInfo.name}
+              {post?.userInfo?.name}
             </h3>
-            <span
-              className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
-                post.author_type
-              )}`}
-            >
-              {post.author_type}
-            </span>
+            {/* <span  className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
+                post?.author_type
+              )}`}>{post?.author_type}</span> */}
+            {post.assignedBy && (
+              <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-br from-white to-indigo-50 text-slate-800 border border-slate-400">
+                📌 {post?.author_type}
+              </span>
+            )}
           </div>
           <p className="text-xs text-gray-500">{post.timestamp}</p>
         </div>
@@ -376,49 +445,88 @@ const PostHeader: React.FC<{
   </div>
 );
 
-const PostActions: React.FC<{
-  post: Post;
-  isLiked: boolean;
-  onLike: () => void;
-  onFlag: () => void;
-}> = ({ post, isLiked, onLike, onFlag }) => {
+const PostActions: React.FC<PostActionsProps> = ({
+  post,
+  likedPosts,
+  onLike,
+  onFlag,
+  onShare,
+}) => {
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [newComment, setNewComment] = useState("");
-  const [comments, setComments] = useState<Comment[]>(
-    mockComments[post.id] || []
-  );
+  const [comments, setComments] = useState<any>(post?.comments || []);
+  const [AllComments, setAllComments] = useState<any>([]);
+  const totalComments = post?._count?.comments;
   const [showToast, setShowToast] = useState(false);
 
+  const isLiked = likedPosts.has(post.id);
   const totalLikes = post.likes + (isLiked ? 1 : 0);
-  const mockLikedBy = [
+
+  const mockLikedBy = post.likedBy || [
     { id: "1", name: "John Doe", avatar: "👤" },
     { id: "2", name: "Jane Smith", avatar: "👩" },
-    { id: "3", name: "Mike", avatar: "👨" },
   ];
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
+  const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    const now = new Date().toISOString();
-    setComments([
-      ...comments,
-      {
-        id: `c${comments.length + 1}`,
-        userInfo: { name: "You" },
-        content: newComment,
-        createdAt: now,
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/comments/post-comment`,
+        {
+          postId: post.id,
+          content: newComment,
+        },
+        { withCredentials: true }
+      );
+
+      const createdComment = response.data.data;
+      const newCommentObj: Comment = {
+        id: createdComment.id,
+        userInfo: {
+          name: "You",
+        },
+        content: createdComment.content,
+        createdAt: new Date(createdComment.createdAt).toLocaleString(),
         avatar: "👤",
-      },
-    ]);
-    setNewComment("");
+      };
+
+      setComments((prev: any) => [...prev, newCommentObj]);
+      setAllComments((prev: any) => [...prev, newCommentObj]);
+      setNewComment("");
+    } catch (error: any) {
+      console.error("Error posting comment:", error.response?.data || error);
+    }
   };
 
   const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 2000);
-    });
+    const postUrl = `${window.location.origin}/post/${post.id}`;
+    navigator.clipboard
+      .writeText(postUrl)
+      .then(() => {
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      })
+      .catch(() => {
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      });
+    onShare?.(post.id);
+  };
+
+  const handleCommentModal = async (postId: string) => {
+    setShowCommentsModal(true);
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/comments/get/${postId}`,
+        { withCredentials: true }
+      );
+      setAllComments(response.data.data);
+    } catch (error: any) {
+      console.error("Error fetching comment:", error.response?.data || error);
+    }
   };
 
   return (
@@ -434,13 +542,12 @@ const PostActions: React.FC<{
                 {totalLikes} {totalLikes === 1 ? "like" : "likes"}
               </button>
             )}
-            {comments.length > 0 && (
+            {comments?.length > 0 && (
               <button
-                onClick={() => setShowCommentsModal(true)}
+                onClick={() => handleCommentModal(post?.id)}
                 className="underline cursor-pointer"
               >
-                {comments.length}{" "}
-                {comments.length === 1 ? "comment" : "comments"}
+                {totalComments} {totalComments === 1 ? "comment" : "comments"}
               </button>
             )}
           </div>
@@ -451,8 +558,8 @@ const PostActions: React.FC<{
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1 gap-6">
             <button
-              onClick={onLike}
-              className={`flex items-center space-x-1 py-2 rounded-md hover:bg-gray-50 cursor-pointer ${
+              onClick={() => onLike(post.id)}
+              className={`flex items-center space-x-1 py-2 rounded-md transition-all hover:bg-gray-50 cursor-pointer ${
                 isLiked ? "text-slate-900" : "text-gray-600"
               }`}
             >
@@ -461,8 +568,8 @@ const PostActions: React.FC<{
             </button>
 
             <button
-              onClick={() => setShowCommentsModal(true)}
-              className="flex items-center space-x-1 py-2 rounded-md hover:bg-gray-50 text-gray-600 cursor-pointer"
+              onClick={() => handleCommentModal(post?.id)}
+              className="flex items-center space-x-1 py-2 rounded-md transition-colors hover:bg-gray-50 text-gray-600 cursor-pointer"
             >
               <MessageCircle className="w-4 h-4" />
               <span className="font-medium">Comment</span>
@@ -470,7 +577,7 @@ const PostActions: React.FC<{
 
             <button
               onClick={handleShare}
-              className="flex items-center space-x-1 py-2 rounded-md hover:bg-gray-50 text-gray-600 cursor-pointer"
+              className="flex items-center space-x-1 py-2 rounded-md transition-colors hover:bg-gray-50 text-gray-600 cursor-pointer"
             >
               <Share2 className="w-4 h-4" />
               <span className="font-medium">Share</span>
@@ -478,8 +585,9 @@ const PostActions: React.FC<{
           </div>
 
           <button
-            onClick={() => onFlag()}
-            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
+            onClick={() => onFlag(post.id)}
+            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+            title="Report post"
           >
             <Flag className="w-4 h-4" />
           </button>
@@ -489,46 +597,50 @@ const PostActions: React.FC<{
       {comments.length > 0 && (
         <div className="px-4 py-3 border-t border-gray-50">
           <div className="space-y-3">
-            {comments.slice(0, 2).map((c) => (
-              <div key={c.id} className="flex space-x-3">
+            {comments?.slice(0, 2)?.map((comment: any) => (
+              <div key={comment.id} className="flex space-x-3">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm">
-                    {c.avatar || "👤"}
+                  <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm text-white">
+                    {comment.avatar ||
+                      comment?.userInfo?.name?.charAt(0) ||
+                      "👤"}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="bg-gray-50 border border-gray-200 rounded-sm px-3 py-2">
                     <div className="font-medium text-sm text-gray-900">
-                      {c.userInfo.name}
+                      {comment?.userInfo?.name}
                     </div>
-                    <div className="text-sm text-gray-700">{c.content}</div>
+                    <div className="text-sm text-gray-700">
+                      {comment.content}
+                    </div>
                   </div>
                   <div className="mt-1 text-xs text-gray-500">
-                    {new Date(c.createdAt).toLocaleString("en-IN", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
+                    {comment?.createdAt &&
+                      new Date(comment.createdAt).toLocaleString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
                   </div>
                 </div>
               </div>
             ))}
             {comments.length > 2 && (
               <button
-                onClick={() => setShowCommentsModal(true)}
-                className="text-sm text-slate-900 hover:text-slate-700 font-medium underline cursor-pointer"
+                onClick={() => handleCommentModal(post.id)}
+                className="text-sm text-slate-900 hover:text-slate-700 font-medium cursor-pointer underline"
               >
-                View all {comments.length} comments
+                View all {totalComments} comments
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* Likes Modal */}
       {showLikesModal && (
         <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 max-h-96 overflow-hidden">
@@ -548,7 +660,7 @@ const PostActions: React.FC<{
                   className="flex items-center space-x-3 p-4 hover:bg-gray-50"
                 >
                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    {user.avatar}
+                    {user.avatar || "👤"}
                   </div>
                   <div className="flex-1">
                     <div className="font-medium text-gray-900">{user.name}</div>
@@ -560,10 +672,9 @@ const PostActions: React.FC<{
         </div>
       )}
 
-      {/* Comments Modal */}
       {showCommentsModal && (
         <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full mx-4 max-h-96 overflow-hidden flex flex-col">
+          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold">Comments</h3>
               <button
@@ -575,29 +686,34 @@ const PostActions: React.FC<{
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {comments.map((c) => (
-                <div key={c.id} className="flex space-x-3">
+              {AllComments?.map((comment: any) => (
+                <div key={comment.id} className="flex space-x-3">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm">
-                      {c.avatar || "👤"}
+                    <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm text-white">
+                      {comment?.avatar ||
+                        comment?.userInfo?.name?.charAt(0) ||
+                        "👤"}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
                       <div className="font-medium text-sm text-gray-900">
-                        {c.userInfo.name}
+                        {comment?.userInfo?.name}
                       </div>
-                      <div className="text-sm text-gray-700">{c.content}</div>
+                      <div className="text-sm text-gray-700">
+                        {comment.content}
+                      </div>
                     </div>
                     <div className="mt-1 text-xs text-gray-500">
-                      {new Date(c.createdAt).toLocaleString("en-IN", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true,
-                      })}
+                      {comment?.createdAt &&
+                        new Date(comment.createdAt).toLocaleString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
                     </div>
                   </div>
                 </div>
@@ -617,13 +733,13 @@ const PostActions: React.FC<{
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Write a comment..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={!newComment.trim()}
-                  className="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors ease-in-out duration-200 cursor-pointer"
                 >
                   Post
                 </button>
@@ -633,10 +749,9 @@ const PostActions: React.FC<{
         </div>
       )}
 
-      {/* Toast for Share */}
       {showToast && (
         <div className="fixed top-4 right-4 z-50">
-          <div className="bg-slate-900 text-white text-sm px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
+          <div className="bg-slate-900 text-white test-sm px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
             <Check className="w-4 h-4" />
             <span>Link copied to clipboard!</span>
           </div>
@@ -648,39 +763,51 @@ const PostActions: React.FC<{
 
 const Post: React.FC<{
   post: Post;
-  isLiked: boolean;
-  onLike: () => void;
-  onFlag: () => void;
-  getRoleBadgeColor: (role: string) => string;
-}> = ({ post, isLiked, onLike, onFlag, getRoleBadgeColor }) => {
+  likedPosts: Set<string>;
+  onLike: (postId: string) => void;
+  onFlag: (postId: string) => void;
+}> = ({ post, likedPosts, onLike, onFlag }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const shouldTruncate =
-    post.content.length > 200 || post.content.split("\n").length > 2;
-  const displayContent = isExpanded
-    ? post.content
-    : shouldTruncate
-    ? post.content.substring(0, 200) + "..."
-    : post.content;
+
+  const contentLines = post.content.split("\n");
+  const shouldTruncate = contentLines.length > 2 || post.content.length > 200;
+
+  const getTruncatedContent = () => {
+    if (contentLines.length > 2) {
+      return contentLines.slice(0, 2).join("\n");
+    }
+    if (post.content.length > 200) {
+      return post.content.substring(0, 200);
+    }
+    return post.content;
+  };
+
+  const displayContent = isExpanded ? post.content : getTruncatedContent();
 
   return (
-    <div className="bg-white rounded-sm shadow-sm border border-gray-400 overflow-hidden">
-      <PostHeader post={post} getRoleBadgeColor={getRoleBadgeColor} />
+    <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
+      <PostHeader post={post} />
 
       <div className="px-4 py-3">
-        <div className="text-gray-800 text-sm whitespace-pre-wrap">
-          {displayContent}
+        <div className="text-gray-800 text-sm">
+          <pre className="whitespace-pre-wrap font-inherit">
+            {displayContent}
+            {shouldTruncate && !isExpanded && "..."}
+          </pre>
+
           {shouldTruncate && !isExpanded && (
             <button
               onClick={() => setIsExpanded(true)}
-              className="text-blue-600 hover:text-blue-900 font-medium ml-1 text-xs underline cursor-pointer"
+              className="text-blue-600 hover:text-blue-900 font-medium ml-1 cursor-pointer text-xs underline"
             >
               more
             </button>
           )}
-          {isExpanded && (
+
+          {isExpanded && shouldTruncate && (
             <button
               onClick={() => setIsExpanded(false)}
-              className="text-blue-600 hover:text-blue-900 font-medium block mt-1 text-xs underline cursor-pointer"
+              className="text-blue-600 hover:text-blue-900 font-medium cursor-pointer block mt-1 text-xs underline"
             >
               Show less
             </button>
@@ -688,27 +815,31 @@ const Post: React.FC<{
         </div>
       </div>
 
-      {post.media.length > 0 && (
-        <div className="px-4 pb-3">
-          {post.media[0].type === "image" ? (
-            <img
-              src={post.media[0].storage_url}
-              alt="Post media"
-              className="w-full h-64 object-cover rounded-sm"
-            />
-          ) : (
-            <video
-              src={post.media[0].storage_url}
-              controls
-              className="w-full h-64 rounded-sm"
-            />
-          )}
+      {post?.media?.length > 0 && (
+        <div className="px-4 pb-3 grid grid-cols-1 gap-2">
+          {post.media.map((mediaItem) => (
+            <div key={mediaItem.id}>
+              {mediaItem.type === "IMAGE" ? (
+                <img
+                  src={mediaItem.signedUrl}
+                  alt="Post media"
+                  className="w-full max-h-96 object-contain rounded-sm bg-gray-100"
+                />
+              ) : (
+                <video
+                  src={mediaItem.signedUrl}
+                  controls
+                  className="w-full max-h-96 rounded-sm bg-gray-100"
+                />
+              )}
+            </div>
+          ))}
         </div>
       )}
 
       <PostActions
         post={post}
-        isLiked={isLiked}
+        likedPosts={likedPosts}
         onLike={onLike}
         onFlag={onFlag}
       />
@@ -716,20 +847,42 @@ const Post: React.FC<{
   );
 };
 
-const ProfileHeader: React.FC<{ user: User }> = ({ user }) => (
-  <div className="bg-white rounded-sm shadow-sm border border-gray-400 p-5">
-    <div className="flex items-center space-x-3">
-      <div className="w-12 h-12 rounded-md bg-slate-900 flex items-center justify-center">
+const Feed: React.FC<FeedProps> = ({
+  posts,
+  likedPosts,
+  onLike,
+  onFlag,
+  getRoleBadgeColor,
+}) => (
+  <div className="space-y-6">
+    {posts.map((post) => (
+      <Post
+        key={post.id}
+        post={post}
+        likedPosts={likedPosts}
+        onLike={onLike}
+        onFlag={onFlag}
+      />
+    ))}
+  </div>
+);
+
+const ProfileHeader: React.FC<any> = ({ user }) => (
+  <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5 overflow-hidden">
+    <div className="flex items-center space-x-3 mb-3">
+      <div className="w-12 h-12 rounded-md bg-slate-900 flex items-center justify-center shadow-lg border border-white/20 transition-all duration-200">
         <span className="text-white font-bold text-lg">
-          {user.name.charAt(0)}
+          {user?.name?.charAt(0).toUpperCase()}
         </span>
       </div>
-      <div>
-        <h3 className="font-bold text-lg">{user.name}</h3>
-        <p className="text-xs text-blue-900">{user.school?.name}</p>
-        {user.enrollmentId && (
-          <p className="text-xs text-gray-600">
-            {user.enrollmentId} • {user.batch?.name}
+      <div className="flex-1">
+        <h3 className="font-bold text-lg tracking-wide">{user?.name}</h3>
+        <p className="text-xs font-medium mb-1 text-blue-900">
+          {user?.designation}
+        </p>
+        {user?.role &&(
+          <p className="text-[11px] font-medium">
+            {user?.role}
           </p>
         )}
       </div>
@@ -737,22 +890,14 @@ const ProfileHeader: React.FC<{ user: User }> = ({ user }) => (
   </div>
 );
 
-const ReportModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: () => void;
-  reason: string;
-  setReason: (r: string) => void;
-  details: string;
-  setDetails: (d: string) => void;
-}> = ({
+const ReportModal: React.FC<ReportModalProps> = ({
   isOpen,
   onClose,
+  reportReason,
+  setReportReason,
+  reportDetails,
+  setReportDetails,
   onSubmit,
-  reason,
-  setReason,
-  details,
-  setDetails,
 }) => {
   if (!isOpen) return null;
 
@@ -764,41 +909,39 @@ const ReportModal: React.FC<{
             <h2 className="text-2xl font-bold text-gray-900">Report Post</h2>
             <button
               onClick={onClose}
-              className="p-1 text-gray-400 hover:text-gray-600 rounded cursor-pointer"
+              className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <p className="text-gray-600 mb-4">
-            Help us understand what’s wrong with this post
+            Help us understand what&lsquo;s wrong with this post
           </p>
 
           <div className="space-y-3 mb-6">
-            {["spam", "harassment", "offensive", "irrelevant", "other"].map(
-              (value) => (
-                <label
-                  key={value}
-                  className="flex items-center space-x-3 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name="reportReason"
-                    value={value}
-                    checked={reason === value}
-                    onChange={(e) => setReason(e.target.value)}
-                    className="text-slate-900 focus:ring-slate-900"
-                  />
-                  <span className="text-gray-700">
-                    {value === "spam" && "Spam or promotional content"}
-                    {value === "harassment" && "Harassment or bullying"}
-                    {value === "offensive" && "Offensive content"}
-                    {value === "irrelevant" && "Irrelevant to the community"}
-                    {value === "other" && "Other (please specify)"}
-                  </span>
-                </label>
-              )
-            )}
+            {[
+              { value: "spam", label: "Spam or promotional content" },
+              { value: "harassment", label: "Harassment or bullying" },
+              { value: "offensive", label: "Offensive content" },
+              { value: "irrelevant", label: "Irrelevant to the community" },
+              { value: "other", label: "Other (please specify)" },
+            ].map((option) => (
+              <label
+                key={option.value}
+                className="flex items-center space-x-3 cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  name="reportReason"
+                  value={option.value}
+                  checked={reportReason === option.value}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="text-slate-900 focus:ring-slate-900"
+                />
+                <span className="text-gray-700">{option.label}</span>
+              </label>
+            ))}
           </div>
 
           <div className="mb-6">
@@ -806,25 +949,25 @@ const ReportModal: React.FC<{
               Additional Information (Optional)
             </label>
             <textarea
-              value={details}
-              onChange={(e) => setDetails(e.target.value)}
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
               placeholder="Please provide details about the issue..."
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900 resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 resize-none"
             />
           </div>
 
           <div className="flex space-x-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-sm text-gray-700 hover:bg-gray-50 transition-colors font-semibold cursor-pointer"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-sm text-gray-700 hover:bg-gray-50 transition-colors focus:ring-slate-900 focus:border-slate-900 cursor-pointer font-semibold"
             >
               Cancel
             </button>
             <button
               onClick={onSubmit}
-              disabled={!reason}
-              className="flex-1 px-4 py-2 bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 text-white rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold cursor-pointer"
+              disabled={!reportReason}
+              className="flex-1 px-4 py-2 bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 text-white rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:ring-slate-900 focus:border-slate-900 cursor-pointer font-semibold"
             >
               Submit
             </button>
@@ -835,50 +978,100 @@ const ReportModal: React.FC<{
   );
 };
 
-// === Main Feed Component ===
-const Feed: React.FC<{ user: any; userDetails: any }> = ({
-  user,
-  userDetails,
-}) => {
-  const [posts] = useState(mockPosts);
+// --- MAIN PAGE COMPONENT ---
+
+const AdminFeed: React.FC<any> = () => {
+  const [user, setUser] = useState<any>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
-  const [reportModal, setReportModal] = useState<{
-    isOpen: boolean;
-    postId: string | null;
-  }>({
+  const [reportModal, setReportModal] = useState<ReportModalState>({
     isOpen: false,
     postId: null,
   });
-  const [reportReason, setReportReason] = useState("");
-  const [reportDetails, setReportDetails] = useState("");
+  const [reportReason, setReportReason] = useState<string>("");
+  const [reportDetails, setReportDetails] = useState<string>("");
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case "Student":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "Faculty":
-        return "bg-indigo-100 text-indigo-800 border-indigo-200";
-      case "Admin":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    }
+  }, []);
+
+  const getPosts = async (
+    cursor?: string,
+    limit: number = 10,
+    search?: string
+  ) => {
+    const response = await axios.get(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/post/get`,
+      { withCredentials: true, params: { cursor, limit, search } }
+    );
+    return response.data;
+  };
+
+  const fetchPosts = async (cursor?: string) => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const data = await getPosts(cursor, 10);
+      setPosts((prev) => [...prev, ...data.data]);
+      setNextCursor(data.nextCursor);
+    } catch (error) {
+      console.error("Failed to fetch posts:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLike = (id: string) => {
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const handleLike = async (postId: string) => {
+    const originalLikedPosts = new Set(likedPosts);
+    const isCurrentlyLiked = likedPosts.has(postId);
+
     setLikedPosts((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+      const newLiked = new Set(prev);
+      if (newLiked.has(postId)) {
+        newLiked.delete(postId);
+      } else {
+        newLiked.add(postId);
+      }
+      return newLiked;
     });
+
+    try {
+      if (isCurrentlyLiked) {
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/likes/unlike/${postId}`,
+          {},
+          { withCredentials: true }
+        );
+      } else {
+        await axios.put(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/likes/like/${postId}`,
+          {},
+          { withCredentials: true }
+        );
+      }
+    } catch (error) {
+      console.error("Error liking/unliking:", error);
+      // Revert UI on error
+      setLikedPosts(originalLikedPosts);
+    }
   };
 
-  const handleFlag = (id: string) => {
-    setReportModal({ isOpen: true, postId: id });
+  const handleFlag = (postId: string): void => {
+    setReportModal({ isOpen: true, postId });
   };
 
-  const handleSubmitReport = () => {
+  const handleReportSubmit = (): void => {
     console.log(
       "Reporting post:",
       reportModal.postId,
@@ -887,15 +1080,27 @@ const Feed: React.FC<{ user: any; userDetails: any }> = ({
       "Details:",
       reportDetails
     );
+    // Add actual API call to submit report here
+    handleReportClose();
+  };
+
+  const handleReportClose = (): void => {
     setReportModal({ isOpen: false, postId: null });
     setReportReason("");
     setReportDetails("");
   };
 
-  const handleCloseReport = () => {
-    setReportModal({ isOpen: false, postId: null });
-    setReportReason("");
-    setReportDetails("");
+  const getRoleBadgeColor = (role: string): string => {
+    switch (role) {
+      case "Admin":
+        return "bg-red-500 text-white";
+      case "Student":
+        return "bg-blue-500 text-white";
+      case "Faculty":
+        return "bg-green-500 text-white";
+      default:
+        return "bg-gray-500 text-white";
+    }
   };
 
   return (
@@ -903,24 +1108,22 @@ const Feed: React.FC<{ user: any; userDetails: any }> = ({
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
           <div className="lg:col-span-7 space-y-4">
-            <WelcomeMessage userName={user?.name} />
+            <WelcomeMessage userName={user?.name || "User"} />
             <div className="block sm:hidden">
               <CreatePost userInitial={user?.name?.charAt(0).toUpperCase()} />
             </div>
-            {posts.map((post) => (
-              <Post
-                key={post.id}
-                post={post}
-                isLiked={likedPosts.has(post.id)}
-                onLike={() => handleLike(post.id)}
-                onFlag={() => handleFlag(post.id)}
-                getRoleBadgeColor={getRoleBadgeColor}
-              />
-            ))}
+            <Feed
+              posts={posts}
+              likedPosts={likedPosts}
+              onLike={handleLike}
+              onFlag={handleFlag}
+              getRoleBadgeColor={getRoleBadgeColor}
+            />
+            {/* Add logic for infinite scroll trigger here if needed */}
           </div>
 
           <div className="lg:col-span-3 space-y-4 hidden sm:block">
-            <ProfileHeader user={userDetails} />
+            <ProfileHeader user={user} />
             <CreatePost userInitial={user?.name?.charAt(0).toUpperCase()} />
           </div>
         </div>
@@ -928,15 +1131,15 @@ const Feed: React.FC<{ user: any; userDetails: any }> = ({
 
       <ReportModal
         isOpen={reportModal.isOpen}
-        onClose={handleCloseReport}
-        onSubmit={handleSubmitReport}
-        reason={reportReason}
-        setReason={setReportReason}
-        details={reportDetails}
-        setDetails={setReportDetails}
+        onClose={handleReportClose}
+        reportReason={reportReason}
+        setReportReason={setReportReason}
+        reportDetails={reportDetails}
+        setReportDetails={setReportDetails}
+        onSubmit={handleReportSubmit}
       />
     </div>
   );
 };
 
-export default Feed;
+export default AdminFeed;

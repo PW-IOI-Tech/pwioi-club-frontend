@@ -1,54 +1,65 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Users, Plus } from "lucide-react";
 import Table from "../../Table";
 import AddAdminModal from "./AddAdminModal";
+import axios from "axios";
 
 interface TableAdmin {
   id: string;
   name: string;
   email: string;
-  phoneNumber: string;
-  linkedinLink: string;
-  designation: string;
-  role: "admin" | "ops" | "teacher" | "manager" | "developer";
+  phone: string;
+  pwId?: string | null;
+  linkedin?: string | null;
+  designation?: string | null;
+  role: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-const initialAdmins: TableAdmin[] = [
-  {
-    id: "1",
-    name: "John Smith",
-    email: "john.smith@university.edu",
-    phoneNumber: "+1 202 555 0198",
-    linkedinLink: "https://linkedin.com/in/johnsmith",
-    designation: "System Administrator",
-    role: "admin",
-  },
-  {
-    id: "2",
-    name: "Sarah Johnson",
-    email: "sarah.johnson@edusupport.org",
-    phoneNumber: "+1 202 555 0173",
-    linkedinLink: "https://linkedin.com/in/sarahjohnson",
-    designation: "Operations Lead",
-    role: "ops",
-  },
-  {
-    id: "3",
-    name: "Michael Chen",
-    email: "michael.chen@teachtech.ai",
-    phoneNumber: "+1 202 555 0144",
-    linkedinLink: "https://linkedin.com/in/michaelchen",
-    designation: "Senior Instructor",
-    role: "teacher",
-  },
-];
-
 export default function AdminManagement() {
-  const [admins, setAdmins] = useState<TableAdmin[]>(initialAdmins);
+  const [admins, setAdmins] = useState<TableAdmin[]>([]);
   const [error, setError] = useState("");
   const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin`; 
+
+
+  // ✅ Fetch all admins
+  const fetchAdmins = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${backendUrl}/all`, {withCredentials:true}
+      );
+      if (res.data.success) {
+        setAdmins(
+          res.data.data.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            email: a.email,
+            phone: a.phone,
+            pwId: a.pwId,
+            linkedin: a.linkedin,
+            designation: a.designation,
+            role: a.role.role,
+            createdAt: a.createdAt,
+            updatedAt: a.updatedAt,
+          }))
+        );
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch admins");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAdmins();
+  }, [fetchAdmins]);
 
   const statistics = useMemo(
     () => ({
@@ -57,44 +68,91 @@ export default function AdminManagement() {
     [admins]
   );
 
-  const handleUpdateAdmin = useCallback((updatedItem: any) => {
-    const adminItem = updatedItem as TableAdmin;
-    setAdmins((prev) =>
-      prev.map((admin) =>
-        admin.id === adminItem.id ? { ...admin, ...adminItem } : admin
-      )
-    );
-  }, []);
-
-  const handleDeleteAdmin = useCallback((id: string | number) => {
-    const deleteId = typeof id === "number" ? id.toString() : id;
-    setAdmins((prev) => prev.filter((admin) => admin.id !== deleteId));
-  }, []);
-
-  const handleAddAdmin = useCallback(
-    (newAdminData: {
-      name: string;
-      email: string;
-      phoneNumber: string;
-      linkedinLink: string;
-      designation: string;
-      role: "admin" | "ops" | "teacher" | "manager" | "developer";
-    }) => {
-      const newAdmin: TableAdmin = {
-        id: Date.now().toString(),
-        name: newAdminData.name,
-        email: newAdminData.email,
-        phoneNumber: newAdminData.phoneNumber,
-        linkedinLink: newAdminData.linkedinLink,
-        designation: newAdminData.designation,
-        role: newAdminData.role,
-      };
-
-      setAdmins((prev) => [...prev, newAdmin]);
-      setIsAddAdminModalOpen(false);
+  // ✅ Update admin
+  const handleUpdateAdmin = useCallback(
+    async (updatedItem: any) => {
+      try {
+        const res = await axios.put(
+          `${backendUrl}/${updatedItem.id}`,
+          updatedItem,
+         {withCredentials:true}
+        );
+        if (res.data.success) {
+          setAdmins((prev) =>
+            prev.map((a) =>
+              a.id === updatedItem.id ? { ...a, ...updatedItem } : a
+            )
+          );
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to update admin");
+      }
     },
     []
   );
+
+  // ✅ Delete admin
+  const handleDeleteAdmin = useCallback(
+    async (id: string | number) => {
+      try {
+        const deleteId = typeof id === "number" ? id.toString() : id;
+        await axios.delete(`${backendUrl}/${deleteId}`, {withCredentials:true});
+        setAdmins((prev) => prev.filter((a) => a.id !== deleteId));
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to delete admin");
+      }
+    },
+    []
+  );
+
+// ✅ Add new admin
+const handleAddAdmin = useCallback(
+  async (newAdminData: {
+    name: string;
+    email: string;
+    phoneNumber: string;       // frontend field
+    linkedinLink: string;      // frontend field
+    designation: string;
+    role: "admin" | "ops" | "teacher" | "manager" | "developer";
+    pwId?: string; 
+  }) => {
+    try {
+      // ✅ sanitize before sending
+      const payload = {
+        name: newAdminData.name,
+        email: newAdminData.email,
+        phone: newAdminData.phoneNumber,   
+        designation: newAdminData.designation,
+        role: newAdminData.role,
+
+        // only send pwId if present, else omit
+        ...(newAdminData["pwId"] ? { pwId: newAdminData["pwId"] } : {}),
+
+        // send linkedin only if valid url
+        ...(newAdminData.linkedinLink?.trim().startsWith("http")
+          ? { linkedin: newAdminData.linkedinLink.trim() }
+          : {}),
+
+        businessHeadCenters: [],
+        academicHeadCenters: [],
+      };
+
+      const res = await axios.post(`${backendUrl}/create`, payload, {
+        withCredentials: true,
+      });
+
+      if (res.data.success) {
+        setAdmins((prev) => [...prev, res.data.data.admin]);
+        setIsAddAdminModalOpen(false);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to add admin");
+    }
+  },
+  []
+);
+
+
 
   const handleOpenAddModal = useCallback(() => {
     setIsAddAdminModalOpen(true);
@@ -103,6 +161,10 @@ export default function AdminManagement() {
   const handleCloseAddModal = useCallback(() => {
     setIsAddAdminModalOpen(false);
   }, []);
+
+  if (loading) {
+    return <p className="text-center mt-8">Loading admins...</p>;
+  }
 
   if (error) {
     return (
@@ -157,16 +219,9 @@ export default function AdminManagement() {
           data={admins}
           title="Admins Overview"
           filterField="role"
-          badgeFields={["role", "company"]}
+          badgeFields={["role"]}
           selectFields={{
-            company: [
-              "University of Tech",
-              "EduSupport Inc",
-              "TeachTech AI",
-              "Global Ed Corp",
-              "NextGen Learning",
-            ],
-            role: ["Admin", "Ops", "Teacher", "Manager", "Developer"],
+            role: ["admin", "ops", "teacher", "manager", "developer"],
             designation: [
               "System Administrator",
               "Operations Lead",
@@ -179,7 +234,7 @@ export default function AdminManagement() {
           nonEditableFields={["id"]}
           onDelete={handleDeleteAdmin}
           onEdit={handleUpdateAdmin}
-          hiddenColumns={["id"]}
+          hiddenColumns={["id", "pwId", "createdAt", "updatedAt"]}
         />
 
         <AddAdminModal
