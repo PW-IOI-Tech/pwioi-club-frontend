@@ -48,28 +48,32 @@ export default function DivSemManagement() {
   const [selectedBatch, setSelectedBatch] = useState("");
   const [filtersComplete, setFiltersComplete] = useState(false);
 
-  // ---- SEMESTER HANDLERS ----
-  const fetchSemesters = useCallback(async (divisionId: string) => {
-    try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${divisionId}`,
-        { withCredentials: true }
-      );
-      if (res.data.success) {
-        const mapped = res.data.data.map((sem: any) => ({
-          id: sem.id,
-          division: sem.division_id,
-          number: sem.semester_number,
-          startDate: new Date(sem.start_date).toLocaleDateString(),
-          endDate: new Date(sem.end_date).toLocaleDateString(),
-        }));
-        setSemesters((prev) => [...prev, ...mapped]);
-        setFilteredSemesters((prev) => [...prev, ...mapped]);
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch semesters");
+const fetchSemesters = useCallback(async (divisionId: string) => {
+  try {
+    const res = await axios.get(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${divisionId}`,
+      { withCredentials: true }
+    );
+    if (res.data.success) {
+     const mapped = res.data.data.map((sem: any) => {
+  const division = divisions.find((d) => d.id === sem.division_id);
+  return {
+    id: sem.id,
+    division: division ? division.code : sem.division_id,
+    number: sem.number, // ✅ instead of sem.semester_number
+    startDate: new Date(sem.start_date).toLocaleDateString(),
+    endDate: new Date(sem.end_date).toLocaleDateString(),
+  };
+});
+
+      setSemesters((prev) => [...prev, ...mapped]);
+      setFilteredSemesters((prev) => [...prev, ...mapped]);
     }
-  }, []);
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Failed to fetch semesters");
+  }
+}, [divisions]);
+
 
   const handleAddSemester = useCallback(
     async (semesterData: {
@@ -90,16 +94,17 @@ export default function DivSemManagement() {
           { withCredentials: true }
         );
 
-        if (res.data.success) {
-          const newSemester: Semester = {
-            id: res.data.data.id,
-            division: res.data.data.division_id,
-            number: res.data.data.semester_number,
-            startDate: new Date(res.data.data.start_date).toLocaleDateString(),
-            endDate: new Date(res.data.data.end_date).toLocaleDateString(),
-          };
-          setSemesters((prev) => [...prev, newSemester]);
-          setFilteredSemesters((prev) => [...prev, newSemester]);
+if (res.data.success) {
+  const division = divisions.find((d) => d.id === res.data.data.division_id);
+  const newSemester: Semester = {
+    id: res.data.data.id,
+    division: division ? division.code : res.data.data.division_id, // ✅
+    number: res.data.data.number,
+    startDate: new Date(res.data.data.start_date).toLocaleDateString(),
+    endDate: new Date(res.data.data.end_date).toLocaleDateString(),
+  };
+  setSemesters((prev) => [...prev, newSemester]);
+  setFilteredSemesters((prev) => [...prev, newSemester]);
 
           setDivisions((prev) =>
             prev.map((d) =>
@@ -571,16 +576,23 @@ export default function DivSemManagement() {
             {/* Table: Semesters */}
             {canAddSemester && (
               <Table
-                data={filteredSemesters.filter((sem) =>
-                  filteredDivisions.some((div) => div.id === sem.division)
-                )}
-                title="Semesters"
-                filterField="division"
-                nonEditableFields={["id"]}
-                onDelete={handleDeleteSemester}
-                onEdit={handleUpdateSemester}
-                hiddenColumns={["id"]}
-              />
+  data={filteredSemesters.filter((sem) =>
+    filteredDivisions.some((div) => div.code === sem.division)
+  )}
+  title="Semesters"
+  filterField="division"
+  nonEditableFields={["id"]}
+  onDelete={handleDeleteSemester}
+  onEdit={handleUpdateSemester}
+  hiddenColumns={["id"]}
+  columns={[
+    { accessorKey: "division", header: "Division" },
+    { accessorKey: "number", header: "Number" },
+    { accessorKey: "startDate", header: "Start Date" },
+    { accessorKey: "endDate", header: "End Date" },
+  ]}
+/>
+
             )}
           </>
         )}
