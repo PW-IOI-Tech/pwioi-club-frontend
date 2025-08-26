@@ -4,19 +4,15 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Image from "next/image";
 
-interface LoginContentProps {
-  imgPath: string;
-}
-
-function LoginContent({ imgPath }: LoginContentProps) {
+function LoginContent() {
   const [isLoading, _setIsLoading] = useState(false);
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
 
-  const redirectUri = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/teacher/callback`;
+  const redirectUri = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/student/callback`;
 
   const handleLogin = () => {
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?client_id=396945085022-ekr24b520997sv6q6c97obiksp7i7vh0.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fteacher%2Fcallback&response_type=code&scope=openid%20email%20profile%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&access_type=offline&prompt=consent&service=lso&o2v=2&flowName=GeneralOAuthFlow`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?client_id=396945085022-ekr24b520997sv6q6c97obiksp7i7vh0.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fstudent%2Fcallback&response_type=code&scope=openid%20email%20profile%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&access_type=offline&prompt=consent&service=lso&o2v=2&flowName=GeneralOAuthFlow`;
 
     window.location.href = authUrl;
   };
@@ -41,7 +37,7 @@ function LoginContent({ imgPath }: LoginContentProps) {
       <div className="w-full max-w-md bg-white border border-black/50 rounded-lg shadow-xl p-8">
         <div className="px-12 mb-6">
           <Image
-            src={imgPath}
+            src="/StudentLogin.png"
             width={500}
             height={500}
             className="w-full h-full object-cover"
@@ -140,7 +136,7 @@ function LoginPageFallback() {
 export default function LoginPage() {
   return (
     <Suspense fallback={<LoginPageFallback />}>
-      <LoginContent imgPath="/StudentLogin.png" />
+      <LoginContent />
     </Suspense>
   );
 }
