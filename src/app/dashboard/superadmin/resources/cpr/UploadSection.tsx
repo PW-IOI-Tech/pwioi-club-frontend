@@ -22,8 +22,8 @@ export default function CPRUploadSection() {
   const [divisions, setDivisions] = useState<any[]>([]);
   const [semesters, setSemesters] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
-const [cprData, setCprData] = useState<any | null>(null);
-const [loadingCpr, setLoadingCpr] = useState(false);
+  const [cprData, setCprData] = useState<any | null>(null);
+  const [loadingCpr, setLoadingCpr] = useState(false);
   const [selectedCenter, setSelectedCenter] = useState<string>("");
   const [selectedSchool, setSelectedSchool] = useState<string>("");
   const [selectedBatch, setSelectedBatch] = useState<string>("");
@@ -34,7 +34,7 @@ const [loadingCpr, setLoadingCpr] = useState(false);
   const [showCPRTable, setShowCPRTable] = useState(false);
   const [showSchemaHelp, setShowSchemaHelp] = useState(false);
 
-    const [cprList, setCprList] = useState<
+  const [cprList, setCprList] = useState<
     Array<{
       id: string;
       teacher: string;
@@ -45,7 +45,6 @@ const [loadingCpr, setLoadingCpr] = useState(false);
       file: string;
     }>
   >([]);
-
 
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -60,9 +59,12 @@ const [loadingCpr, setLoadingCpr] = useState(false);
   useEffect(() => {
     const fetchCenters = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`, {
-          withCredentials: true,
-        });
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+          {
+            withCredentials: true,
+          }
+        );
         if (res.data.success) {
           setCenters(
             res.data.data.map((c: any) => ({
@@ -166,33 +168,33 @@ const [loadingCpr, setLoadingCpr] = useState(false);
   }, [selectedSemester]);
 
   const fetchCPR = async () => {
-  if (!selectedSubject) return;
-  setLoadingCpr(true);
-  try {
-    const res = await axios.get(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/subject/${selectedSubject}`,
-      { withCredentials: true }
-    );
-    if (res.data.success) {
-      setCprData(res.data.data);
+    if (!selectedSubject) return;
+    setLoadingCpr(true);
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/subject/${selectedSubject}`,
+        { withCredentials: true }
+      );
+      if (res.data.success) {
+        setCprData(res.data.data);
+      }
+    } catch (err: any) {
+      console.error(err.response?.data?.message || "Failed to fetch CPR");
+    } finally {
+      setLoadingCpr(false);
     }
-  } catch (err: any) {
-    console.error(err.response?.data?.message || "Failed to fetch CPR");
-  } finally {
-    setLoadingCpr(false);
-  }
-};
+  };
 
-
-const canShowViewButton = selectedCenter &&
+  const canShowViewButton =
+    selectedCenter &&
     selectedSchool &&
     selectedBatch &&
     selectedDivision &&
     selectedSemester &&
-    selectedSubject
+    selectedSubject;
 
   const canUpload =
-  selectedCenter &&
+    selectedCenter &&
     selectedSchool &&
     selectedBatch &&
     selectedDivision &&
@@ -266,50 +268,53 @@ const canShowViewButton = selectedCenter &&
     }
   };
 
-const uploadFile = async () => {
-  if (!canUpload) return;
+  const uploadFile = async () => {
+    if (!canUpload) return;
 
-  setUploadStatus("uploading");
-  setErrorMessage("");
-  setSuccessMessage("");
+    setUploadStatus("uploading");
+    setErrorMessage("");
+    setSuccessMessage("");
 
-  try {
-    const formData = new FormData();
-    formData.append("file", uploadedFile!);
-    formData.append("subject_id", selectedSubject); // ✅ send subject_id to backend
+    try {
+      const formData = new FormData();
+      formData.append("file", uploadedFile!);
+      formData.append("subject_id", selectedSubject); // ✅ send subject_id to backend
 
-    const res = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/upload`,
-      formData,
-      {
-        withCredentials: true, // so JWT cookie goes along
-        headers: { "Content-Type": "multipart/form-data" },
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/upload`,
+        formData,
+        {
+          withCredentials: true, // so JWT cookie goes along
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      if (res.data.success) {
+        setSuccessMessage(res.data.message || "Upload successful!");
+        setUploadStatus("success");
+
+        const newCPR = {
+          id: Date.now().toString(),
+          teacher: "You (Admin)",
+          semester: Number(selectedSemester),
+          subject:
+            subjects.find((s) => s.id === selectedSubject)?.name ||
+            selectedSubject,
+          uploadedOn: new Date().toISOString().split("T")[0],
+          status: "Pending" as const,
+          file: uploadedFile?.name || "uploaded_cpr.xlsx",
+        };
+        setCprList((prev) => [newCPR, ...prev]);
+      } else {
+        throw new Error(res.data.message || "Upload failed.");
       }
-    );
-
-    if (res.data.success) {
-      setSuccessMessage(res.data.message || "Upload successful!");
-      setUploadStatus("success");
-
-      const newCPR = {
-        id: Date.now().toString(),
-        teacher: "You (Admin)",
-        semester: Number(selectedSemester),
-        subject: subjects.find((s) => s.id === selectedSubject)?.name || selectedSubject,
-        uploadedOn: new Date().toISOString().split("T")[0],
-        status: "Pending" as const,
-        file: uploadedFile?.name || "uploaded_cpr.xlsx",
-      };
-      setCprList((prev) => [newCPR, ...prev]);
-    } else {
-      throw new Error(res.data.message || "Upload failed.");
+    } catch (err: any) {
+      setUploadStatus("error");
+      setErrorMessage(
+        err.response?.data?.message || err.message || "Upload failed."
+      );
     }
-  } catch (err: any) {
-    setUploadStatus("error");
-    setErrorMessage(err.response?.data?.message || err.message || "Upload failed.");
-  }
-};
-
+  };
 
   const resetUpload = () => {
     setUploadStatus("idle");
@@ -362,7 +367,7 @@ const uploadFile = async () => {
           </div>
         </div>
 
-              <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8 mb-6">
+        <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8 mb-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
             Select CPR Details
           </h2>
@@ -516,72 +521,77 @@ const uploadFile = async () => {
           </div>
 
           {canShowViewButton && (
-  <button
-    onClick={() => {
-      setShowCPRTable(true);
-      fetchCPR();
-    }}
-    className="px-6 py-2 bg-slate-900 text-white rounded-sm flex items-center gap-2"
-  >
-    <ClipboardList size={16} /> View CPR Table
-  </button>
-)}
-
+            <button
+              onClick={() => {
+                setShowCPRTable(true);
+                fetchCPR();
+              }}
+              className="px-6 py-2 bg-slate-900 text-white rounded-sm flex items-center gap-2"
+            >
+              <ClipboardList size={16} /> View CPR Table
+            </button>
+          )}
         </div>
 
         {showCPRTable && (
           <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8 mb-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              CPR Records 
+              CPR Records
             </h3>
 
-           <div className="border border-gray-300 rounded-sm overflow-hidden">
-  <table className="w-full text-sm">
-    <thead className="bg-gray-50">
-      <tr>
-        <th className="px-4 py-2 text-left">Subject</th>
-        <th className="px-4 py-2 text-left">Code</th>
-        <th className="px-4 py-2 text-left">Modules</th>
-        <th className="px-4 py-2 text-left">Topics</th>
-        <th className="px-4 py-2 text-left">Subtopics</th>
-        <th className="px-4 py-2 text-left">Completion %</th>
-      </tr>
-    </thead>
-    <tbody>
-      {cprData ? (
-        <tr className="border-t border-gray-200 hover:bg-gray-50">
-          <td className="px-4 py-2">{cprData.subject?.name}</td>
-          <td className="px-4 py-2">{cprData.subject?.code}</td>
-          <td className="px-4 py-2">{cprData.summary?.total_modules}</td>
-          <td className="px-4 py-2">{cprData.summary?.total_topics}</td>
-          <td className="px-4 py-2">{cprData.summary?.total_sub_topics}</td>
-          <td className="px-4 py-2">
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                cprData.summary?.completion_percentage === 100
-                  ? "bg-green-100 text-green-800"
-                  : cprData.summary?.completion_percentage > 0
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-red-100 text-red-800"
-              }`}
-            >
-              {cprData.summary?.completion_percentage}%
-            </span>
-          </td>
-        </tr>
-      ) : (
-        <tr>
-          <td
-            colSpan={6}
-            className="px-4 py-6 text-center text-gray-500"
-          >
-            No CPR found for selected subject.
-          </td>
-        </tr>
-      )}
-    </tbody>
-  </table>
-</div>
+            <div className="border border-gray-300 rounded-sm overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left">Subject</th>
+                    <th className="px-4 py-2 text-left">Code</th>
+                    <th className="px-4 py-2 text-left">Modules</th>
+                    <th className="px-4 py-2 text-left">Topics</th>
+                    <th className="px-4 py-2 text-left">Subtopics</th>
+                    <th className="px-4 py-2 text-left">Completion %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cprData ? (
+                    <tr className="border-t border-gray-200 hover:bg-gray-50">
+                      <td className="px-4 py-2">{cprData.subject?.name}</td>
+                      <td className="px-4 py-2">{cprData.subject?.code}</td>
+                      <td className="px-4 py-2">
+                        {cprData.summary?.total_modules}
+                      </td>
+                      <td className="px-4 py-2">
+                        {cprData.summary?.total_topics}
+                      </td>
+                      <td className="px-4 py-2">
+                        {cprData.summary?.total_sub_topics}
+                      </td>
+                      <td className="px-4 py-2">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            cprData.summary?.completion_percentage === 100
+                              ? "bg-green-100 text-green-800"
+                              : cprData.summary?.completion_percentage > 0
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {cprData.summary?.completion_percentage}%
+                        </span>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-6 text-center text-gray-500"
+                      >
+                        No CPR found for selected subject.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
 
             <p className="text-sm text-gray-600 mt-2">
               Showing {cprList.length} record(s) • Data is mock for demo
@@ -617,7 +627,14 @@ const uploadFile = async () => {
             onDragOver={handleDrag}
             onDrop={handleDrop}
           >
-            {!(selectedCenter && selectedSchool && selectedDivision && selectedBatch && selectedSemester && selectedSubject) ? (
+            {!(
+              selectedCenter &&
+              selectedSchool &&
+              selectedDivision &&
+              selectedBatch &&
+              selectedSemester &&
+              selectedSubject
+            ) ? (
               <div className="space-y-4">
                 <AlertCircle className="text-gray-400 mx-auto" size={40} />
                 <p className="text-gray-500">

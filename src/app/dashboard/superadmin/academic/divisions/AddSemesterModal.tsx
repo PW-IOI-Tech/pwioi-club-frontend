@@ -3,7 +3,7 @@ import { ChevronDown } from "lucide-react";
 
 interface Division {
   id: string;
-  division: string;
+  code: string;
 }
 
 interface AddSemesterModalProps {
@@ -11,7 +11,7 @@ interface AddSemesterModalProps {
   onClose: () => void;
   onSemesterCreated: (data: {
     divisionId: string;
-    semesterNumber: number;
+    number: number;
     startDate: string;
     endDate: string;
   }) => void;
@@ -26,7 +26,7 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     divisionId: "",
-    semesterNumber: 1,
+    number: 1,
     startDate: "",
     endDate: "",
   });
@@ -37,7 +37,7 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
     if (isOpen) {
       setFormData({
         divisionId: "",
-        semesterNumber: 1,
+        number: 1,
         startDate: "",
         endDate: "",
       });
@@ -51,7 +51,7 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "semesterNumber" ? parseInt(value) : value,
+      [name]: name === "number" ? parseInt(value) : value,
     }));
     if (formErrors[name]) {
       setFormErrors((prev) => {
@@ -70,11 +70,11 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
     }
 
     if (
-      !formData.semesterNumber ||
-      formData.semesterNumber < 1 ||
-      formData.semesterNumber > 8
+      !formData.number ||
+      formData.number < 1 ||
+      formData.number > 8
     ) {
-      errors.semesterNumber = "Semester must be 1–8";
+      errors.number = "Semester must be 1–8";
     }
 
     if (!formData.startDate) {
@@ -106,7 +106,7 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
     if (!isSubmitting) {
       setFormData({
         divisionId: "",
-        semesterNumber: 1,
+        number: 1,
         startDate: "",
         endDate: "",
       });
@@ -140,7 +140,7 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
                   <option value="">Select Division</option>
                   {divisions.map((div) => (
                     <option key={div.id} value={div.id}>
-                      {div.division}
+                      {div.code}
                     </option>
                   ))}
                 </select>
@@ -162,11 +162,11 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
               </label>
               <div className="relative">
                 <select
-                  name="semesterNumber"
-                  value={formData.semesterNumber}
+                  name="number"
+                  value={formData.number}
                   onChange={handleInputChange}
                   className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
-                    formErrors.semesterNumber
+                    formErrors.number
                       ? "border-red-500"
                       : "border-gray-300"
                   }`}
@@ -182,9 +182,9 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
                   size={18}
                 />
               </div>
-              {formErrors.semesterNumber && (
+              {formErrors.number && (
                 <p className="mt-1 text-sm text-red-600">
-                  {formErrors.semesterNumber}
+                  {formErrors.number}
                 </p>
               )}
             </div>
