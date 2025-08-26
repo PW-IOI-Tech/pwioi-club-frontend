@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 
 interface AddClubModalProps {
@@ -42,10 +42,12 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [coreMembersInput, setCoreMembersInput] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       setFormData((prev) => ({ ...prev, centerLocation: prefillLocation }));
+      setCoreMembersInput("");
       setFormErrors({});
     }
   }, [isOpen, prefillLocation]);
@@ -66,17 +68,11 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
     }
   };
 
-  const toggleMultiSelect = (
-    type: "clubOfficials" | "coreMembers",
-    value: string
-  ) => {
-    if (!value) return;
-
+  const toggleFaculty = (value: string) => {
+    if (!value || formData.clubOfficials.includes(value)) return;
     setFormData((prev) => ({
       ...prev,
-      [type]: prev[type].includes(value)
-        ? prev[type].filter((item) => item !== value)
-        : [...prev[type], value],
+      clubOfficials: [...prev.clubOfficials, value],
     }));
   };
 
@@ -87,14 +83,40 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
     }));
   };
 
-  const handleMultiSelectChange = (
-    type: "clubOfficials" | "coreMembers",
-    e: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    const value = e.target.value;
-    toggleMultiSelect(type, value);
-    e.target.value = "";
-  };
+  const debouncedUpdateCoreMembers = useCallback(() => {
+    const inputIds = coreMembersInput
+      .split(",")
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0);
+
+    const validIds = inputIds.filter((id) => students.includes(id));
+    const invalidIds = inputIds.filter((id) => !students.includes(id));
+
+    setFormData((prev) => ({
+      ...prev,
+      coreMembers: validIds,
+    }));
+
+    if (invalidIds.length > 0) {
+      setFormErrors((prev) => ({
+        ...prev,
+        coreMembers: `Invalid enrollment ID(s): ${invalidIds.join(", ")}`,
+      }));
+    } else {
+      setFormErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.coreMembers;
+        return newErrors;
+      });
+    }
+  }, [coreMembersInput, students]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      debouncedUpdateCoreMembers();
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [coreMembersInput, debouncedUpdateCoreMembers]);
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -109,8 +131,10 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
       errors.category = "Category is required";
     }
 
-    if (!formData.leaderId) {
-      errors.leaderId = "Club leader is required";
+    if (!formData.leaderId.trim()) {
+      errors.leaderId = "Leader enrollment ID is required";
+    } else if (!students.includes(formData.leaderId.trim())) {
+      errors.leaderId = "Leader must be a valid student enrollment ID";
     }
 
     if (!formData.description.trim()) {
@@ -141,7 +165,6 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     setIsSubmitting(true);
@@ -157,6 +180,7 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
       clubOfficials: [],
       coreMembers: [],
     });
+    setCoreMembersInput("");
     setFormErrors({});
     setIsSubmitting(false);
   };
@@ -173,6 +197,7 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
         clubOfficials: [],
         coreMembers: [],
       });
+      setCoreMembersInput("");
       setFormErrors({});
       onClose();
     }
@@ -248,32 +273,21 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
               )}
             </div>
 
-            <div className="relative">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Club Leader (Student) *
+                Club Leader (Student ID) *
               </label>
-              <div className="relative">
-                <select
-                  name="leaderId"
-                  value={formData.leaderId}
-                  onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
-                    formErrors.leaderId ? "border-red-500" : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting}
-                >
-                  <option value="">Select Student</option>
-                  {students.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                  size={18}
-                />
-              </div>
+              <input
+                type="text"
+                name="leaderId"
+                value={formData.leaderId}
+                onChange={handleInputChange}
+                placeholder="e.g., STD001"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                  formErrors.leaderId ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isSubmitting}
+              />
               {formErrors.leaderId && (
                 <p className="mt-1 text-sm text-red-600">
                   {formErrors.leaderId}
@@ -325,14 +339,12 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
                   {formErrors.establishedDate}
                 </p>
               )}
-              <p className="mt-1 text-xs text-gray-500">
-                Date when the club was established
-              </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Faculty Officials * ({formData.clubOfficials.length} selected)
+                Faculty Officials (Teachers) * ({formData.clubOfficials.length}{" "}
+                selected)
               </label>
               <div
                 className={`border rounded-md p-2 min-h-10 bg-gray-50 flex flex-wrap gap-1 mb-2 ${
@@ -346,11 +358,11 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
                     None selected
                   </span>
                 ) : (
-                  formData.clubOfficials.map((officer) => (
+                  formData.clubOfficials.map((id) => (
                     <Pill
-                      key={officer}
-                      label={officer}
-                      onRemove={() => removePill("clubOfficials", officer)}
+                      key={id}
+                      label={id}
+                      onRemove={() => removePill("clubOfficials", id)}
                       color="blue"
                     />
                   ))
@@ -358,17 +370,23 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
               </div>
               <div className="relative">
                 <select
-                  onChange={(e) => handleMultiSelectChange("clubOfficials", e)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value) {
+                      toggleFaculty(value);
+                      e.target.value = "";
+                    }
+                  }}
                   defaultValue=""
                   className="w-full pl-2 pr-10 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer"
                   disabled={isSubmitting}
                 >
-                  <option value="">Add Faculty</option>
+                  <option value="">Add Faculty (ID)</option>
                   {faculties
-                    .filter((f) => !formData.clubOfficials.includes(f))
-                    .map((f) => (
-                      <option key={f} value={f}>
-                        {f}
+                    .filter((id) => !formData.clubOfficials.includes(id))
+                    .map((id) => (
+                      <option key={id} value={id}>
+                        {id}
                       </option>
                     ))}
                 </select>
@@ -386,7 +404,8 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Core Members * ({formData.coreMembers.length} selected)
+                Core Members (Student IDs) * ({formData.coreMembers.length}{" "}
+                selected)
               </label>
               <div
                 className={`border rounded-md p-2 min-h-10 bg-gray-50 flex flex-wrap gap-1 mb-2 ${
@@ -398,37 +417,27 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
                     None selected
                   </span>
                 ) : (
-                  formData.coreMembers.map((member) => (
+                  formData.coreMembers.map((id) => (
                     <Pill
-                      key={member}
-                      label={member}
-                      onRemove={() => removePill("coreMembers", member)}
+                      key={id}
+                      label={id}
+                      onRemove={() => removePill("coreMembers", id)}
                       color="green"
                     />
                   ))
                 )}
               </div>
-              <div className="relative">
-                <select
-                  onChange={(e) => handleMultiSelectChange("coreMembers", e)}
-                  defaultValue=""
-                  className="w-full pl-2 pr-10 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer"
-                  disabled={isSubmitting}
-                >
-                  <option value="">Add Student</option>
-                  {students
-                    .filter((s) => !formData.coreMembers.includes(s))
-                    .map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                  size={18}
-                />
-              </div>
+              <input
+                type="text"
+                placeholder="e.g., STD001, STD002, STD003"
+                value={coreMembersInput}
+                onChange={(e) => setCoreMembersInput(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A]"
+                disabled={isSubmitting}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Enter valid student enrollment IDs separated by commas
+              </p>
               {formErrors.coreMembers && (
                 <p className="mt-1 text-sm text-red-600">
                   {formErrors.coreMembers}
@@ -467,9 +476,6 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
                   {formErrors.centerLocation}
                 </p>
               )}
-              <p className="mt-1 text-xs text-gray-500">
-                This will apply to the selected center
-              </p>
             </div>
           </div>
 

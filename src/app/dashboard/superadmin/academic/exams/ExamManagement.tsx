@@ -5,74 +5,110 @@ import { Plus, ChevronDown, NotepadText } from "lucide-react";
 import Table from "../../Table";
 import AddExamModal from "./AddExamModal";
 
+const examTypeOptions = ["Fortnightly", "Internal", "Interview"] as const;
+type ExamType = (typeof examTypeOptions)[number];
+
 interface TableExam {
   id: string;
   examName: string;
   weightage: number;
   maxMarks: number;
   passingMarks: number;
-  examType: "Midterm" | "Final" | "Quiz" | "Assignment" | "Practical";
+  examType: ExamType;
+  examNumber: string;
+  subject: string;
   date: string;
+  center: string;
   school: string;
   batch: string;
   division: string;
   semester: number;
 }
 
-const schoolOptions = [
-  { value: "SOT", label: "School of Technology" },
-  { value: "SOM", label: "School of Management" },
-  { value: "SOD", label: "School of Design" },
-];
+const centerOptions = ["Bangalore", "Pune", "Noida", "Lucknow"] as const;
 
-const batchOptions = ["21", "22", "23", "24"];
-const divisionOptions = ["B1", "B2", "B3"];
-const semesterOptions = [1, 2, 3, 4, 5, 6, 7, 8];
-const examTypeOptions: TableExam["examType"][] = [
-  "Midterm",
-  "Final",
-  "Quiz",
-  "Assignment",
-  "Practical",
-];
+const schoolOptionsByCenter: Record<
+  string,
+  Array<{ value: string; label: string }>
+> = {
+  Bangalore: [
+    { value: "SOT", label: "School of Technology" },
+    { value: "SOM", label: "School of Management" },
+    { value: "SOD", label: "School of Design" },
+  ],
+  Pune: [
+    { value: "SOT", label: "School of Technology" },
+    { value: "SOM", label: "School of Management" },
+  ],
+  Noida: [
+    { value: "SOT", label: "School of Technology" },
+    { value: "SOM", label: "School of Management" },
+  ],
+  Lucknow: [
+    { value: "SOT", label: "School of Technology" },
+    { value: "SOD", label: "School of Design" },
+  ],
+};
+
+const examTypeOptionsForDropdown = [...examTypeOptions];
+
+const subjectsBySchool: Record<string, string[]> = {
+  SOT: [
+    "CS201 Data Structures",
+    "CS202 Algorithms",
+    "IT301 Web Development",
+    "CS305 DBMS",
+  ],
+  SOM: ["MG201 Marketing", "MG302 Finance", "HR401 Organizational Behavior"],
+  SOD: ["DS101 Design Thinking", "DS205 UI/UX", "DS301 Branding"],
+};
 
 const initialExams: TableExam[] = [
   {
     id: "1",
-    examName: "Midterm Exam",
-    weightage: 30,
-    maxMarks: 100,
-    passingMarks: 35,
-    examType: "Midterm",
-    date: "2025-04-10",
+    examName: "Fortnightly Test 1",
+    weightage: 10,
+    maxMarks: 20,
+    passingMarks: 8,
+    examType: "Fortnightly",
+    examNumber: "F1",
+    subject: "CS201 Data Structures",
+    date: "2025-04-05",
+    center: "Bangalore",
     school: "SOT",
-    batch: "22",
+    batch: "23",
     division: "B1",
     semester: 3,
   },
   {
     id: "2",
-    examName: "Final Project",
-    weightage: 50,
-    maxMarks: 200,
-    passingMarks: 100,
-    examType: "Assignment",
-    date: "2025-05-15",
+    examName: "Internal Assessment",
+    weightage: 25,
+    maxMarks: 50,
+    passingMarks: 20,
+    examType: "Internal",
+    examNumber: "I1",
+    subject: "MG201 Marketing",
+    date: "2025-04-12",
+    center: "Noida",
     school: "SOM",
-    batch: "21",
+    batch: "22",
     division: "B2",
     semester: 5,
   },
   {
     id: "3",
-    examName: "Lab Practical",
-    weightage: 20,
-    maxMarks: 50,
-    passingMarks: 20,
-    examType: "Practical",
-    date: "2025-04-05",
+    examName: "Interview Round 1",
+    weightage: 15,
+    maxMarks: 30,
+    passingMarks: 12,
+    examType: "Interview",
+    examNumber: "IR1",
+    subject: "DS101 Design Thinking",
+    date: "2025-04-08",
+    center: "Lucknow",
     school: "SOD",
-    batch: "23",
+    batch: "24",
     division: "B1",
     semester: 2,
   },
@@ -84,10 +120,15 @@ export default function ExamManagement() {
   const [error, setError] = useState("");
   const [isAddExamModalOpen, setIsAddExamModalOpen] = useState(false);
 
-  const [selectedSchool, setSelectedSchool] = useState("");
-  const [selectedBatch, setSelectedBatch] = useState("");
-  const [selectedDivision, setSelectedDivision] = useState("");
-  const [selectedSemester, setSelectedSemester] = useState("");
+  const [selectedCenter, setSelectedCenter] = useState<string>("");
+  const [selectedSchool, setSelectedSchool] = useState<string>("");
+  const [selectedBatch, setSelectedBatch] = useState<string>("");
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
+  const [selectedSemester, setSelectedSemester] = useState<string>("");
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
+  const [selectedExamType, setSelectedExamType] = useState<ExamType | "">("");
+  const [selectedExamNumber, setSelectedExamNumber] = useState<string>("");
+
   const [filtersComplete, setFiltersComplete] = useState(false);
 
   const statistics = useMemo(
@@ -105,11 +146,31 @@ export default function ExamManagement() {
     [filteredExams]
   );
 
+  const batchOptions = ["22", "23", "24", "25"];
+  const divisionOptions = ["B1", "B2", "B3"];
+  const examNumberOptions = ["1", "2", "3", "4"];
+
+  const handleCenterChange = (center: string) => {
+    setSelectedCenter(center);
+    setSelectedSchool("");
+    setSelectedBatch("");
+    setSelectedDivision("");
+    setSelectedSemester("");
+    setSelectedSubject("");
+    setSelectedExamType("");
+    setSelectedExamNumber("");
+    setFiltersComplete(false);
+    setFilteredExams([]);
+  };
+
   const handleSchoolChange = (school: string) => {
     setSelectedSchool(school);
     setSelectedBatch("");
     setSelectedDivision("");
     setSelectedSemester("");
+    setSelectedSubject("");
+    setSelectedExamType("");
+    setSelectedExamNumber("");
     setFiltersComplete(false);
     setFilteredExams([]);
   };
@@ -118,6 +179,9 @@ export default function ExamManagement() {
     setSelectedBatch(batch);
     setSelectedDivision("");
     setSelectedSemester("");
+    setSelectedSubject("");
+    setSelectedExamType("");
+    setSelectedExamNumber("");
     setFiltersComplete(false);
     setFilteredExams([]);
   };
@@ -125,23 +189,67 @@ export default function ExamManagement() {
   const handleDivisionChange = (division: string) => {
     setSelectedDivision(division);
     setSelectedSemester("");
+    setSelectedSubject("");
+    setSelectedExamType("");
+    setSelectedExamNumber("");
     setFiltersComplete(false);
     setFilteredExams([]);
   };
 
   const handleSemesterChange = (semester: string) => {
     setSelectedSemester(semester);
+    setSelectedSubject("");
+    setSelectedExamType("");
+    setSelectedExamNumber("");
+    setFiltersComplete(false);
+    setFilteredExams([]);
+  };
+
+  const handleSubjectChange = (subject: string) => {
+    setSelectedSubject(subject);
+    setSelectedExamType("");
+    setSelectedExamNumber("");
+    setFiltersComplete(false);
+    setFilteredExams([]);
+  };
+
+  const handleExamTypeChange = (type: string) => {
+    if (examTypeOptions.includes(type as ExamType)) {
+      setSelectedExamType(type as ExamType);
+    } else {
+      setSelectedExamType("");
+    }
+    setSelectedExamNumber("");
+    setFiltersComplete(false);
+    setFilteredExams([]);
+  };
+
+  const handleExamNumberChange = (num: string) => {
+    setSelectedExamNumber(num);
     const isComplete =
-      selectedSchool && selectedBatch && selectedDivision && semester;
+      selectedCenter &&
+      selectedSchool &&
+      selectedBatch &&
+      selectedDivision &&
+      selectedSemester &&
+      selectedSubject &&
+      selectedExamType &&
+      num;
+
     setFiltersComplete(!!isComplete);
 
     if (isComplete) {
+      const examNumber = `${selectedExamType.charAt(0).toUpperCase()}${num}`;
       const filtered = exams.filter(
         (exam) =>
+          exam.center === selectedCenter &&
           exam.school === selectedSchool &&
           exam.batch === selectedBatch &&
           exam.division === selectedDivision &&
-          exam.semester === parseInt(semester)
+          exam.semester === parseInt(selectedSemester) &&
+          exam.subject === selectedSubject &&
+          exam.examType === selectedExamType &&
+          exam.examNumber === examNumber
       );
       setFilteredExams(filtered);
     } else {
@@ -183,12 +291,24 @@ export default function ExamManagement() {
     (
       newExamData: Omit<
         TableExam,
-        "id" | "school" | "batch" | "division" | "semester"
+        | "id"
+        | "examNumber"
+        | "center"
+        | "school"
+        | "batch"
+        | "division"
+        | "semester"
       >
     ) => {
+      const examNumber = selectedExamType
+        ? `${selectedExamType.charAt(0).toUpperCase()}${selectedExamNumber}`
+        : "UNK";
+
       const newExam: TableExam = {
         id: Date.now().toString(),
         ...newExamData,
+        examNumber,
+        center: selectedCenter,
         school: selectedSchool,
         batch: selectedBatch,
         division: selectedDivision,
@@ -199,14 +319,22 @@ export default function ExamManagement() {
       setFilteredExams((prev) => [...prev, newExam]);
       setIsAddExamModalOpen(false);
     },
-    [selectedSchool, selectedBatch, selectedDivision, selectedSemester]
+    [
+      selectedCenter,
+      selectedSchool,
+      selectedBatch,
+      selectedDivision,
+      selectedSemester,
+      selectedExamType,
+      selectedExamNumber,
+    ]
   );
 
   const handleOpenAddModal = useCallback(() => {
-    if (filtersComplete) {
+    if (filtersComplete && selectedExamType) {
       setIsAddExamModalOpen(true);
     }
-  }, [filtersComplete]);
+  }, [filtersComplete, selectedExamType]);
 
   const handleCloseAddModal = useCallback(() => {
     setIsAddExamModalOpen(false);
@@ -239,7 +367,31 @@ export default function ExamManagement() {
             Select Filters
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Center
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedCenter}
+                  onChange={(e) => handleCenterChange(e.target.value)}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">Select Center</option>
+                  {centerOptions.map((center) => (
+                    <option key={center} value={center}>
+                      {center}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block font-medium text-gray-700 mb-2">
                 School
@@ -248,18 +400,21 @@ export default function ExamManagement() {
                 <select
                   value={selectedSchool}
                   onChange={(e) => handleSchoolChange(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
+                  disabled={!selectedCenter}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select School</option>
-                  {schoolOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                  {schoolOptionsByCenter[selectedCenter]?.map((school) => (
+                    <option key={school.value} value={school.value}>
+                      {school.label}
                     </option>
                   ))}
                 </select>
                 <ChevronDown
                   size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !selectedCenter ? "text-gray-300" : "text-gray-400"
+                  }`}
                 />
               </div>
             </div>
@@ -303,11 +458,11 @@ export default function ExamManagement() {
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select Division</option>
-                  {divisionOptions.map((division) => (
-                    <option key={division} value={division}>
+                  {divisionOptions.map((div) => (
+                    <option key={div} value={div}>
                       {selectedSchool}
                       {selectedBatch}
-                      {division}
+                      {div}
                     </option>
                   ))}
                 </select>
@@ -331,10 +486,10 @@ export default function ExamManagement() {
                   disabled={!selectedDivision}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
-                  <option value="">Select Semester</option>
-                  {semesterOptions.map((sem) => (
+                  <option value="">Sem</option>
+                  {Array.from({ length: 8 }, (_, i) => i + 1).map((sem) => (
                     <option key={sem} value={sem.toString()}>
-                      Semester {sem}
+                      S{sem}
                     </option>
                   ))}
                 </select>
@@ -346,12 +501,94 @@ export default function ExamManagement() {
                 />
               </div>
             </div>
+
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Subject
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedSubject}
+                  onChange={(e) => handleSubjectChange(e.target.value)}
+                  disabled={!selectedSemester}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">Subject</option>
+                  {subjectsBySchool[selectedSchool]?.map((sub) => (
+                    <option key={sub} value={sub}>
+                      {sub}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !selectedSemester ? "text-gray-300" : "text-gray-400"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Exam Type
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedExamType}
+                  onChange={(e) => handleExamTypeChange(e.target.value)}
+                  disabled={!selectedSubject}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">Type</option>
+                  {examTypeOptionsForDropdown.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !selectedSubject ? "text-gray-300" : "text-gray-400"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                No.
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedExamNumber}
+                  onChange={(e) => handleExamNumberChange(e.target.value)}
+                  disabled={!selectedExamType}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">#</option>
+                  {examNumberOptions.map((num) => (
+                    <option key={num} value={num}>
+                      {selectedExamType?.charAt(0).toUpperCase() || "?"}
+                      {num}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !selectedExamType ? "text-gray-300" : "text-gray-400"
+                  }`}
+                />
+              </div>
+            </div>
           </div>
 
           {!filtersComplete && (
             <div className="mt-4 p-3 text-slate-900 rounded-sm">
               <p className="text-sm">
-                * Please select all filters to view and manage exams.
+                * Select all filters to view and manage exams.
               </p>
             </div>
           )}
@@ -390,33 +627,49 @@ export default function ExamManagement() {
               data={filteredExams}
               title="Exams Overview"
               filterField="examName"
-              badgeFields={["examType", "weightage"]}
+              badgeFields={["examType", "weightage", "subject"]}
               selectFields={{
-                examType: examTypeOptions,
+                examType: examTypeOptionsForDropdown,
+                subject: subjectsBySchool[selectedSchool] || [],
               }}
               nonEditableFields={[
                 "id",
+                "center",
+                "school",
+                "batch",
+                "division",
+                "semester",
+                "examNumber",
+              ]}
+              onDelete={handleDeleteExam}
+              onEdit={handleUpdateExam}
+              hiddenColumns={[
+                "id",
+                "center",
                 "school",
                 "batch",
                 "division",
                 "semester",
               ]}
-              onDelete={handleDeleteExam}
-              onEdit={handleUpdateExam}
-              hiddenColumns={["id", "school", "batch", "division", "semester"]}
             />
           </>
         )}
 
-        <AddExamModal
-          isOpen={isAddExamModalOpen}
-          onClose={handleCloseAddModal}
-          onExamCreated={handleAddExam}
-          selectedSchool={selectedSchool}
-          selectedBatch={selectedBatch}
-          selectedDivision={selectedDivision}
-          selectedSemester={selectedSemester}
-        />
+        {filtersComplete && selectedExamType && (
+          <AddExamModal
+            isOpen={isAddExamModalOpen}
+            onClose={handleCloseAddModal}
+            onExamCreated={handleAddExam}
+            selectedCenter={selectedCenter}
+            selectedSchool={selectedSchool}
+            selectedBatch={selectedBatch}
+            selectedDivision={selectedDivision}
+            selectedSemester={selectedSemester}
+            selectedSubject={selectedSubject}
+            selectedExamType={selectedExamType}
+            selectedExamNumber={selectedExamNumber}
+          />
+        )}
       </div>
     </div>
   );
