@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Plus, ChevronDown, NotepadText } from "lucide-react";
 import Table from "../../Table";
 import AddExamModal from "./AddExamModal";
-
-const examTypeOptions = ["Fortnightly", "Internal", "Interview"] as const;
-type ExamType = (typeof examTypeOptions)[number];
+import axios from "axios";
 
 interface TableExam {
   id: string;
@@ -14,123 +12,136 @@ interface TableExam {
   weightage: number;
   maxMarks: number;
   passingMarks: number;
-  examType: ExamType;
-  examNumber: string;
-  subject: string;
+  examType: "Midterm" | "Final" | "Quiz" | "Assignment" | "Practical";
   date: string;
-  center: string;
   school: string;
   batch: string;
   division: string;
   semester: number;
 }
 
-const centerOptions = ["Bangalore", "Pune", "Noida", "Lucknow"] as const;
-
-const schoolOptionsByCenter: Record<
-  string,
-  Array<{ value: string; label: string }>
-> = {
-  Bangalore: [
-    { value: "SOT", label: "School of Technology" },
-    { value: "SOM", label: "School of Management" },
-    { value: "SOD", label: "School of Design" },
-  ],
-  Pune: [
-    { value: "SOT", label: "School of Technology" },
-    { value: "SOM", label: "School of Management" },
-  ],
-  Noida: [
-    { value: "SOT", label: "School of Technology" },
-    { value: "SOM", label: "School of Management" },
-  ],
-  Lucknow: [
-    { value: "SOT", label: "School of Technology" },
-    { value: "SOD", label: "School of Design" },
-  ],
-};
-
-const examTypeOptionsForDropdown = [...examTypeOptions];
-
-const subjectsBySchool: Record<string, string[]> = {
-  SOT: [
-    "CS201 Data Structures",
-    "CS202 Algorithms",
-    "IT301 Web Development",
-    "CS305 DBMS",
-  ],
-  SOM: ["MG201 Marketing", "MG302 Finance", "HR401 Organizational Behavior"],
-  SOD: ["DS101 Design Thinking", "DS205 UI/UX", "DS301 Branding"],
-};
-
-const initialExams: TableExam[] = [
-  {
-    id: "1",
-    examName: "Fortnightly Test 1",
-    weightage: 10,
-    maxMarks: 20,
-    passingMarks: 8,
-    examType: "Fortnightly",
-    examNumber: "F1",
-    subject: "CS201 Data Structures",
-    date: "2025-04-05",
-    center: "Bangalore",
-    school: "SOT",
-    batch: "23",
-    division: "B1",
-    semester: 3,
-  },
-  {
-    id: "2",
-    examName: "Internal Assessment",
-    weightage: 25,
-    maxMarks: 50,
-    passingMarks: 20,
-    examType: "Internal",
-    examNumber: "I1",
-    subject: "MG201 Marketing",
-    date: "2025-04-12",
-    center: "Noida",
-    school: "SOM",
-    batch: "22",
-    division: "B2",
-    semester: 5,
-  },
-  {
-    id: "3",
-    examName: "Interview Round 1",
-    weightage: 15,
-    maxMarks: 30,
-    passingMarks: 12,
-    examType: "Interview",
-    examNumber: "IR1",
-    subject: "DS101 Design Thinking",
-    date: "2025-04-08",
-    center: "Lucknow",
-    school: "SOD",
-    batch: "24",
-    division: "B1",
-    semester: 2,
-  },
-];
-
 export default function ExamManagement() {
+  const [centers, setCenters] = useState<any[]>([]);
+  const [schools, setSchools] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
+  const [divisions, setDivisions] = useState<any[]>([]);
+  const [semesters, setSemesters] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
   const [exams, setExams] = useState<TableExam[]>([]);
   const [filteredExams, setFilteredExams] = useState<TableExam[]>([]);
   const [error, setError] = useState("");
   const [isAddExamModalOpen, setIsAddExamModalOpen] = useState(false);
 
-  const [selectedCenter, setSelectedCenter] = useState<string>("");
-  const [selectedSchool, setSelectedSchool] = useState<string>("");
-  const [selectedBatch, setSelectedBatch] = useState<string>("");
-  const [selectedDivision, setSelectedDivision] = useState<string>("");
-  const [selectedSemester, setSelectedSemester] = useState<string>("");
-  const [selectedSubject, setSelectedSubject] = useState<string>("");
-  const [selectedExamType, setSelectedExamType] = useState<ExamType | "">("");
-  const [selectedExamNumber, setSelectedExamNumber] = useState<string>("");
+  const [selectedCenter, setSelectedCenter] = useState("");
+  const [selectedSchool, setSelectedSchool] = useState("");
+  const [selectedBatch, setSelectedBatch] = useState("");
+  const [selectedDivision, setSelectedDivision] = useState("");
+  const [selectedSemester, setSelectedSemester] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("");
 
-  const [filtersComplete, setFiltersComplete] = useState(false);
+  const allFiltersSelected =
+    selectedCenter &&
+    selectedSchool &&
+    selectedBatch &&
+    selectedDivision &&
+    selectedSemester;
 
+  // ----------------- FETCH FILTER DATA -----------------
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+          { withCredentials: true }
+        );
+        if (res.data.success) setCenters(res.data.data);
+      } catch (err: any) {
+        console.error(err.response?.data?.message || "Failed to fetch centers");
+      }
+    };
+    fetchCenters();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCenter) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${selectedCenter}`,
+        { withCredentials: true }
+      )
+      .then((res) => setSchools(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch schools"));
+  }, [selectedCenter]);
+
+  useEffect(() => {
+    if (!selectedSchool) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
+        { withCredentials: true }
+      )
+      .then((res) => setBatches(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch batches"));
+  }, [selectedSchool]);
+
+  useEffect(() => {
+    if (!selectedBatch) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/by-batch/${selectedBatch}`,
+        { withCredentials: true }
+      )
+      .then((res) => setDivisions(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch divisions"));
+  }, [selectedBatch]);
+
+  useEffect(() => {
+    if (!selectedDivision) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${selectedDivision}`,
+        { withCredentials: true }
+      )
+      .then((res) => setSemesters(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch semesters"));
+  }, [selectedDivision]);
+
+  useEffect(() => {
+    if (!selectedSemester) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/semesters/${selectedSemester}`,
+        { withCredentials: true }
+      )
+      .then((res) => setSubjects(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch subjects"));
+  }, [selectedSemester]);
+
+  // ----------------- FETCH EXAMS -----------------
+  useEffect(() => {
+    if (!allFiltersSelected) return;
+
+    const fetchExams = async () => {
+      try {
+        const res = await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${selectedSchool}`,
+          {
+            batch: selectedBatch,
+            division: selectedDivision,
+            semester: selectedSemester,
+          },
+          { withCredentials: true }
+        );
+        setExams(res.data.data || []);
+        setFilteredExams(res.data.data || []);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to fetch exams");
+      }
+    };
+    fetchExams();
+  }, [selectedSchool, selectedBatch, selectedDivision, selectedSemester]);
+
+  // ----------------- STATISTICS -----------------
   const statistics = useMemo(
     () => ({
       totalExams: filteredExams.length,
@@ -146,201 +157,113 @@ export default function ExamManagement() {
     [filteredExams]
   );
 
-  const batchOptions = ["22", "23", "24", "25"];
-  const divisionOptions = ["B1", "B2", "B3"];
-  const examNumberOptions = ["1", "2", "3", "4"];
-
-  const handleCenterChange = (center: string) => {
-    setSelectedCenter(center);
-    setSelectedSchool("");
-    setSelectedBatch("");
-    setSelectedDivision("");
-    setSelectedSemester("");
-    setSelectedSubject("");
-    setSelectedExamType("");
-    setSelectedExamNumber("");
-    setFiltersComplete(false);
-    setFilteredExams([]);
+  // ----------------- ADD / UPDATE / DELETE -----------------
+  const mapExamType = (type: TableExam["examType"]) => {
+    const map: Record<TableExam["examType"], string> = {
+      Midterm: "INTERNAL_ASSESSMENT",
+      Final: "END_SEM",
+      Quiz: "FORTNIGHTLY",
+      Assignment: "PROJECT",
+      Practical: "INTERVIEW",
+    };
+    return map[type];
   };
-
-  const handleSchoolChange = (school: string) => {
-    setSelectedSchool(school);
-    setSelectedBatch("");
-    setSelectedDivision("");
-    setSelectedSemester("");
-    setSelectedSubject("");
-    setSelectedExamType("");
-    setSelectedExamNumber("");
-    setFiltersComplete(false);
-    setFilteredExams([]);
-  };
-
-  const handleBatchChange = (batch: string) => {
-    setSelectedBatch(batch);
-    setSelectedDivision("");
-    setSelectedSemester("");
-    setSelectedSubject("");
-    setSelectedExamType("");
-    setSelectedExamNumber("");
-    setFiltersComplete(false);
-    setFilteredExams([]);
-  };
-
-  const handleDivisionChange = (division: string) => {
-    setSelectedDivision(division);
-    setSelectedSemester("");
-    setSelectedSubject("");
-    setSelectedExamType("");
-    setSelectedExamNumber("");
-    setFiltersComplete(false);
-    setFilteredExams([]);
-  };
-
-  const handleSemesterChange = (semester: string) => {
-    setSelectedSemester(semester);
-    setSelectedSubject("");
-    setSelectedExamType("");
-    setSelectedExamNumber("");
-    setFiltersComplete(false);
-    setFilteredExams([]);
-  };
-
-  const handleSubjectChange = (subject: string) => {
-    setSelectedSubject(subject);
-    setSelectedExamType("");
-    setSelectedExamNumber("");
-    setFiltersComplete(false);
-    setFilteredExams([]);
-  };
-
-  const handleExamTypeChange = (type: string) => {
-    if (examTypeOptions.includes(type as ExamType)) {
-      setSelectedExamType(type as ExamType);
-    } else {
-      setSelectedExamType("");
-    }
-    setSelectedExamNumber("");
-    setFiltersComplete(false);
-    setFilteredExams([]);
-  };
-
-  const handleExamNumberChange = (num: string) => {
-    setSelectedExamNumber(num);
-    const isComplete =
-      selectedCenter &&
-      selectedSchool &&
-      selectedBatch &&
-      selectedDivision &&
-      selectedSemester &&
-      selectedSubject &&
-      selectedExamType &&
-      num;
-
-    setFiltersComplete(!!isComplete);
-
-    if (isComplete) {
-      const examNumber = `${selectedExamType.charAt(0).toUpperCase()}${num}`;
-      const filtered = exams.filter(
-        (exam) =>
-          exam.center === selectedCenter &&
-          exam.school === selectedSchool &&
-          exam.batch === selectedBatch &&
-          exam.division === selectedDivision &&
-          exam.semester === parseInt(selectedSemester) &&
-          exam.subject === selectedSubject &&
-          exam.examType === selectedExamType &&
-          exam.examNumber === examNumber
-      );
-      setFilteredExams(filtered);
-    } else {
-      setFilteredExams([]);
-    }
-  };
-
-  React.useEffect(() => {
-    setExams(initialExams);
-  }, []);
-
-  const handleUpdateExam = useCallback(
-    (updatedItem: any) => {
-      const examItem = updatedItem as TableExam;
-      setExams((prev) =>
-        prev.map((exam) =>
-          exam.id === examItem.id ? { ...exam, ...examItem } : exam
-        )
-      );
-
-      if (filtersComplete) {
-        setFilteredExams((prev) =>
-          prev.map((exam) =>
-            exam.id === examItem.id ? { ...exam, ...examItem } : exam
-          )
-        );
-      }
-    },
-    [filtersComplete]
-  );
-
-  const handleDeleteExam = useCallback((id: string | number) => {
-    const deleteId = typeof id === "number" ? id.toString() : id;
-    setExams((prev) => prev.filter((exam) => exam.id !== deleteId));
-    setFilteredExams((prev) => prev.filter((exam) => exam.id !== deleteId));
-  }, []);
 
   const handleAddExam = useCallback(
-    (
+    async (
       newExamData: Omit<
         TableExam,
-        | "id"
-        | "examNumber"
-        | "center"
-        | "school"
-        | "batch"
-        | "division"
-        | "semester"
-      >
+        "id" | "school" | "batch" | "division" | "semester"
+      > & { subjectId: string }
     ) => {
-      const examNumber = selectedExamType
-        ? `${selectedExamType.charAt(0).toUpperCase()}${selectedExamNumber}`
-        : "UNK";
+      if (!newExamData.subjectId) {
+        setError("Please select a subject for the exam");
+        return;
+      }
 
-      const newExam: TableExam = {
-        id: Date.now().toString(),
-        ...newExamData,
-        examNumber,
-        center: selectedCenter,
-        school: selectedSchool,
-        batch: selectedBatch,
-        division: selectedDivision,
-        semester: parseInt(selectedSemester),
-      };
+      try {
+        const payload = {
+          name: newExamData.examName,
+          weightage: Number(newExamData.weightage || 0),
+          full_marks: newExamData.maxMarks,
+          passing_marks: newExamData.passingMarks,
+          exam_type: mapExamType(newExamData.examType),
+          exam_date: newExamData.date,
+          subject_id: newExamData.subjectId,
+          school: selectedSchool,
+          batch: selectedBatch,
+          division: selectedDivision,
+          semester: parseInt(selectedSemester),
+          subjectId: selectedSubject,
+        };
 
-      setExams((prev) => [...prev, newExam]);
-      setFilteredExams((prev) => [...prev, newExam]);
-      setIsAddExamModalOpen(false);
+        const res = await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams`,
+          payload,
+          { withCredentials: true }
+        );
+
+        setExams((prev) => [...prev, res.data.data]);
+        setFilteredExams((prev) => [...prev, res.data.data]);
+        setIsAddExamModalOpen(false);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to add exam");
+      }
     },
-    [
-      selectedCenter,
-      selectedSchool,
-      selectedBatch,
-      selectedDivision,
-      selectedSemester,
-      selectedExamType,
-      selectedExamNumber,
-    ]
+    [selectedSchool, selectedBatch, selectedDivision, selectedSemester, selectedSubject]
   );
 
-  const handleOpenAddModal = useCallback(() => {
-    if (filtersComplete && selectedExamType) {
-      setIsAddExamModalOpen(true);
-    }
-  }, [filtersComplete, selectedExamType]);
-
-  const handleCloseAddModal = useCallback(() => {
-    setIsAddExamModalOpen(false);
+  const handleUpdateExam = useCallback((item: any) => {
+    const updatedExam = item as TableExam;
+    const updateExam = async () => {
+      try {
+        const res = await axios.patch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${updatedExam.id}`,
+          updatedExam,
+          { withCredentials: true }
+        );
+        setExams((prev) =>
+          prev.map((e) => (e.id === updatedExam.id ? res.data.data : e))
+        );
+        setFilteredExams((prev) =>
+          prev.map((e) => (e.id === updatedExam.id ? res.data.data : e))
+        );
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to update exam");
+      }
+    };
+    updateExam();
   }, []);
 
-  if (error) {
+  const handleDeleteExam = useCallback((id: string | number) => {
+    const deleteExam = async () => {
+      try {
+        await axios.delete(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${id}`,
+          {
+            withCredentials: true,
+          }
+        );
+        setExams((prev) => prev.filter((exam) => exam.id !== id));
+        setFilteredExams((prev) => prev.filter((exam) => exam.id !== id));
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to delete exam");
+      }
+    };
+    deleteExam();
+  }, []);
+
+  const handleOpenAddModal = useCallback(() => {
+    if (allFiltersSelected) setIsAddExamModalOpen(true);
+  }, [allFiltersSelected]);
+
+  const handleCloseAddModal = useCallback(
+    () => setIsAddExamModalOpen(false),
+    []
+  );
+
+  // ----------------- RENDER -----------------
+  if (error)
     return (
       <div className="bg-red-50 text-red-600 p-4 rounded-lg max-w-2xl mx-auto mt-8">
         <h3 className="font-bold">Error</h3>
@@ -353,8 +276,6 @@ export default function ExamManagement() {
         </button>
       </div>
     );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
@@ -367,234 +288,99 @@ export default function ExamManagement() {
             Select Filters
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Center
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedCenter}
-                  onChange={(e) => handleCenterChange(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Center</option>
-                  {centerOptions.map((center) => (
-                    <option key={center} value={center}>
-                      {center}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-            </div>
+          <div className="flex space-x-3 flex-wrap space-y-2">
+            {[
+              {
+                label: "Center",
+                value: selectedCenter,
+                options: centers,
+                setter: setSelectedCenter,
+                disabled: false,
+              },
+              {
+                label: "School",
+                value: selectedSchool,
+                options: schools,
+                setter: setSelectedSchool,
+                disabled: !selectedCenter,
+              },
 
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                School
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedSchool}
-                  onChange={(e) => handleSchoolChange(e.target.value)}
-                  disabled={!selectedCenter}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select School</option>
-                  {schoolOptionsByCenter[selectedCenter]?.map((school) => (
-                    <option key={school.value} value={school.value}>
-                      {school.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedCenter ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
+              {
+                label: "Batch",
+                value: selectedBatch,
+                options: batches,
+                setter: setSelectedBatch,
+                disabled: !selectedSchool,
+              },
+              {
+                label: "Division",
+                value: selectedDivision,
+                options: divisions,
+                setter: setSelectedDivision,
+                disabled: !selectedBatch,
+              },
+              {
+                label: "Semester",
+                value: selectedSemester,
+                options: semesters,
+                setter: setSelectedSemester,
+                disabled: !selectedDivision,
+              },
+              {
+                label: "Subject",
+                value: selectedSubject,
+                options: subjects,
+                setter: setSelectedSubject,
+                disabled: !selectedSemester,
+              },
+            ].map((filter, idx) => (
+              <div key={idx} className="relative min-w-36">
+                <label className="block text-xs font-medium text-gray-100 mb-1">
+                  {filter.label}
+                </label>
+                <div className="relative">
+                  <select
+                    value={filter.value}
+                    onChange={(e) => filter.setter(e.target.value)}
+                    disabled={filter.disabled}
+                    className={`w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none bg-white cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                  >
+                    <option value="">{`Select ${filter.label}`}</option>
+                    {filter.options.map((opt: any) => {
+                      const value = opt.id || opt;
+                      const label =
+                        typeof opt === "string"
+                          ? opt
+                          : opt.name ||
+                            opt.division ||
+                            opt.number ||
+                            opt.code ||
+                            opt.id ||
+                            "Unknown";
 
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Batch
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedBatch}
-                  onChange={(e) => handleBatchChange(e.target.value)}
-                  disabled={!selectedSchool}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Batch</option>
-                  {batchOptions.map((batch) => (
-                    <option key={batch} value={batch}>
-                      {selectedSchool}20{batch}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedSchool ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
+                      return (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 w-4 h-4 text-gray-400 pointer-events-none -translate-y-1/2" />
+                </div>
               </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Division
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedDivision}
-                  onChange={(e) => handleDivisionChange(e.target.value)}
-                  disabled={!selectedBatch}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Division</option>
-                  {divisionOptions.map((div) => (
-                    <option key={div} value={div}>
-                      {selectedSchool}
-                      {selectedBatch}
-                      {div}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedBatch ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Semester
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedSemester}
-                  onChange={(e) => handleSemesterChange(e.target.value)}
-                  disabled={!selectedDivision}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Sem</option>
-                  {Array.from({ length: 8 }, (_, i) => i + 1).map((sem) => (
-                    <option key={sem} value={sem.toString()}>
-                      S{sem}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedDivision ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Subject
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedSubject}
-                  onChange={(e) => handleSubjectChange(e.target.value)}
-                  disabled={!selectedSemester}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Subject</option>
-                  {subjectsBySchool[selectedSchool]?.map((sub) => (
-                    <option key={sub} value={sub}>
-                      {sub}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedSemester ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Exam Type
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedExamType}
-                  onChange={(e) => handleExamTypeChange(e.target.value)}
-                  disabled={!selectedSubject}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Type</option>
-                  {examTypeOptionsForDropdown.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedSubject ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                No.
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedExamNumber}
-                  onChange={(e) => handleExamNumberChange(e.target.value)}
-                  disabled={!selectedExamType}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">#</option>
-                  {examNumberOptions.map((num) => (
-                    <option key={num} value={num}>
-                      {selectedExamType?.charAt(0).toUpperCase() || "?"}
-                      {num}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedExamType ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
+            ))}
           </div>
 
-          {!filtersComplete && (
+          {!allFiltersSelected && (
             <div className="mt-4 p-3 text-slate-900 rounded-sm">
               <p className="text-sm">
-                * Select all filters to view and manage exams.
+                * Please select all filters to view and manage exams.
               </p>
             </div>
           )}
         </div>
 
-        {filtersComplete && (
+        {allFiltersSelected && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
@@ -606,7 +392,6 @@ export default function ExamManagement() {
                   </p>
                 </div>
               </div>
-
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 flex items-center justify-center p-6">
                 <button
                   onClick={handleOpenAddModal}
@@ -627,48 +412,39 @@ export default function ExamManagement() {
               data={filteredExams}
               title="Exams Overview"
               filterField="examName"
-              badgeFields={["examType", "weightage", "subject"]}
+              badgeFields={["examType", "weightage"]}
               selectFields={{
-                examType: examTypeOptionsForDropdown,
-                subject: subjectsBySchool[selectedSchool] || [],
+                examType: [
+                  "Midterm",
+                  "Final",
+                  "Quiz",
+                  "Assignment",
+                  "Practical",
+                ],
               }}
               nonEditableFields={[
                 "id",
-                "center",
                 "school",
                 "batch",
                 "division",
                 "semester",
-                "examNumber",
               ]}
               onDelete={handleDeleteExam}
               onEdit={handleUpdateExam}
-              hiddenColumns={[
-                "id",
-                "center",
-                "school",
-                "batch",
-                "division",
-                "semester",
-              ]}
+              hiddenColumns={["id", "school", "batch", "division", "semester"]}
+            />
+
+            <AddExamModal
+              isOpen={isAddExamModalOpen}
+              onClose={handleCloseAddModal}
+              onExamCreated={handleAddExam}
+              selectedSchool={selectedSchool}
+              selectedBatch={selectedBatch}
+              selectedDivision={selectedDivision}
+              selectedSemester={selectedSemester}
+              selectedSubject={selectedSubject}
             />
           </>
-        )}
-
-        {filtersComplete && selectedExamType && (
-          <AddExamModal
-            isOpen={isAddExamModalOpen}
-            onClose={handleCloseAddModal}
-            onExamCreated={handleAddExam}
-            selectedCenter={selectedCenter}
-            selectedSchool={selectedSchool}
-            selectedBatch={selectedBatch}
-            selectedDivision={selectedDivision}
-            selectedSemester={selectedSemester}
-            selectedSubject={selectedSubject}
-            selectedExamType={selectedExamType}
-            selectedExamNumber={selectedExamNumber}
-          />
         )}
       </div>
     </div>
