@@ -83,7 +83,7 @@ export default function ExamManagement() {
   const [centers, setCenters] = useState<any[]>([]);
   const [exams, setExams] = useState<TableExam[]>([]);
   const [batches, setBatches] = useState<any[]>([]);
-  const [divisons, setDivisons] = useState<any[]>([]);
+  const [divisons, setDivisions] = useState<any[]>([]);
   const [semesters, setSemesters] = useState<any[]>([]);
   const [filteredExams, setFilteredExams] = useState<TableExam[]>([]);
   const [error, setError] = useState("");
@@ -96,132 +96,73 @@ export default function ExamManagement() {
   const [selectedSemester, setSelectedSemester] = useState("");
   const [filtersComplete, setFiltersComplete] = useState(false);
 
-  useEffect(() => {
+    useEffect(() => {
     const fetchCenters = async () => {
       try {
-        const res = await axios.get("http://localhost:8000/api/center/all", {
-          withCredentials: true,
-        });
-
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+          { withCredentials: true }
+        );
         if (res.data.success) {
-          const mappedCenters = res.data.data.map((c: any) => ({
-            id: c.id,
-            centerName: c.name,
-            location: c.location,
-            code: c.code,
-          }));
-          setCenters(mappedCenters);
+          setCenters(res.data.data);
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to fetch centers");
+        console.error(err.response?.data?.message || "Failed to fetch centers");
       }
     };
-
     fetchCenters();
   }, []);
 
-  const fetchSchools = async (centerId: string) => {
-    try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${centerId}`,
-        { withCredentials: true }
-      );
-      const schoolsData = res.data.data;
-
-      const schoolsWithStats = await Promise.all(
-        schoolsData.map(async (school: any) => {
-          try {
-            const statsRes = await axios.get(
-              `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/school-stats/${school.id}`,
-              {
-                withCredentials: true,
-              }
-            );
-            const stats = statsRes.data.data;
-            return {
-              id: school.id,
-              location:
-                centers.find((c) => c.id === setSelectedCenter)?.name || "",
-              schoolName: school.name,
-              divisionsCount: stats.divisions,
-              batchesCount: stats.batches,
-              stdCount: stats.students,
-              teachersCount: stats.teachers,
-            };
-          } catch {
-            return {
-              location: setSelectedCenter,
-              schoolName: school.name,
-              divisionsCount: 0,
-              batchesCount: 0,
-              stdCount: 0,
-              teachersCount: 0,
-            };
-          }
-        })
-      );
-
-      setSchools(schoolsWithStats);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch schools");
-    }
-  };
-
   useEffect(() => {
-    if (selectedCenter) {
-      fetchSchools(selectedCenter);
-    }
+    if (!selectedCenter) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${selectedCenter}`,
+        {
+          withCredentials: true,
+        }
+      )
+      .then((res) => setSchools(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch schools"));
   }, [selectedCenter]);
 
   useEffect(() => {
-    const fetchBatches = async () => {
-      if (!selectedSchool) return;
-      try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
-          { withCredentials: true }
-        );
-        setBatches(res.data.data); // assuming API returns [{id, name}]
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to fetch batches");
-      }
-    };
-
-    fetchBatches();
+    if (!selectedSchool) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
+        {
+          withCredentials: true,
+        }
+      )
+      .then((res) => setBatches(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch batches"));
   }, [selectedSchool]);
 
   useEffect(() => {
-    const fetchDivisions = async () => {
-      if (!selectedBatch) return;
-      try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/by-batch/${selectedBatch}`,
-          { withCredentials: true }
-        );
-        setDivisons(res.data.data); // assuming API returns [{id, name}]
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to fetch divisions");
-      }
-    };
-
-    fetchDivisions();
+    if (!selectedBatch) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/by-batch/${selectedBatch}`,
+        {
+          withCredentials: true,
+        }
+      )
+      .then((res) => setDivisions(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch divisions"));
   }, [selectedBatch]);
 
   useEffect(() => {
-    const fetchSemesters = async () => {
-      if (!selectedDivision) return;
-      try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${selectedDivision}`,
-          { withCredentials: true }
-        );
-        setSemesters(res.data.data); // assuming API returns [1,2,3,...] or [{id, number}]
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to fetch semesters");
-      }
-    };
-
-    fetchSemesters();
+    if (!selectedDivision) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${selectedDivision}`,
+        {
+          withCredentials: true,
+        }
+      )
+      .then((res) => setSemesters(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch semesters"));
   }, [selectedDivision]);
 
   const statistics = useMemo(
