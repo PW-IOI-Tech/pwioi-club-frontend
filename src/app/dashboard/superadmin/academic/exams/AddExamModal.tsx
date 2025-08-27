@@ -202,14 +202,6 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
       <div className="bg-white rounded-sm p-6 max-w-lg w-full border border-gray-400 max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add New Exam</h3>
 
-        <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-sm">
-          <p className="text-sm">
-            <strong>Adding exam for:</strong> {selectedSchool}
-            {selectedBatch}
-            {selectedDivision} - Semester {selectedSemester}
-          </p>
-        </div>
-
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
