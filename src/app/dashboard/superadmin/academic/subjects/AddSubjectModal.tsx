@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
 interface AddSubjectModalProps {
@@ -14,6 +14,7 @@ interface AddSubjectModalProps {
   selectedBatch: string;
   selectedDivision: string;
   selectedSemester: string;
+  selectedCenter: string;
 }
 
 interface FormData {
@@ -25,20 +26,6 @@ interface FormData {
   teacher: string;
 }
 
-const centerOptions = [
-  { value: "bangalore", label: "Bangalore" },
-  { value: "lucknow", label: "Lucknow" },
-  { value: "pune", label: "Pune" },
-  { value: "noida", label: "Noida" },
-];
-
-const schoolOptionsForTeacher = [
-  { value: "SOT", label: "School of Technology" },
-  { value: "SOM", label: "School of Management" },
-  { value: "SOD", label: "School of Design" },
-];
-
-// Sample teachers data - in real app, this would come from API based on center and school
 const teachersData: Record<
   string,
   Record<string, Array<{ value: string; label: string }>>
@@ -99,6 +86,7 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   selectedBatch,
   selectedDivision,
   selectedSemester,
+  selectedCenter,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     subjectName: "",
@@ -111,49 +99,36 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  React.useEffect(() => {
+  const normalizedCenter = selectedCenter.toLowerCase();
+
+  useEffect(() => {
     if (isOpen) {
       setFormData({
         subjectName: "",
         credits: "",
         subjectCode: "",
-        teacherCenter: "",
-        teacherSchool: "",
+        teacherCenter: normalizedCenter,
+        teacherSchool: selectedSchool,
         teacher: "",
       });
       setFormErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, normalizedCenter, selectedSchool]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
 
-    if (name === "teacherCenter") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-        teacherSchool: "",
-        teacher: "",
-      }));
-    } else if (name === "teacherSchool") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-        teacher: "",
-      }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-
-    // Clear error when user starts typing/selecting
-    if (formErrors[name]) {
-      setFormErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
+    if (name === "teacher") {
+      setFormData((prev) => ({ ...prev, teacher: value }));
+      if (formErrors.teacher) {
+        setFormErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.teacher;
+          return newErrors;
+        });
+      }
     }
   };
 
@@ -183,16 +158,8 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
       errors.subjectCode = "Subject code must be at least 3 characters";
     }
 
-    if (!formData.teacherCenter.trim()) {
-      errors.teacherCenter = "Teacher center is required";
-    }
-
-    if (!formData.teacherSchool.trim()) {
-      errors.teacherSchool = "Teacher school is required";
-    }
-
-    if (!formData.teacher.trim()) {
-      errors.teacher = "Teacher selection is required";
+    if (!formData.teacher) {
+      errors.teacher = "Please select a teacher";
     }
 
     setFormErrors(errors);
@@ -202,16 +169,12 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
 
-    // Get teacher name from the selected teacher value
     const teacherName = getTeacherName(formData.teacher);
 
-    // Call the parent component's callback to add the subject
     onSubjectCreated({
       subjectName: formData.subjectName,
       credits: formData.credits,
@@ -219,13 +182,12 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
       teacher: teacherName,
     });
 
-    // Reset form
     setFormData({
       subjectName: "",
       credits: "",
       subjectCode: "",
-      teacherCenter: "",
-      teacherSchool: "",
+      teacherCenter: normalizedCenter,
+      teacherSchool: selectedSchool,
       teacher: "",
     });
     setFormErrors({});
@@ -234,22 +196,11 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setFormData({
-        subjectName: "",
-        credits: "",
-        subjectCode: "",
-        teacherCenter: "",
-        teacherSchool: "",
-        teacher: "",
-      });
-      setFormErrors({});
       onClose();
     }
   };
 
   const getTeacherName = (teacherValue: string): string => {
-    if (!formData.teacherCenter || !formData.teacherSchool) return "";
-
     const teachers =
       teachersData[formData.teacherCenter]?.[formData.teacherSchool] || [];
     const teacher = teachers.find((t) => t.value === teacherValue);
@@ -257,7 +208,6 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   };
 
   const getAvailableTeachers = () => {
-    if (!formData.teacherCenter || !formData.teacherSchool) return [];
     return teachersData[formData.teacherCenter]?.[formData.teacherSchool] || [];
   };
 
@@ -270,22 +220,19 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
           Add New Subject
         </h3>
 
+        {/* Context Info */}
         <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-sm">
           <p className="text-sm">
-            <strong>Adding subject for:</strong> {selectedSchool}
+            <strong>Adding subject for:</strong> {selectedCenter} →{" "}
+            {selectedSchool}
             {selectedBatch}
             {selectedDivision} - Semester {selectedSemester}
           </p>
         </div>
 
-        {formErrors.submit && (
-          <div className="mb-4 p-2 bg-red-50 text-red-600 rounded">
-            {formErrors.submit}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
+            {/* Subject Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Subject Name *
@@ -294,7 +241,12 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
                 type="text"
                 name="subjectName"
                 value={formData.subjectName}
-                onChange={handleInputChange}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    subjectName: e.target.value,
+                  }))
+                }
                 placeholder="e.g., Data Structures and Algorithms"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.subjectName ? "border-red-500" : "border-gray-300"
@@ -308,6 +260,7 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
               )}
             </div>
 
+            {/* Credits */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Credits *
@@ -316,7 +269,9 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
                 type="text"
                 name="credits"
                 value={formData.credits}
-                onChange={handleInputChange}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, credits: e.target.value }))
+                }
                 placeholder="e.g., 4"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.credits ? "border-red-500" : "border-gray-300"
@@ -333,6 +288,7 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
               </p>
             </div>
 
+            {/* Subject Code */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Subject Code *
@@ -341,7 +297,12 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
                 type="text"
                 name="subjectCode"
                 value={formData.subjectCode}
-                onChange={handleInputChange}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    subjectCode: e.target.value,
+                  }))
+                }
                 placeholder="e.g., CS201"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.subjectCode ? "border-red-500" : "border-gray-300"
@@ -355,78 +316,43 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
               )}
             </div>
 
-            <div className="relative">
+            {/* Teacher Center (Auto-filled, non-editable) */}
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Teacher Center *
+                Teacher Center
               </label>
               <div className="relative">
-                <select
-                  name="teacherCenter"
-                  value={formData.teacherCenter}
-                  onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
-                    formErrors.teacherCenter
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting}
-                >
-                  <option value="">Select Teacher Center</option>
-                  {centerOptions.map((center) => (
-                    <option key={center.value} value={center.value}>
-                      {center.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                  size={18}
+                <input
+                  type="text"
+                  value={selectedCenter}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-300 bg-gray-100 rounded-md cursor-not-allowed text-gray-700"
                 />
               </div>
-              {formErrors.teacherCenter && (
-                <p className="mt-1 text-sm text-red-600">
-                  {formErrors.teacherCenter}
-                </p>
-              )}
             </div>
 
-            <div className="relative">
+            {/* Teacher School (Auto-filled, non-editable) */}
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Teacher School *
+                Teacher School
               </label>
               <div className="relative">
-                <select
-                  name="teacherSchool"
-                  value={formData.teacherSchool}
-                  onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                    formErrors.teacherSchool
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting || !formData.teacherCenter}
-                >
-                  <option value="">Select Teacher School</option>
-                  {schoolOptionsForTeacher.map((school) => (
-                    <option key={school.value} value={school.value}>
-                      {school.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !formData.teacherCenter ? "text-gray-300" : "text-gray-500"
-                  }`}
-                  size={18}
+                <input
+                  type="text"
+                  value={
+                    {
+                      SOT: "School of Technology",
+                      SOM: "School of Management",
+                      SOD: "School of Design",
+                    }[selectedSchool] || selectedSchool
+                  }
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-300 bg-gray-100 rounded-md cursor-not-allowed text-gray-700"
                 />
               </div>
-              {formErrors.teacherSchool && (
-                <p className="mt-1 text-sm text-red-600">
-                  {formErrors.teacherSchool}
-                </p>
-              )}
             </div>
 
+            {/* Teacher Dropdown */}
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Teacher *
@@ -436,10 +362,10 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
                   name="teacher"
                   value={formData.teacher}
                   onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                  className={`w-full pl-3 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
                     formErrors.teacher ? "border-red-500" : "border-gray-300"
                   }`}
-                  disabled={isSubmitting || !formData.teacherSchool}
+                  disabled={isSubmitting || getAvailableTeachers().length === 0}
                 >
                   <option value="">Select Teacher</option>
                   {getAvailableTeachers().map((teacher) => (
@@ -450,7 +376,9 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !formData.teacherSchool ? "text-gray-300" : "text-gray-500"
+                    getAvailableTeachers().length === 0
+                      ? "text-gray-300"
+                      : "text-gray-500"
                   }`}
                   size={18}
                 />
@@ -461,11 +389,12 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
                 </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Teachers available at the selected center and school
+                Teachers from {selectedCenter} - {selectedSchool}
               </p>
             </div>
           </div>
 
+          {/* Action Buttons */}
           <div className="mt-6 flex justify-end space-x-3">
             <button
               type="button"

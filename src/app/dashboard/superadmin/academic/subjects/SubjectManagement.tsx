@@ -20,7 +20,10 @@ interface TableSubject {
   batch: string;
   division: string;
   semester: number;
+  center: string; // Added center
 }
+
+const centerOptions: string[] = ["Bangalore", "Lucknow", "Pune", "Noida"];
 
 const schoolOptions: SchoolOption[] = [
   { value: "SOT", label: "School of Technology" },
@@ -43,6 +46,7 @@ const initialSubjects: TableSubject[] = [
     batch: "22",
     division: "B1",
     semester: 3,
+    center: "Bangalore",
   },
   {
     id: "2",
@@ -54,6 +58,7 @@ const initialSubjects: TableSubject[] = [
     batch: "21",
     division: "B2",
     semester: 5,
+    center: "Noida",
   },
   {
     id: "3",
@@ -65,6 +70,7 @@ const initialSubjects: TableSubject[] = [
     batch: "23",
     division: "B1",
     semester: 2,
+    center: "Pune",
   },
 ];
 
@@ -75,6 +81,7 @@ export default function SubjectManagement() {
   const [isAddSubjectModalOpen, setIsAddSubjectModalOpen] = useState(false);
 
   // Filter state
+  const [selectedCenter, setSelectedCenter] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("");
   const [selectedBatch, setSelectedBatch] = useState("");
   const [selectedDivision, setSelectedDivision] = useState("");
@@ -93,6 +100,16 @@ export default function SubjectManagement() {
   );
 
   // Handle filter changes with cascading logic
+  const handleCenterChange = (center: string) => {
+    setSelectedCenter(center);
+    setSelectedSchool("");
+    setSelectedBatch("");
+    setSelectedDivision("");
+    setSelectedSemester("");
+    setFiltersComplete(false);
+    setFilteredSubjects([]);
+  };
+
   const handleSchoolChange = (school: string) => {
     setSelectedSchool(school);
     setSelectedBatch("");
@@ -120,13 +137,18 @@ export default function SubjectManagement() {
   const handleSemesterChange = (semester: string) => {
     setSelectedSemester(semester);
     const isComplete =
-      selectedSchool && selectedBatch && selectedDivision && semester;
+      selectedCenter &&
+      selectedSchool &&
+      selectedBatch &&
+      selectedDivision &&
+      semester;
     setFiltersComplete(!!isComplete);
 
     if (isComplete) {
-      // Filter subjects based on all selections
+      // Filter subjects based on all selections including center
       const filtered = subjects.filter(
         (subject) =>
+          subject.center === selectedCenter &&
           subject.school === selectedSchool &&
           subject.batch === selectedBatch &&
           subject.division === selectedDivision &&
@@ -193,13 +215,20 @@ export default function SubjectManagement() {
         batch: selectedBatch,
         division: selectedDivision,
         semester: parseInt(selectedSemester),
+        center: selectedCenter,
       };
 
       setSubjects((prev) => [...prev, newSubject]);
       setFilteredSubjects((prev) => [...prev, newSubject]);
       setIsAddSubjectModalOpen(false);
     },
-    [selectedSchool, selectedBatch, selectedDivision, selectedSemester]
+    [
+      selectedCenter,
+      selectedSchool,
+      selectedBatch,
+      selectedDivision,
+      selectedSemester,
+    ]
   );
 
   const handleOpenAddModal = useCallback(() => {
@@ -235,12 +264,39 @@ export default function SubjectManagement() {
         </h2>
 
         {/* Filter Section */}
-        <div className="bg-gradient-to-br from-white to-indigo-50  p-6 rounded-sm border border-gray-400">
+        <div className="bg-gradient-to-br from-white to-indigo-50 p-6 rounded-sm border border-gray-400">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
             Select Filters
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {" "}
+            {/* 5 columns */}
+            {/* Center Dropdown */}
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Center
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedCenter}
+                  onChange={(e) => handleCenterChange(e.target.value)}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">Select Center</option>
+                  {centerOptions.map((center) => (
+                    <option key={center} value={center}>
+                      {center}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+              </div>
+            </div>
+            {/* School Dropdown */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
                 School
@@ -249,7 +305,8 @@ export default function SubjectManagement() {
                 <select
                   value={selectedSchool}
                   onChange={(e) => handleSchoolChange(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
+                  disabled={!selectedCenter}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select School</option>
                   {schoolOptions.map((option) => (
@@ -260,11 +317,13 @@ export default function SubjectManagement() {
                 </select>
                 <ChevronDown
                   size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !selectedCenter ? "text-gray-300" : "text-gray-400"
+                  }`}
                 />
               </div>
             </div>
-
+            {/* Batch Dropdown */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
                 Batch
@@ -291,7 +350,7 @@ export default function SubjectManagement() {
                 />
               </div>
             </div>
-
+            {/* Division Dropdown */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
                 Division
@@ -320,7 +379,7 @@ export default function SubjectManagement() {
                 />
               </div>
             </div>
-
+            {/* Semester Dropdown */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
                 Semester
@@ -413,6 +472,7 @@ export default function SubjectManagement() {
                 "batch",
                 "division",
                 "semester",
+                "center",
               ]}
               onDelete={handleDeleteSubject}
               onEdit={handleUpdateSubject}
@@ -429,6 +489,7 @@ export default function SubjectManagement() {
           selectedBatch={selectedBatch}
           selectedDivision={selectedDivision}
           selectedSemester={selectedSemester}
+          selectedCenter={selectedCenter}
         />
       </div>
     </div>
