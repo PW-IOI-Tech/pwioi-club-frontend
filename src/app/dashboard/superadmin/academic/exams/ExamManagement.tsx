@@ -180,49 +180,7 @@ export default function ExamManagement() {
     [filteredExams]
   );
 
-  const handleSchoolChange = (school: string) => {
-    setSelectedSchool(school);
-    setSelectedBatch("");
-    setSelectedDivision("");
-    setSelectedSemester("");
-    setFiltersComplete(false);
-    setFilteredExams([]);
-  };
 
-  const handleBatchChange = (batch: string) => {
-    setSelectedBatch(batch);
-    setSelectedDivision("");
-    setSelectedSemester("");
-    setFiltersComplete(false);
-    setFilteredExams([]);
-  };
-
-  const handleDivisionChange = (division: string) => {
-    setSelectedDivision(division);
-    setSelectedSemester("");
-    setFiltersComplete(false);
-    setFilteredExams([]);
-  };
-
-  const handleSemesterChange = (semester: string) => {
-    setSelectedSemester(semester);
-    const isComplete =
-      selectedSchool && selectedBatch && selectedDivision && semester;
-    setFiltersComplete(!!isComplete);
-
-    if (isComplete) {
-      const filtered = exams.filter(
-        (exam) =>
-          exam.school === selectedSchool &&
-          exam.batch === selectedBatch &&
-          exam.division === selectedDivision &&
-          exam.semester === parseInt(semester)
-      );
-      setFilteredExams(filtered);
-    } else {
-      setFilteredExams([]);
-    }
-  };
 
   React.useEffect(() => {
     setExams(initialExams);
@@ -314,137 +272,81 @@ export default function ExamManagement() {
             Select Filters
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Center
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedCenter}
-                  onChange={(e) => setSelectedCenter(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Center</option>
-                  {centers.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.location}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                School
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedSchool}
-                  onChange={(e) => setSelectedSchool(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select School</option>
-                  {schools.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.schoolName}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Batch
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedBatch}
-                  onChange={(e) => handleBatchChange(e.target.value)}
-                  disabled={!selectedSchool}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Batch</option>
-                  {batches.map((batch) => (
-                    <option key={batch} value={batch}>
-                      {selectedSchool}20{batch.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedSchool ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Division
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedDivision}
-                  onChange={(e) => handleDivisionChange(e.target.value)}
-                  disabled={!selectedBatch}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Division</option>
-                  {divisons.map((division) => (
-                    <option key={division} value={division}>
-                      {selectedSchool}
-                      {selectedBatch}
-                      {division.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedBatch ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium text-gray-700 mb-2">
-                Semester
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedSemester}
-                  onChange={(e) => handleSemesterChange(e.target.value)}
-                  disabled={!selectedDivision}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
-                >
-                  <option value="">Select Semester</option>
-                  {semesters.map((sem: any) => (
-                    <option key={sem.id || sem} value={sem.id || sem}>
-                      Semester {sem.number || sem}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedDivision ? "text-gray-300" : "text-gray-400"
-                  }`}
-                />
-              </div>
-            </div>
-          </div>
+          <div className="flex space-x-3 flex-wrap space-y-2">
+                    {[
+                      {
+                        label: "Center",
+                        value: selectedCenter,
+                        options: centers,
+                        setter: setSelectedCenter,
+                        disabled: false,
+                      },
+                      {
+                        label: "School",
+                        value: selectedSchool,
+                        options: schools,
+                        setter: setSelectedSchool,
+                        disabled: !selectedCenter,
+                      },
+          
+                      {
+                        label: "Batch",
+                        value: selectedBatch,
+                        options: batches,
+                        setter: setSelectedBatch,
+                        disabled: !selectedSchool,
+                      },
+                      {
+                        label: "Division",
+                        value: selectedDivision,
+                        options: divisons,
+                        setter: setSelectedDivision,
+                        disabled: !selectedBatch,
+                      },
+                      {
+                        label: "Semester",
+                        value: selectedSemester,
+                        options: semesters,
+                        setter: setSelectedSemester,
+                        disabled: !selectedDivision,
+                      },
+                    ].map((filter, idx) => (
+                      <div key={idx} className="relative min-w-36">
+                        <label className="block text-xs font-medium text-gray-100 mb-1">
+                          {filter.label}
+                        </label>
+                        <div className="relative">
+                          <select
+                            value={filter.value}
+                            onChange={(e) => filter.setter(e.target.value)}
+                            disabled={filter.disabled}
+                            className={`w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none bg-white cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                          >
+                            <option value="">{`Select ${filter.label}`}</option>
+                            {filter.options.map((opt: any) => {
+                              const value = opt.id || opt;
+                              const label =
+                                typeof opt === "string"
+                                  ? opt
+                                  : opt.name ||
+                                    opt.division ||
+                                    opt.number ||
+                                    opt.code ||
+                                    opt.id ||
+                                    "Unknown";
+          
+                              return (
+                                <option key={value} value={value}>
+                                  {label}
+                                </option>
+                              );
+                            })}
+                          </select>
+                          <ChevronDown className="absolute right-2 top-1/2 w-4 h-4 text-gray-400 pointer-events-none -translate-y-1/2" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
           {!filtersComplete && (
             <div className="mt-4 p-3 text-slate-900 rounded-sm">
