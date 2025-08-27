@@ -22,11 +22,16 @@ interface ColumnConfig {
 interface CustomRenderers {
   [key: string]: (item: GenericTableItem) => React.ReactNode;
 }
+interface Column {
+  accessorKey: string;
+  header: string;
+}
 
 interface TableProps {
   data: GenericTableItem[];
   title?: string;
   filterField?: string;
+  columns?: Column[];
   onEdit?: (item: GenericTableItem) => void;
   onDelete?: (id: number | string) => void;
   rowsPerPage?: number;

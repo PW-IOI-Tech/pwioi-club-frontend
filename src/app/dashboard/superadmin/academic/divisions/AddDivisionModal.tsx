@@ -101,14 +101,6 @@ const AddDivisionModal: React.FC<AddDivisionModalProps> = ({
     <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-sm p-6 max-w-lg w-full border border-gray-400">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add Division</h3>
-
-        <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-sm">
-          <p className="text-sm">
-            <strong>Adding to:</strong> {selectedCenter} - {selectedSchool} -{" "}
-            {selectedBatch}
-          </p>
-        </div>
-
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="relative">
