@@ -254,7 +254,7 @@ export default function ClubManagement() {
           <ShimmerSkeleton />
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <StatCard
                 title="Total Clubs"
                 value={stats.totalClubs}
