@@ -11,18 +11,20 @@ interface AddExamModalProps {
     passingMarks: number;
     examType: "Midterm" | "Final" | "Quiz" | "Assignment" | "Practical";
     date: string;
+    subjectId: string;
   }) => void;
   selectedSchool: string;
   selectedBatch: string;
   selectedDivision: string;
   selectedSemester: string;
+  selectedSubject:string;
 }
 
 type ExamType = "Midterm" | "Final" | "Quiz" | "Assignment" | "Practical";
 
 interface FormData {
   examName: string;
-  weightage: string;
+  weightage: number;
   maxMarks: string;
   passingMarks: string;
   examType: ExamType;
@@ -45,10 +47,11 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
   selectedBatch,
   selectedDivision,
   selectedSemester,
+  selectedSubject
 }) => {
   const [formData, setFormData] = useState<FormData>({
     examName: "",
-    weightage: "",
+    weightage: 0,
     maxMarks: "",
     passingMarks: "",
     examType: "Quiz",
@@ -61,7 +64,7 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
     if (isOpen) {
       setFormData({
         examName: "",
-        weightage: "",
+        weightage: 0,
         maxMarks: "",
         passingMarks: "",
         examType: "Quiz",
@@ -71,20 +74,24 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
     }
   }, [isOpen]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+const handleInputChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  const { name, value } = e.target;
+  setFormData((prev) => ({
+    ...prev,
+    [name]: name === "weightage" ? Number(value) : value,
+  }));
 
-    if (formErrors[name]) {
-      setFormErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
+  if (formErrors[name]) {
+    setFormErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[name];
+      return newErrors;
+    });
+  }
+};
+
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -100,17 +107,6 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
       errors.examName = "Exam name is required";
     } else if (formData.examName.length < 2) {
       errors.examName = "Exam name must be at least 2 characters";
-    }
-
-    if (!formData.weightage.trim()) {
-      errors.weightage = "Weightage is required";
-    } else if (!/^\d+(\.\d+)?$/.test(formData.weightage)) {
-      errors.weightage = "Weightage must be a number";
-    } else if (
-      parseFloat(formData.weightage) <= 0 ||
-      parseFloat(formData.weightage) > 100
-    ) {
-      errors.weightage = "Weightage must be between 0.1 and 100%";
     }
 
     if (!formData.maxMarks.trim()) {
@@ -161,16 +157,17 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
 
     onExamCreated({
       examName: formData.examName,
-      weightage: parseFloat(formData.weightage),
+      weightage: Number(formData.weightage),
       maxMarks: parseInt(formData.maxMarks, 10),
       passingMarks: parseInt(formData.passingMarks, 10),
       examType: formData.examType,
       date: formData.date,
+      subjectId: selectedSubject,
     });
 
     setFormData({
       examName: "",
-      weightage: "",
+      weightage: 0,
       maxMarks: "",
       passingMarks: "",
       examType: "Quiz",
@@ -184,7 +181,7 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
     if (!isSubmitting) {
       setFormData({
         examName: "",
-        weightage: "",
+        weightage: 0,
         maxMarks: "",
         passingMarks: "",
         examType: "Quiz",
@@ -231,7 +228,7 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
                 Weightage (%) *
               </label>
               <input
-                type="text"
+                type="number"
                 name="weightage"
                 value={formData.weightage}
                 onChange={handleInputChange}

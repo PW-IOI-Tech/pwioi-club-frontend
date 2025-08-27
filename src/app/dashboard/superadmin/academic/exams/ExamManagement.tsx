@@ -26,6 +26,7 @@ export default function ExamManagement() {
   const [batches, setBatches] = useState<any[]>([]);
   const [divisions, setDivisions] = useState<any[]>([]);
   const [semesters, setSemesters] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
   const [exams, setExams] = useState<TableExam[]>([]);
   const [filteredExams, setFilteredExams] = useState<TableExam[]>([]);
   const [error, setError] = useState("");
@@ -36,6 +37,7 @@ export default function ExamManagement() {
   const [selectedBatch, setSelectedBatch] = useState("");
   const [selectedDivision, setSelectedDivision] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("");
 
   const allFiltersSelected =
     selectedCenter &&
@@ -104,6 +106,17 @@ export default function ExamManagement() {
       .catch(() => console.error("Failed to fetch semesters"));
   }, [selectedDivision]);
 
+  useEffect(() => {
+    if (!selectedSemester) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/semesters/${selectedSemester}`,
+        { withCredentials: true }
+      )
+      .then((res) => setSubjects(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch subjects"));
+  }, [selectedSemester]);
+
   // ----------------- FETCH EXAMS -----------------
   useEffect(() => {
     if (!allFiltersSelected) return;
@@ -144,49 +157,61 @@ export default function ExamManagement() {
     [filteredExams]
   );
 
-const handleAddExam = useCallback(
-  async (newExamData: Omit<TableExam, "id" | "school" | "batch" | "division" | "semester"> & { subjectId: string }) => {
-    try {
-      // Map frontend fields to backend fields
-      const payload = {
-        name: newExamData.examName,
-        full_marks: newExamData.maxMarks,
-        passing_marks: newExamData.passingMarks,
-        exam_type: mapExamType(newExamData.examType), // map frontend to backend
-        exam_date: newExamData.date,
-        subject_id: newExamData.subjectId,
-        school: selectedSchool,
-        batch: selectedBatch,
-        division: selectedDivision,
-        semester: parseInt(selectedSemester),
-      };
-
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams`, payload, {
-        withCredentials: true,
-      });
-
-      setExams((prev) => [...prev, res.data.data]);
-      setFilteredExams((prev) => [...prev, res.data.data]);
-      setIsAddExamModalOpen(false);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to add exam");
-    }
-  },
-  [selectedSchool, selectedBatch, selectedDivision, selectedSemester]
-);
-
-// Helper to map frontend examType to backend enum
-const mapExamType = (type: TableExam["examType"]) => {
-  const map: Record<TableExam["examType"], string> = {
-    Midterm: "INTERNAL_ASSESSMENT",
-    Final: "END_SEM",
-    Quiz: "FORTNIGHTLY",
-    Assignment: "PROJECT",
-    Practical: "INTERVIEW",
+  // ----------------- ADD / UPDATE / DELETE -----------------
+  const mapExamType = (type: TableExam["examType"]) => {
+    const map: Record<TableExam["examType"], string> = {
+      Midterm: "INTERNAL_ASSESSMENT",
+      Final: "END_SEM",
+      Quiz: "FORTNIGHTLY",
+      Assignment: "PROJECT",
+      Practical: "INTERVIEW",
+    };
+    return map[type];
   };
-  return map[type];
-};
 
+  const handleAddExam = useCallback(
+    async (
+      newExamData: Omit<
+        TableExam,
+        "id" | "school" | "batch" | "division" | "semester"
+      > & { subjectId: string }
+    ) => {
+      if (!newExamData.subjectId) {
+        setError("Please select a subject for the exam");
+        return;
+      }
+
+      try {
+        const payload = {
+          name: newExamData.examName,
+          weightage: Number(newExamData.weightage || 0),
+          full_marks: newExamData.maxMarks,
+          passing_marks: newExamData.passingMarks,
+          exam_type: mapExamType(newExamData.examType),
+          exam_date: newExamData.date,
+          subject_id: newExamData.subjectId,
+          school: selectedSchool,
+          batch: selectedBatch,
+          division: selectedDivision,
+          semester: parseInt(selectedSemester),
+          subjectId: selectedSubject,
+        };
+
+        const res = await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams`,
+          payload,
+          { withCredentials: true }
+        );
+
+        setExams((prev) => [...prev, res.data.data]);
+        setFilteredExams((prev) => [...prev, res.data.data]);
+        setIsAddExamModalOpen(false);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to add exam");
+      }
+    },
+    [selectedSchool, selectedBatch, selectedDivision, selectedSemester, selectedSubject]
+  );
 
   const handleUpdateExam = useCallback((item: any) => {
     const updatedExam = item as TableExam;
@@ -251,7 +276,6 @@ const mapExamType = (type: TableExam["examType"]) => {
         </button>
       </div>
     );
-
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
@@ -301,6 +325,13 @@ const mapExamType = (type: TableExam["examType"]) => {
                 options: semesters,
                 setter: setSelectedSemester,
                 disabled: !selectedDivision,
+              },
+              {
+                label: "Subject",
+                value: selectedSubject,
+                options: subjects,
+                setter: setSelectedSubject,
+                disabled: !selectedSemester,
               },
             ].map((filter, idx) => (
               <div key={idx} className="relative min-w-36">
@@ -411,6 +442,7 @@ const mapExamType = (type: TableExam["examType"]) => {
               selectedBatch={selectedBatch}
               selectedDivision={selectedDivision}
               selectedSemester={selectedSemester}
+              selectedSubject={selectedSubject}
             />
           </>
         )}
