@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Plus, ChevronDown, NotepadText } from "lucide-react";
 import Table from "../../Table";
 import AddExamModal from "./AddExamModal";
+import axios from "axios";
 
 interface TableExam {
   id: string;
@@ -79,16 +80,149 @@ const initialExams: TableExam[] = [
 ];
 
 export default function ExamManagement() {
+  const [centers, setCenters] = useState<any[]>([]);
   const [exams, setExams] = useState<TableExam[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
+  const [divisons, setDivisons] = useState<any[]>([]);
+  const [semesters, setSemesters] = useState<any[]>([]);
   const [filteredExams, setFilteredExams] = useState<TableExam[]>([]);
   const [error, setError] = useState("");
   const [isAddExamModalOpen, setIsAddExamModalOpen] = useState(false);
-
+  const [schools, setSchools] = useState<any[]>([]);
+  const [selectedCenter, setSelectedCenter] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("");
   const [selectedBatch, setSelectedBatch] = useState("");
   const [selectedDivision, setSelectedDivision] = useState("");
   const [selectedSemester, setSelectedSemester] = useState("");
   const [filtersComplete, setFiltersComplete] = useState(false);
+
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const res = await axios.get("http://localhost:8000/api/center/all", {
+          withCredentials: true,
+        });
+
+        if (res.data.success) {
+          const mappedCenters = res.data.data.map((c: any) => ({
+            id: c.id,
+            centerName: c.name,
+            location: c.location,
+            code: c.code,
+          }));
+          setCenters(mappedCenters);
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to fetch centers");
+      }
+    };
+
+    fetchCenters();
+  }, []);
+
+  const fetchSchools = async (centerId: string) => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${centerId}`,
+        { withCredentials: true }
+      );
+      const schoolsData = res.data.data;
+
+      const schoolsWithStats = await Promise.all(
+        schoolsData.map(async (school: any) => {
+          try {
+            const statsRes = await axios.get(
+              `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/school-stats/${school.id}`,
+              {
+                withCredentials: true,
+              }
+            );
+            const stats = statsRes.data.data;
+            return {
+              id: school.id,
+              location:
+                centers.find((c) => c.id === setSelectedCenter)?.name || "",
+              schoolName: school.name,
+              divisionsCount: stats.divisions,
+              batchesCount: stats.batches,
+              stdCount: stats.students,
+              teachersCount: stats.teachers,
+            };
+          } catch {
+            return {
+              location: setSelectedCenter,
+              schoolName: school.name,
+              divisionsCount: 0,
+              batchesCount: 0,
+              stdCount: 0,
+              teachersCount: 0,
+            };
+          }
+        })
+      );
+
+      setSchools(schoolsWithStats);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch schools");
+    }
+  };
+
+  useEffect(() => {
+    if (selectedCenter) {
+      fetchSchools(selectedCenter);
+    }
+  }, [selectedCenter]);
+
+  useEffect(() => {
+    const fetchBatches = async () => {
+      if (!selectedSchool) return;
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
+          { withCredentials: true }
+        );
+        setBatches(res.data.data); // assuming API returns [{id, name}]
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to fetch batches");
+      }
+    };
+
+    fetchBatches();
+  }, [selectedSchool]);
+
+  useEffect(() => {
+    const fetchDivisions = async () => {
+      if (!selectedBatch) return;
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/by-batch/${selectedBatch}`,
+          { withCredentials: true }
+        );
+        setDivisons(res.data.data); // assuming API returns [{id, name}]
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to fetch divisions");
+      }
+    };
+
+    fetchDivisions();
+  }, [selectedBatch]);
+
+  useEffect(() => {
+    const fetchSemesters = async () => {
+      if (!selectedDivision) return;
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${selectedDivision}`,
+          { withCredentials: true }
+        );
+        setSemesters(res.data.data); // assuming API returns [1,2,3,...] or [{id, number}]
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to fetch semesters");
+      }
+    };
+
+    fetchSemesters();
+  }, [selectedDivision]);
 
   const statistics = useMemo(
     () => ({
@@ -242,18 +376,41 @@ export default function ExamManagement() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block font-medium text-gray-700 mb-2">
+                Center
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedCenter}
+                  onChange={(e) => setSelectedCenter(e.target.value)}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">Select Center</option>
+                  {centers.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.location}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
                 School
               </label>
               <div className="relative">
                 <select
                   value={selectedSchool}
-                  onChange={(e) => handleSchoolChange(e.target.value)}
+                  onChange={(e) => setSelectedSchool(e.target.value)}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select School</option>
-                  {schoolOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                  {schools.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.schoolName}
                     </option>
                   ))}
                 </select>
@@ -276,9 +433,9 @@ export default function ExamManagement() {
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select Batch</option>
-                  {batchOptions.map((batch) => (
+                  {batches.map((batch) => (
                     <option key={batch} value={batch}>
-                      {selectedSchool}20{batch}
+                      {selectedSchool}20{batch.name}
                     </option>
                   ))}
                 </select>
@@ -303,11 +460,11 @@ export default function ExamManagement() {
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select Division</option>
-                  {divisionOptions.map((division) => (
+                  {divisons.map((division) => (
                     <option key={division} value={division}>
                       {selectedSchool}
                       {selectedBatch}
-                      {division}
+                      {division.name}
                     </option>
                   ))}
                 </select>
@@ -332,9 +489,9 @@ export default function ExamManagement() {
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select Semester</option>
-                  {semesterOptions.map((sem) => (
-                    <option key={sem} value={sem.toString()}>
-                      Semester {sem}
+                  {semesters.map((sem: any) => (
+                    <option key={sem.id || sem} value={sem.id || sem}>
+                      Semester {sem.number || sem}
                     </option>
                   ))}
                 </select>
