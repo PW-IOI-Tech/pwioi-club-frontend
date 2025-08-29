@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
-
-type ExamType = "Fortnightly" | "Internal" | "Interview";
+import React, { useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 interface AddExamModalProps {
   isOpen: boolean;
@@ -10,86 +9,89 @@ interface AddExamModalProps {
     weightage: number;
     maxMarks: number;
     passingMarks: number;
-    examType: ExamType;
-    subject: string;
+    examType: "Midterm" | "Final" | "Quiz" | "Assignment" | "Practical";
     date: string;
+    subjectId: string;
   }) => void;
-  selectedCenter: string;
   selectedSchool: string;
   selectedBatch: string;
   selectedDivision: string;
   selectedSemester: string;
-  selectedSubject: string;
-  selectedExamType: ExamType;
-  selectedExamNumber: string;
+  selectedSubject:string;
 }
 
+type ExamType = "Midterm" | "Final" | "Quiz" | "Assignment" | "Practical";
+
 interface FormData {
-  weightage: string;
+  examName: string;
+  weightage: number;
   maxMarks: string;
   passingMarks: string;
+  examType: ExamType;
   date: string;
 }
 
-const examTypeLabels: Record<ExamType, string> = {
-  Fortnightly: "Fortnightly Test",
-  Internal: "Internal Assessment",
-  Interview: "Interview Round",
-};
+const examTypeOptions: ExamType[] = [
+  "Midterm",
+  "Final",
+  "Quiz",
+  "Assignment",
+  "Practical",
+];
 
 const AddExamModal: React.FC<AddExamModalProps> = ({
   isOpen,
   onClose,
   onExamCreated,
-  selectedCenter,
   selectedSchool,
   selectedBatch,
   selectedDivision,
   selectedSemester,
-  selectedSubject,
-  selectedExamType,
-  selectedExamNumber,
+  selectedSubject
 }) => {
   const [formData, setFormData] = useState<FormData>({
-    weightage: "",
+    examName: "",
+    weightage: 0,
     maxMarks: "",
     passingMarks: "",
+    examType: "Quiz",
     date: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const examName =
-    selectedExamType && selectedSubject
-      ? `${examTypeLabels[selectedExamType]} ${selectedExamNumber.slice(
-          -1
-        )} - ${selectedSubject}`
-      : "New Exam";
-
-  useEffect(() => {
+  React.useEffect(() => {
     if (isOpen) {
       setFormData({
-        weightage: "",
+        examName: "",
+        weightage: 0,
         maxMarks: "",
         passingMarks: "",
+        examType: "Quiz",
         date: "",
       });
       setFormErrors({});
     }
   }, [isOpen]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+const handleInputChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  const { name, value } = e.target;
+  setFormData((prev) => ({
+    ...prev,
+    [name]: name === "weightage" ? Number(value) : value,
+  }));
 
-    if (formErrors[name]) {
-      setFormErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
+  if (formErrors[name]) {
+    setFormErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[name];
+      return newErrors;
+    });
+  }
+};
+
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -101,15 +103,10 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
       now.getDate()
     );
 
-    if (!formData.weightage.trim()) {
-      errors.weightage = "Weightage is required";
-    } else if (!/^\d+(\.\d+)?$/.test(formData.weightage)) {
-      errors.weightage = "Must be a number";
-    } else {
-      const w = parseFloat(formData.weightage);
-      if (w <= 0 || w > 100) {
-        errors.weightage = "Must be between 0.1 and 100%";
-      }
+    if (!formData.examName.trim()) {
+      errors.examName = "Exam name is required";
+    } else if (formData.examName.length < 2) {
+      errors.examName = "Exam name must be at least 2 characters";
     }
 
     if (!formData.maxMarks.trim()) {
@@ -118,17 +115,21 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
       !/^\d+$/.test(formData.maxMarks) ||
       parseInt(formData.maxMarks) <= 0
     ) {
-      errors.maxMarks = "Must be a positive number";
+      errors.maxMarks = "Max marks must be a positive number";
     }
 
     if (!formData.passingMarks.trim()) {
       errors.passingMarks = "Passing marks is required";
     } else if (!/^\d+$/.test(formData.passingMarks)) {
-      errors.passingMarks = "Must be a number";
+      errors.passingMarks = "Passing marks must be a number";
     } else if (
       parseInt(formData.passingMarks) > parseInt(formData.maxMarks || "0")
     ) {
-      errors.passingMarks = "Cannot exceed max marks";
+      errors.passingMarks = "Passing marks cannot exceed max marks";
+    }
+
+    if (!formData.examType) {
+      errors.examType = "Exam type is required";
     }
 
     if (!formData.date) {
@@ -138,9 +139,9 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
       if (isNaN(examDate.getTime())) {
         errors.date = "Invalid date";
       } else if (examDate < minDate) {
-        errors.date = "Must be at least tomorrow";
+        errors.date = "Date must be at least tomorrow";
       } else if (examDate > maxDate) {
-        errors.date = "Cannot be more than one year from now";
+        errors.date = "Date cannot be more than one year from now";
       }
     }
 
@@ -155,19 +156,21 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
     setIsSubmitting(true);
 
     onExamCreated({
-      examName,
-      weightage: parseFloat(formData.weightage),
+      examName: formData.examName,
+      weightage: Number(formData.weightage),
       maxMarks: parseInt(formData.maxMarks, 10),
       passingMarks: parseInt(formData.passingMarks, 10),
-      examType: selectedExamType,
-      subject: selectedSubject,
+      examType: formData.examType,
       date: formData.date,
+      subjectId: selectedSubject,
     });
 
     setFormData({
-      weightage: "",
+      examName: "",
+      weightage: 0,
       maxMarks: "",
       passingMarks: "",
+      examType: "Quiz",
       date: "",
     });
     setFormErrors({});
@@ -176,6 +179,15 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
 
   const handleClose = () => {
     if (!isSubmitting) {
+      setFormData({
+        examName: "",
+        weightage: 0,
+        maxMarks: "",
+        passingMarks: "",
+        examType: "Quiz",
+        date: "",
+      });
+      setFormErrors({});
       onClose();
     }
   };
@@ -187,41 +199,28 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
       <div className="bg-white rounded-sm p-6 max-w-lg w-full border border-gray-400 max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add New Exam</h3>
 
-        <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-sm text-sm">
-          <p>
-            <strong>Center:</strong> {selectedCenter}
-          </p>
-          <p>
-            <strong>School:</strong> {selectedSchool} | <strong>Batch:</strong>{" "}
-            {selectedBatch} | <strong>Div:</strong> {selectedDivision}
-          </p>
-          <p>
-            <strong>Semester:</strong> {selectedSemester}
-          </p>
-          <p>
-            <strong>Subject:</strong> {selectedSubject}
-          </p>
-          <p>
-            <strong>Type:</strong> {examTypeLabels[selectedExamType]} |{" "}
-            <strong>No:</strong> {selectedExamNumber}
-          </p>
-        </div>
-
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Exam Name
+                Exam Name *
               </label>
               <input
                 type="text"
-                value={examName}
-                readOnly
-                className="w-full px-3 py-2 border border-gray-300 bg-gray-100 rounded-md cursor-not-allowed text-gray-700"
+                name="examName"
+                value={formData.examName}
+                onChange={handleInputChange}
+                placeholder="e.g., Midterm Exam"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                  formErrors.examName ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isSubmitting}
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Auto-generated based on type and subject
-              </p>
+              {formErrors.examName && (
+                <p className="mt-1 text-sm text-red-600">
+                  {formErrors.examName}
+                </p>
+              )}
             </div>
 
             <div>
@@ -229,11 +228,11 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
                 Weightage (%) *
               </label>
               <input
-                type="text"
+                type="number"
                 name="weightage"
                 value={formData.weightage}
                 onChange={handleInputChange}
-                placeholder="e.g., 10"
+                placeholder="e.g., 30"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.weightage ? "border-red-500" : "border-gray-300"
                 }`}
@@ -244,6 +243,9 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
                   {formErrors.weightage}
                 </p>
               )}
+              <p className="mt-1 text-xs text-gray-500">
+                Percentage of total grade (0.1 - 100%)
+              </p>
             </div>
 
             <div>
@@ -255,7 +257,7 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
                 name="maxMarks"
                 value={formData.maxMarks}
                 onChange={handleInputChange}
-                placeholder="e.g., 20"
+                placeholder="e.g., 100"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.maxMarks ? "border-red-500" : "border-gray-300"
                 }`}
@@ -277,7 +279,7 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
                 name="passingMarks"
                 value={formData.passingMarks}
                 onChange={handleInputChange}
-                placeholder="e.g., 8"
+                placeholder="e.g., 35"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.passingMarks ? "border-red-500" : "border-gray-300"
                 }`}
@@ -286,6 +288,38 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
               {formErrors.passingMarks && (
                 <p className="mt-1 text-sm text-red-600">
                   {formErrors.passingMarks}
+                </p>
+              )}
+            </div>
+
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Exam Type *
+              </label>
+              <div className="relative">
+                <select
+                  name="examType"
+                  value={formData.examType}
+                  onChange={handleInputChange}
+                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
+                    formErrors.examType ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={isSubmitting}
+                >
+                  {examTypeOptions.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
+                  size={18}
+                />
+              </div>
+              {formErrors.examType && (
+                <p className="mt-1 text-sm text-red-600">
+                  {formErrors.examType}
                 </p>
               )}
             </div>

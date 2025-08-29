@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Users, ChevronDown } from "lucide-react";
 import Table from "../../Table";
 import UploadSection from "../UploadSection";
 import teacherSchemaInfo from "./TeacherSchemaInfo";
+import axios from "axios";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -13,7 +14,7 @@ interface Teacher {
   name: string;
   email: string;
   department: string;
-  center: string;
+  center: string; // currently name in mock data
   phoneNumber: string;
   experience: number;
 }
@@ -57,25 +58,63 @@ const initialTeachers: Teacher[] = [
   },
 ];
 
-const LOCATIONS = ["Bangalore", "Noida", "Pune", "Lucknow"] as const;
-const SCHOOLS = ["SOT", "SOM", "SOH"] as const;
-
 export default function TeacherManagement() {
+  const [centers, setCenters] = useState<any[]>([]);
   const [teachers] = useState<Teacher[]>(initialTeachers);
-  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [selectedLocation, setSelectedLocation] = useState<string>(""); // store centerId
   const [selectedSchool, setSelectedSchool] = useState<string>("");
-  const [isUploading, setIsUploading] = useState(false);
+  const [schools, setSchools] = useState<any[]>([]);
 
   const bothFiltersSelected = !!selectedLocation && !!selectedSchool;
 
+  // Fetch centers
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await axios.get(`${backendUrl}/api/center/all`, {
+          withCredentials: true,
+        });
+        const data = res.data.data || [];
+        setCenters(data);
+        if (data.length > 0) {
+          setSelectedLocation(data[0].id); // default to first centerId
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch centers:", err);
+      }
+    })();
+  }, []);
+
+  // Fetch schools for a center
+  useEffect(() => {
+    if (!selectedLocation) return;
+    const fetchSchools = async () => {
+      try {
+        const res = await axios.get(
+          `${backendUrl}/api/schools/${selectedLocation}`,
+          { withCredentials: true }
+        );
+        setSchools(res.data?.data || []);
+      } catch (err) {
+        console.error("Failed to fetch schools:", err);
+      }
+    };
+    fetchSchools();
+  }, [selectedLocation]);
+
+  // For filtering, get centerName from centers
+  const selectedCenterName = useMemo(() => {
+    const c = centers.find((c) => c.id === selectedLocation);
+    return c?.name || "";
+  }, [centers, selectedLocation]);
+
   const filteredTeachers = useMemo(() => {
-    return teachers.filter((teacher) => {
-      return (
-        teacher.center === selectedLocation &&
+    return teachers.filter(
+      (teacher) =>
+        teacher.center === selectedCenterName &&
         teacher.department === selectedSchool
-      );
-    });
-  }, [teachers, selectedLocation, selectedSchool]);
+    );
+  }, [teachers, selectedCenterName, selectedSchool]);
 
   const statistics = useMemo(() => {
     return {
@@ -91,8 +130,9 @@ export default function TeacherManagement() {
     console.log("Deleting teacher with id:", id);
   }, []);
 
-  const handleUploadStart = () => setIsUploading(true);
-  const handleUploadComplete = () => setIsUploading(false);
+  const handleUploadComplete = () => {
+    console.log("Upload completed");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -101,11 +141,13 @@ export default function TeacherManagement() {
           Teacher Management
         </h2>
 
+        {/* Filter Card */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-white text-sm font-semibold mb-4">
             Filter Teachers
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Center Filter */}
             <div className="relative">
               <label
                 htmlFor="center"
@@ -121,9 +163,9 @@ export default function TeacherManagement() {
                   className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer appearance-none text-sm"
                 >
                   <option value="">Select Center</option>
-                  {LOCATIONS.map((loc) => (
-                    <option key={loc} value={loc}>
-                      {loc}
+                  {centers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
                     </option>
                   ))}
                 </select>
@@ -131,6 +173,7 @@ export default function TeacherManagement() {
               </div>
             </div>
 
+            {/* School Filter */}
             <div className="relative">
               <label
                 htmlFor="school"
@@ -146,9 +189,9 @@ export default function TeacherManagement() {
                   className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer appearance-none text-sm"
                 >
                   <option value="">Select School</option>
-                  {SCHOOLS.map((school) => (
-                    <option key={school} value={school}>
-                      {school}
+                  {schools.map((school) => (
+                    <option key={school.id} value={school.id}>
+                      {school.name}
                     </option>
                   ))}
                 </select>
@@ -164,6 +207,7 @@ export default function TeacherManagement() {
           )}
         </div>
 
+        {/* Content */}
         {!bothFiltersSelected ? (
           <ShimmerSkeleton />
         ) : (
@@ -172,7 +216,7 @@ export default function TeacherManagement() {
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 text-center">
                 <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
                 <h4 className="text-lg text-slate-900 mb-1">
-                  Teachers in {selectedSchool} ({selectedLocation})
+                  Teachers in {selectedSchool} ({selectedCenterName})
                 </h4>
                 <p className="text-5xl font-bold text-[#1B3A6A]">
                   {statistics.totalTeachers}
@@ -181,17 +225,21 @@ export default function TeacherManagement() {
 
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 flex items-center justify-center">
                 <UploadSection
-                  onSuccess={handleUploadComplete}
-                  uploadUrl={`${backendUrl}/api/teacher/add-teacher`}
-                  schemaInfo={teacherSchemaInfo}
-                />
+  onSuccess={handleUploadComplete}
+  uploadUrl={`${backendUrl}/api/teachers/upload`}
+  schemaInfo={teacherSchemaInfo}
+  extraData={{
+    centerId: selectedLocation,
+    schoolIds: [selectedSchool],
+  }}
+/>
+
               </div>
             </div>
 
-            {/* Table */}
             <Table
               data={filteredTeachers}
-              title={`Teachers - ${selectedSchool} at ${selectedLocation}`}
+              title={`Teachers - ${selectedSchool} at ${selectedCenterName}`}
               filterField="department"
               badgeFields={["department"]}
               selectFields={{

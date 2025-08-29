@@ -17,11 +17,8 @@ interface TableExam {
   weightage: number;
   maxMarks: number;
   passingMarks: number;
-  examType: ExamType;
-  examNumber: string;
-  subject: string;
+  examType: "Midterm" | "Final" | "Quiz" | "Assignment" | "Practical";
   date: string;
-  center: string;
   school: string;
   batch: string;
   division: string;
@@ -539,7 +536,7 @@ export default function ExamManagement() {
   }, []);
 
   const handleAddExam = useCallback(
-    (
+    async (
       newExamData: Omit<
         TableExam,
         | "id"
@@ -598,11 +595,35 @@ export default function ExamManagement() {
     }
   }, [filtersComplete, selectedExamType]);
 
-  const handleCloseAddModal = useCallback(() => {
-    setIsAddExamModalOpen(false);
+  const handleDeleteExam = useCallback((id: string | number) => {
+    const deleteExam = async () => {
+      try {
+        await axios.delete(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${id}`,
+          {
+            withCredentials: true,
+          }
+        );
+        setExams((prev) => prev.filter((exam) => exam.id !== id));
+        setFilteredExams((prev) => prev.filter((exam) => exam.id !== id));
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to delete exam");
+      }
+    };
+    deleteExam();
   }, []);
 
-  if (error) {
+  const handleOpenAddModal = useCallback(() => {
+    if (allFiltersSelected) setIsAddExamModalOpen(true);
+  }, [allFiltersSelected]);
+
+  const handleCloseAddModal = useCallback(
+    () => setIsAddExamModalOpen(false),
+    []
+  );
+
+  // ----------------- RENDER -----------------
+  if (error)
     return (
       <div className="bg-red-50 text-red-600 p-4 rounded-lg max-w-2xl mx-auto mt-8">
         <h3 className="font-bold">Error</h3>
@@ -615,8 +636,6 @@ export default function ExamManagement() {
         </button>
       </div>
     );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
@@ -859,16 +878,16 @@ export default function ExamManagement() {
             </div>
           </div>
 
-          {!filtersComplete && (
+          {!allFiltersSelected && (
             <div className="mt-4 p-3 text-slate-900 rounded-sm">
               <p className="text-sm">
-                * Select all filters to view and manage exams.
+                * Please select all filters to view and manage exams.
               </p>
             </div>
           )}
         </div>
 
-        {filtersComplete && (
+        {allFiltersSelected && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
@@ -880,7 +899,6 @@ export default function ExamManagement() {
                   </p>
                 </div>
               </div>
-
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 flex items-center justify-center p-6">
                 <button
                   onClick={handleOpenAddModal}
@@ -901,30 +919,21 @@ export default function ExamManagement() {
               data={filteredExams}
               title="Exams Overview"
               filterField="examName"
-              badgeFields={["examType", "weightage", "subject"]}
+              badgeFields={["examType", "weightage"]}
               selectFields={{
                 examType: [...examTypeOptions],
                 subject: subjects.map(s => `${s.code} ${s.name}`),
               }}
               nonEditableFields={[
                 "id",
-                "center",
                 "school",
                 "batch",
                 "division",
                 "semester",
-                "examNumber",
               ]}
               onDelete={handleDeleteExam}
               onEdit={handleUpdateExam}
-              hiddenColumns={[
-                "id",
-                "center",
-                "school",
-                "batch",
-                "division",
-                "semester",
-              ]}
+              hiddenColumns={["id", "school", "batch", "division", "semester"]}
             />
           </>
         )}

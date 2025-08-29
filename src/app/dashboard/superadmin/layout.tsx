@@ -18,6 +18,7 @@ import {
   Users,
   School,
   ChevronDown,
+  ChartPie,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -170,6 +171,23 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
         },
       ],
     },
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: ChartPie,
+      subItems: [
+        {
+          id: "attendance",
+          label: "Attendance Dashboard",
+          href: "/dashboard/superadmin/dashboard/attendance",
+        },
+        {
+          id: "marks",
+          label: "Marks Dashboard",
+          href: "/dashboard/superadmin/dashboard/marks",
+        },
+      ],
+    },
   ];
 
   const getActiveSection = () => {
@@ -178,6 +196,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
     if (pathname.includes("/academic/")) return "academic";
     if (pathname.includes("/operations/")) return "operations";
     if (pathname.includes("/resources/")) return "resources";
+    if (pathname.includes("/dashboard/")) return "dashboard";
     return "home";
   };
 

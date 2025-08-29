@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Users, ChevronDown } from "lucide-react";
 import Table from "../../Table";
-import UploadSection from "../UploadSection";
+import UploadSection from "./UploadSection";
 import studentSchemaInfo from "./StudentSchemaInfo";
+import axios from "axios";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -67,37 +68,126 @@ const initialStudents: Student[] = [
   },
 ];
 
-const LOCATIONS = ["Bangalore", "Noida", "Pune", "Lucknow"] as const;
-const SCHOOLS = ["SOT", "SOM", "SOH"] as const;
-const DIVISIONS = ["23", "24", "25"] as const;
-
 export default function StudentManagement() {
-  const [students] = useState<Student[]>(initialStudents);
-  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [centers, setCenters] = useState<any[]>([]);
+  const [schools, setSchools] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
+  const [divisions, setDivisions] = useState<any[]>([]);
+    const [semesters, setSemesters] = useState<any[]>([]);
+  const [selectedCenter, setSelectedCenter] = useState<string>("");
   const [selectedSchool, setSelectedSchool] = useState<string>("");
-  const [selectedDivision, setSelectedDivision] = useState<string>("");
   const [selectedBatch, setSelectedBatch] = useState<string>("");
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
+    const [selectedSemester, setSelectedSemester] = useState<string>("");
+  const [students] = useState<Student[]>(initialStudents);
   const [isUploading, setIsUploading] = useState(false);
 
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+          {
+            withCredentials: true,
+          }
+        );
+        if (res.data.success) {
+          setCenters(
+            res.data.data.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              location: c.location,
+              code: c.code,
+            }))
+          );
+        }
+      } catch (err: any) {
+        console.error(err.response?.data?.message || "Failed to fetch centers");
+      }
+    };
+    fetchCenters();
+  }, []);
+
+  // ✅ Fetch Schools when Center selected
+  useEffect(() => {
+    if (!selectedCenter) return;
+    const fetchSchools = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${selectedCenter}`,
+          { withCredentials: true }
+        );
+        setSchools(res.data?.data || []);
+      } catch (err) {
+        console.error("Failed to fetch schools");
+      }
+    };
+    fetchSchools();
+  }, [selectedCenter]);
+
+  // ✅ Fetch Batches when School selected
+  useEffect(() => {
+    if (!selectedSchool) return;
+    const fetchBatches = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
+          { withCredentials: true }
+        );
+        setBatches(res.data?.data || []);
+      } catch {
+        console.error("Failed to fetch batches");
+      }
+    };
+    fetchBatches();
+  }, [selectedSchool]);
+
+  // ✅ Fetch Divisions when Batch selected
+  useEffect(() => {
+    if (!selectedBatch) return;
+    const fetchDivisions = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/by-batch/${selectedBatch}`,
+          { withCredentials: true }
+        );
+        setDivisions(res.data?.data || []);
+      } catch {
+        console.error("Failed to fetch divisions");
+      }
+    };
+    fetchDivisions();
+  }, [selectedBatch]);
+
+    useEffect(() => {
+    if (!selectedDivision) return;
+    const fetchSemesters = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${selectedDivision}`,
+          { withCredentials: true }
+        );
+        setSemesters(res.data?.data || []);
+      } catch {
+        console.error("Failed to fetch semesters");
+      }
+    };
+    fetchSemesters();
+  }, [selectedDivision]);
+
   const allFiltersSelected =
-    !!selectedLocation &&
+    !!selectedCenter &&
     !!selectedSchool &&
     !!selectedDivision &&
-    !!selectedBatch;
-
-  const availableBatches = useMemo(() => {
-    if (!selectedSchool || !selectedDivision) return [];
-    return ["B1", "B2", "B3"].map(
-      (b) => `${selectedSchool}${selectedDivision}${b}`
-    );
-  }, [selectedSchool, selectedDivision]);
+    !!selectedBatch &&
+    !!selectedSemester
 
   const filteredStudents = useMemo(() => {
     if (!allFiltersSelected) return [];
     return students.filter(
-      (s) => s.batch === selectedBatch && s.center === selectedLocation
+      (s) => s.batch === selectedBatch && s.center === selectedCenter
     );
-  }, [students, selectedBatch, selectedLocation, allFiltersSelected]);
+  }, [students, selectedBatch, selectedCenter, allFiltersSelected]);
 
   const statistics = useMemo(() => {
     return {
@@ -126,7 +216,7 @@ export default function StudentManagement() {
           <h3 className="text-white text-sm font-semibold mb-4">
             Filter Students
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="relative">
               <label
                 htmlFor="center"
@@ -137,9 +227,9 @@ export default function StudentManagement() {
               <div className="relative">
                 <select
                   id="center"
-                  value={selectedLocation}
+                  value={selectedCenter}
                   onChange={(e) => {
-                    setSelectedLocation(e.target.value);
+                    setSelectedCenter(e.target.value);
                     setSelectedSchool("");
                     setSelectedDivision("");
                     setSelectedBatch("");
@@ -147,12 +237,13 @@ export default function StudentManagement() {
                   className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm"
                 >
                   <option value="">Select Center</option>
-                  {LOCATIONS.map((loc) => (
-                    <option key={loc} value={loc}>
-                      {loc}
+                  {centers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
                     </option>
                   ))}
                 </select>
+
                 <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>
@@ -173,16 +264,47 @@ export default function StudentManagement() {
                     setSelectedDivision("");
                     setSelectedBatch("");
                   }}
-                  disabled={!selectedLocation}
+                  disabled={!selectedCenter}
                   className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">Select School</option>
-                  {SCHOOLS.map((sch) => (
-                    <option key={sch} value={sch}>
-                      {sch}
+                  {schools.map((sch) => (
+                    <option key={sch.id} value={sch.id}>
+                      {sch.name}
                     </option>
                   ))}
                 </select>
+
+                <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
+              </div>
+            </div>
+
+            <div className="relative">
+              <label
+                htmlFor="batch"
+                className="block text-xs font-medium text-gray-100 mb-2"
+              >
+                Batch
+              </label>
+              <div className="relative">
+                <select
+                  id="batch"
+                  value={selectedBatch}
+                  onChange={(e) => {
+                    setSelectedBatch(e.target.value);
+                    setSelectedDivision("");
+                  }}
+                  disabled={!selectedSchool || batches.length === 0}
+                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">Select Batch</option>
+                  {batches.map((batch) => (
+                    <option key={batch.id} value={batch.id}>
+                      {batch.name}
+                    </option>
+                  ))}
+                </select>
+
                 <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>
@@ -200,44 +322,47 @@ export default function StudentManagement() {
                   value={selectedDivision}
                   onChange={(e) => {
                     setSelectedDivision(e.target.value);
-                    setSelectedBatch("");
                   }}
-                  disabled={!selectedSchool}
+                  disabled={!selectedBatch}
                   className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">Select Division</option>
-                  {DIVISIONS.map((div) => (
-                    <option key={div} value={div}>
-                      {div}
+                  {divisions.map((div) => (
+                    <option key={div.id} value={div.id}>
+                      {div.code}
                     </option>
                   ))}
                 </select>
+
                 <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>
 
-            <div className="relative">
+               <div className="relative">
               <label
-                htmlFor="batch"
+                htmlFor="division"
                 className="block text-xs font-medium text-gray-100 mb-2"
               >
-                Batch
+                Semester
               </label>
               <div className="relative">
                 <select
-                  id="batch"
-                  value={selectedBatch}
-                  onChange={(e) => setSelectedBatch(e.target.value)}
-                  disabled={!selectedDivision || availableBatches.length === 0}
+                  id="semster"
+                  value={selectedSemester}
+                  onChange={(e) => {
+                    setSelectedSemester(e.target.value);
+                  }}
+                  disabled={!selectedDivision}
                   className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select Batch</option>
-                  {availableBatches.map((batch) => (
-                    <option key={batch} value={batch}>
-                      {batch}
+                  <option value="">Select Semester</option>
+                  {semesters.map((sem) => (
+                    <option key={sem.id} value={sem.id}>
+                      {sem.number}
                     </option>
                   ))}
                 </select>
+
                 <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>
@@ -258,7 +383,7 @@ export default function StudentManagement() {
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 text-center">
                 <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
                 <h4 className="text-lg text-slate-900 mb-1">
-                  Students in {selectedBatch}
+                  Students in selected batch
                 </h4>
                 <p className="text-5xl font-bold text-[#1B3A6A]">
                   {statistics.totalStudents}
@@ -267,10 +392,15 @@ export default function StudentManagement() {
 
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 flex items-center justify-center">
                 <UploadSection
-                  onSuccess={handleUploadComplete}
-                  uploadUrl={`${backendUrl}/api/student/add-student`}
-                  schemaInfo={studentSchemaInfo}
-                />
+  onSuccess={handleUploadComplete}
+  uploadUrl={`${backendUrl}/api/students/bulk-excel`}
+  schemaInfo={studentSchemaInfo}
+  extraData={{
+    divisionId: selectedDivision,
+    semesterId: selectedSemester,
+  }}
+/>
+
               </div>
             </div>
 
