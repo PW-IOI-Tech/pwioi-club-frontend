@@ -11,6 +11,20 @@ const mapEducationToBackend = (edu: AcademicHistory) => ({
   end_date: edu.endDate,
 });
 
+const mapDegreeLabel = (degree: string) => {
+  switch (degree) {
+    case "undergraduate":
+      return "Undergraduation";
+    case "x_education":
+      return "10th Education";
+    case "xii_education":
+      return "12th Education";
+    default:
+      return degree;
+  }
+};
+
+
 interface AcademicHistory {
   id?: string;
   degree: string;
@@ -74,15 +88,9 @@ const AddAcademicHistoryModal: React.FC<AddAcademicHistoryModalProps> = ({
   >({});
 
   const degreeOptions = [
-    "High School Diploma",
-    "Associate Degree",
-    "Bachelor's Degree",
-    "Master's Degree",
-    "Doctoral Degree (PhD)",
-    "Professional Degree",
-    "Certificate Program",
-    "Diploma",
-    "Other",
+    { label: "10th Education", value: "x_education" },
+    { label: "12th Education", value: "xii_education" },
+    { label: "Undergraduation", value: "undergraduate" },
   ];
 
   const handleInputChange = (
@@ -160,7 +168,7 @@ const AddAcademicHistoryModal: React.FC<AddAcademicHistoryModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Add Education">
-<form onSubmit={handleSubmit} className="space-y-4 text-sm">
+      <form onSubmit={handleSubmit} className="space-y-4 text-sm">
         <div>
           <label className="block text-sm font-semibold text-slate-900 mb-2">
             Degree *
@@ -174,8 +182,8 @@ const AddAcademicHistoryModal: React.FC<AddAcademicHistoryModalProps> = ({
           >
             <option value="">Select a degree</option>
             {degreeOptions.map((degree) => (
-              <option key={degree} value={degree}>
-                {degree}
+              <option key={degree.value} value={degree.value}>
+                {degree.label}
               </option>
             ))}
           </select>
@@ -326,15 +334,9 @@ const EditAcademicHistoryModal: React.FC<EditAcademicHistoryModalProps> = ({
   >({});
 
   const degreeOptions = [
-    "High School Diploma",
-    "Associate Degree",
-    "Bachelor's Degree",
-    "Master's Degree",
-    "Doctoral Degree (PhD)",
-    "Professional Degree",
-    "Certificate Program",
-    "Diploma",
-    "Other",
+    { label: "10th Education", value: "x_education" },
+    { label: "12th Education", value: "xii_education" },
+    { label: "Undergraduation", value: "undergraduate" },
   ];
 
   // Update form data when education changes
@@ -431,8 +433,8 @@ const EditAcademicHistoryModal: React.FC<EditAcademicHistoryModalProps> = ({
           >
             <option value="">Select a degree</option>
             {degreeOptions.map((degree) => (
-              <option key={degree} value={degree}>
-                {degree}
+              <option key={degree.value} value={degree.value}>
+                {degree.label}
               </option>
             ))}
           </select>
@@ -623,7 +625,7 @@ const AcademicHistoryCard: React.FC = () => {
         if (undergrad) {
           formatted.push({
             id: undergrad.id,
-            degree: undergrad.degree,
+            degree: mapDegreeLabel(undergrad.degree),
             institution: undergrad.institution,
             fieldOfStudy: undergrad.field_of_study,
             grade: undergrad.grade,
@@ -634,7 +636,7 @@ const AcademicHistoryCard: React.FC = () => {
         if (xEducation) {
           formatted.push({
             id: xEducation.id,
-            degree: xEducation.degree,
+            degree: mapDegreeLabel(xEducation.degree),
             institution: xEducation.institution,
             fieldOfStudy: xEducation.field_of_study,
             grade: xEducation.grade,
@@ -645,7 +647,7 @@ const AcademicHistoryCard: React.FC = () => {
         if (xiiEducation) {
           formatted.push({
             id: xiiEducation.id,
-            degree: xiiEducation.degree,
+            degree: mapDegreeLabel(xiiEducation.degree),
             institution: xiiEducation.institution,
             fieldOfStudy: xiiEducation.field_of_study,
             grade: xiiEducation.grade,
@@ -665,42 +667,64 @@ const AcademicHistoryCard: React.FC = () => {
   }, [studentId]);
 
   const handleAddEducation = async (newEducation: AcademicHistory) => {
-  try {
-    await axios.patch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history`,
-      { undergraduate: mapEducationToBackend(newEducation) },
-      { withCredentials: true }
-    );
-    fetchAcademicHistory();
-  } catch (error) {
-    console.error("Error adding education", error);
-  }
-  setShowAddModal(false);
-};
+    try {
+      const payload: any = {};
 
+      if (newEducation.degree === "undergraduate") {
+        payload.undergraduate = mapEducationToBackend(newEducation);
+      } else if (newEducation.degree === "x_education") {
+        payload.x_education = mapEducationToBackend(newEducation);
+      } else if (newEducation.degree === "xii_education") {
+        payload.xii_education = mapEducationToBackend(newEducation);
+      }
+
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history`,
+        payload,
+        { withCredentials: true }
+      );
+
+      fetchAcademicHistory();
+    } catch (error) {
+      console.error("Error adding education", error);
+    }
+    setShowAddModal(false);
+  };
 
   const handleEditEducation = async (updatedEducation: AcademicHistory) => {
-  try {
-    await axios.patch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history`,
-      { undergraduate: mapEducationToBackend(updatedEducation) },
-      { withCredentials: true }
-    );
-    fetchAcademicHistory();
-  } catch (error) {
-    console.error("Error editing education", error);
-  }
-  setShowEditModal(false);
-};
+    try {
+      const payload: any = {};
 
+      if (updatedEducation.degree === "undergraduate") {
+        payload.undergraduate = mapEducationToBackend(updatedEducation);
+      } else if (updatedEducation.degree === "x_education") {
+        payload.x_education = mapEducationToBackend(updatedEducation);
+      } else if (updatedEducation.degree === "xii_education") {
+        payload.xii_education = mapEducationToBackend(updatedEducation);
+      }
+
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history`,
+        payload,
+        { withCredentials: true }
+      );
+
+      fetchAcademicHistory();
+    } catch (error) {
+      console.error("Error editing education", error);
+    }
+    setShowEditModal(false);
+  };
 
   const handleDeleteEducation = async () => {
     try {
+      if (!selectedEducation?.id) return;
+
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history/${selectedEducation.id}`,
         { withCredentials: true }
       );
-      setAcademicHistory([]);
+      fetchAcademicHistory();
     } catch (error) {
       console.error("Error deleting education", error);
     }
@@ -780,15 +804,16 @@ const AcademicHistoryCard: React.FC = () => {
             </div>
           ))}
           {academicHistory.length === 0 && (
- <button
-            onClick={() => setShowAddModal(true)}
-            className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-blue-500 hover:bg-blue-50 transition-all group cursor-pointer"
-          >
-            <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-600 mx-auto mb-1" />
-            <span className="text-sm text-gray-600 group-hover:text-blue-600 font-medium">
-              Add Education
-            </span>
-          </button>          )}
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-blue-500 hover:bg-blue-50 transition-all group cursor-pointer"
+            >
+              <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-600 mx-auto mb-1" />
+              <span className="text-sm text-gray-600 group-hover:text-blue-600 font-medium">
+                Add Education
+              </span>
+            </button>
+          )}
         </div>
       </div>
 

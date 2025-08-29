@@ -27,7 +27,9 @@ import axios from "axios";
 interface Course {
   class: string;
   semester: number;
-  subject: string;
+  subjectName: string;
+  batchName: string;
+  divisionCode: string;
   totalStudents: number;
 }
 
@@ -66,8 +68,6 @@ interface SelectedFilters {
 
 type SortField = "enrollmentId" | "name" | "marks" | "percentage" | "rank";
 type SortOrder = "asc" | "desc";
-
-
 
 const mockStudentMarks: StudentMark[] = [
   {
@@ -201,12 +201,12 @@ const OngoingCoursesTable: React.FC = () => {
                 {ongoingCourses?.map((course, index) => (
                   <tr key={index} className="border-b border-gray-50">
                     <td className="py-4 font-medium text-gray-900">
-                      {course.class}
+                      {course?.batchName+course?.divisionCode}
                     </td>
-                    <td className="py-4 text-gray-600">{course.semester}</td>
-                    <td className="py-4 text-gray-600">{course.subject}</td>
+                    <td className="py-4 text-gray-600">{course?.semester}</td>
+                    <td className="py-4 text-gray-600">{course?.subjectName}</td>
                     <td className="py-4 text-gray-600">
-                      {course.totalStudents}
+                      {course?.totalStudents}
                     </td>
                   </tr>
                 ))}
@@ -219,7 +219,6 @@ const OngoingCoursesTable: React.FC = () => {
   );
 };
 
-
 const CompletedCoursesTable: React.FC = () => {
   const [completedCourses, setCompletedCourses] = useState<Course[]>([]);
   const [showCompletedCourses, setShowCompletedCourses] = useState(false);
@@ -231,7 +230,7 @@ const CompletedCoursesTable: React.FC = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teacher-courses/completedSubject`,
         { withCredentials: true }
       )
-      .then((res) => setCompletedCourses(res.data))
+      .then((res) => setCompletedCourses(res?.data?.data))
       .catch((err) => console.error("Error fetching completed courses:", err));
   }, []);
 
@@ -241,7 +240,7 @@ const CompletedCoursesTable: React.FC = () => {
       : completedCourses.filter((c) => c.class === classFilter);
 
   const getUniqueClasses = () =>
-    [...new Set(completedCourses.map((c) => c.class))].sort();
+    [...new Set(completedCourses?.map((c) => c.class))].sort();
 
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
@@ -268,8 +267,8 @@ const CompletedCoursesTable: React.FC = () => {
                 onChange={(e) => setClassFilter(e.target.value)}
               >
                 <option value="all">All Classes</option>
-                {getUniqueClasses().map((cls) => (
-                  <option key={cls} value={cls}>
+                {getUniqueClasses().map((cls, idx) => (
+                  <option key={`${cls}-${idx}`} value={cls}>
                     {cls}
                   </option>
                 ))}
@@ -322,9 +321,11 @@ const CompletedCoursesTable: React.FC = () => {
                 <tbody>
                   {getFilteredCompletedCourses().map((course, index) => (
                     <tr key={index} className="border-b border-gray-50">
-                      <td className="py-4">{course.class}</td>
+                      <td className="py-4">
+                        {course?.batchName + course?.divisionCode}
+                      </td>
                       <td className="py-4">{course.semester}</td>
-                      <td className="py-4">{course.subject}</td>
+                      <td className="py-4">{course?.subjectName}</td>
                       <td className="py-4">{course.totalStudents}</td>
                     </tr>
                   ))}
@@ -337,7 +338,6 @@ const CompletedCoursesTable: React.FC = () => {
     </div>
   );
 };
-
 
 interface MarksSelectionFormProps {
   onShowAnalysis: (filters: SelectedFilters) => void;
@@ -531,8 +531,7 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
                 setSelectedTestType("");
                 setSelectedTestNumber("");
               }}
-                            disabled={schoolOptions.length===0}
-
+              disabled={schoolOptions.length === 0}
               className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
               focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
               appearance-none bg-white cursor-pointer"
@@ -589,7 +588,9 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
 
         {/* Division */}
         <div>
-          <label className="block font-medium text-gray-700 mb-2">Division</label>
+          <label className="block font-medium text-gray-700 mb-2">
+            Division
+          </label>
           <div className="relative">
             <select
               value={selectedDivision}
@@ -626,7 +627,9 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
 
         {/* Semester */}
         <div>
-          <label className="block font-medium text-gray-700 mb-2">Semester</label>
+          <label className="block font-medium text-gray-700 mb-2">
+            Semester
+          </label>
           <div className="relative">
             <select
               value={selectedSemester}
@@ -664,7 +667,9 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
 
         {/* Subject */}
         <div>
-          <label className="block font-medium text-gray-700 mb-2">Subject</label>
+          <label className="block font-medium text-gray-700 mb-2">
+            Subject
+          </label>
           <div className="relative">
             <select
               value={selectedSubject}
@@ -836,7 +841,6 @@ const PerformanceChart: React.FC<{ selectedFilters: SelectedFilters }> = ({
     </div>
   );
 };
-
 
 interface StudentMarksTableProps {
   selectedFilters: SelectedFilters;
@@ -1055,7 +1059,6 @@ const TeacherMarksDashboard: React.FC = () => {
     setSelectedFilters(filters);
     setShowMarksDetails(true);
   };
-
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">

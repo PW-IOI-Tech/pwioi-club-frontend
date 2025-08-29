@@ -532,13 +532,9 @@ const PostHeader: React.FC<any> = ({ post, getRoleBadgeColor }) => (
             <h3 className="font-semibold text-gray-900 text-sm">
               {post?.userInfo?.name}
             </h3>
-            <span
-              className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
+           <span  className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
                 post?.author_type
-              )}`}
-            >
-              {post?.author_type}
-            </span>
+              )}`}>{post?.author_type}</span>
             {post.assignedBy && (
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-br from-white to-indigo-50 text-slate-800 border border-slate-400">
                 📌 {post?.author_type}
@@ -577,6 +573,7 @@ const PostActions: React.FC<PostActionsProps> = ({
     { id: "3", name: "Mike Johnson", avatar: "👨" },
     { id: "4", name: "Sarah Wilson", avatar: "👩‍💼" },
   ];
+  
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -972,20 +969,27 @@ const Feed: React.FC<FeedProps> = ({
   onLike,
   onFlag,
   getRoleBadgeColor,
-}) => (
-  <div className="space-y-6">
-    {posts.map((post) => (
-      <Post
-        key={post.id}
-        post={post}
-        likedPosts={likedPosts}
-        onLike={onLike}
-        onFlag={onFlag}
-        getRoleBadgeColor={getRoleBadgeColor}
-      />
-    ))}
-  </div>
-);
+}) => {
+  const uniquePosts = posts.filter(
+    (post, index, self) => index === self.findIndex((p) => p.id === post.id)
+  );
+
+  return (
+    <div className="space-y-6">
+      {uniquePosts.map((post, index) => (
+        <Post
+          key={`${post.id}-${index}`} 
+          post={post}
+          likedPosts={likedPosts}
+          onLike={onLike}
+          onFlag={onFlag}
+          getRoleBadgeColor={getRoleBadgeColor}
+        />
+      ))}
+    </div>
+  );
+};
+
 
 const ProfileHeader: React.FC<any> = ({ user }) => {
   const storedUser = localStorage.getItem("user");

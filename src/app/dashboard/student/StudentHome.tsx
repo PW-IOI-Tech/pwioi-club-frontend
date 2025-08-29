@@ -410,7 +410,6 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
   );
 };
 
-// ... rest of the frontend code remains the same ...
 const PostHeader: React.FC<any> = ({ post,getRoleBadgeColor }) => (
   <div className="p-4 pb-3">
     <div className="flex items-start justify-between">
@@ -428,9 +427,9 @@ const PostHeader: React.FC<any> = ({ post,getRoleBadgeColor }) => (
             <h3 className="font-semibold text-gray-900 text-sm">
               {post?.userInfo?.name}
             </h3>
-            {/* <span  className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
+            <span  className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
                 post?.author_type
-              )}`}>{post?.author_type}</span> */}
+              )}`}>{post?.author_type}</span>
             {post.assignedBy && (
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-br from-white to-indigo-50 text-slate-800 border border-slate-400">
                 📌 {post?.author_type}
@@ -759,13 +758,13 @@ const PostActions: React.FC<PostActionsProps> = ({
     </div>
   );
 };
-
-const Post: React.FC<{
-  post: Post;
-  likedPosts: Set<string>;
-  onLike: (postId: string) => void;
-  onFlag: (postId: string) => void;
-}> = ({ post, likedPosts, onLike, onFlag }) => {
+const Post: React.FC<any> = ({
+  post,
+  likedPosts,
+  onLike,
+  onFlag,
+  getRoleBadgeColor,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const contentLines = post.content.split("\n");
@@ -785,7 +784,7 @@ const Post: React.FC<{
 
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
-      <PostHeader post={post} />
+      <PostHeader post={post} getRoleBadgeColor={getRoleBadgeColor} />
 
       <div className="px-4 py-3">
         <div className="text-gray-800 text-sm">
@@ -816,7 +815,7 @@ const Post: React.FC<{
 
       {post?.media?.length > 0 && (
         <div className="px-4 pb-3 grid grid-cols-1 gap-2">
-          {post.media.map((mediaItem) => (
+          {post.media.map((mediaItem:any) => (
             <div key={mediaItem.id}>
               {mediaItem.type === "IMAGE" ? (
                 <img
@@ -852,19 +851,27 @@ const Feed: React.FC<FeedProps> = ({
   onLike,
   onFlag,
   getRoleBadgeColor,
-}) => (
-  <div className="space-y-6">
-    {posts.map((post) => (
-      <Post
-        key={post.id}
-        post={post}
-        likedPosts={likedPosts}
-        onLike={onLike}
-        onFlag={onFlag}
-      />
-    ))}
-  </div>
-);
+}) => {
+  const uniquePosts = posts.filter(
+    (post, index, self) => index === self.findIndex((p) => p.id === post.id)
+  );
+
+  return (
+    <div className="space-y-6">
+      {uniquePosts.map((post, index) => (
+        <Post
+          key={`${post.id}-${index}`} 
+          post={post}
+          likedPosts={likedPosts}
+          onLike={onLike}
+          onFlag={onFlag}
+          getRoleBadgeColor={getRoleBadgeColor}
+        />
+      ))}
+    </div>
+  );
+};
+
 
 const ProfileHeader: React.FC<any> = ({ user }) => (
   <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5 overflow-hidden">
