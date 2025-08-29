@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   ChevronDown,
   Upload,
@@ -9,16 +10,42 @@ import {
   CheckCircle,
 } from "lucide-react";
 
+interface School {
+  id: string;
+  name: string;
+}
+
+interface Teacher {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  pwId?: string;
+  gender?: string;
+  role?: string;
+  designation?: string;
+  linkedin?: string;
+  github_link?: string;
+  personal_mail?: string;
+  createdAt: string;
+}
+
 interface AddCohortModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCohortCreated: (cohortData: {
-    cohortName: string;
-    startDate: string;
-    endDate: string;
-    school: string;
-  }) => void;
+  onCohortCreated: (
+    cohortData: {
+      cohortName: string;
+      startDate: string;
+      endDate: string;
+      school: string;
+    },
+    selectedTeachers: string[],
+    uploadedFile: File | null
+  ) => void;
   prefillLocation?: string;
+  centerId?: string;
+  isCreating?: boolean;
 }
 
 interface FormData {
@@ -33,48 +60,19 @@ const teachersData: Record<
   string,
   Record<string, Array<{ value: string; label: string }>>
 > = {
-  Bangalore: {
-    SOT: [
-      { value: "dr-john-smith", label: "Dr. John Smith" },
-      { value: "prof-alice-brown", label: "Prof. Alice Brown" },
-    ],
-    SOM: [
-      { value: "prof-sarah-johnson", label: "Prof. Sarah Johnson" },
-      { value: "dr-michael-davis", label: "Dr. Michael Davis" },
-    ],
-    SOD: [
-      { value: "ms-emily-davis", label: "Ms. Emily Davis" },
-      { value: "prof-robert-taylor", label: "Prof. Robert Taylor" },
-    ],
-  },
-  Lucknow: {
-    SOT: [{ value: "dr-rajesh-kumar", label: "Dr. Rajesh Kumar" }],
-    SOM: [{ value: "dr-amit-singh", label: "Dr. Amit Singh" }],
-    SOD: [{ value: "ms-kavya-patel", label: "Ms. Kavya Patel" }],
-  },
-  Pune: {
-    SOT: [{ value: "dr-suresh-reddy", label: "Dr. Suresh Reddy" }],
-    SOM: [{ value: "dr-vikram-shah", label: "Dr. Vikram Shah" }],
-    SOD: [{ value: "ms-pooja-mehta", label: "Ms. Pooja Mehta" }],
-  },
-  Noida: {
-    SOT: [{ value: "dr-ashok-verma", label: "Dr. Ashok Verma" }],
-    SOM: [{ value: "prof-deepa-agarwal", label: "Prof. Deepa Agarwal" }],
-    SOD: [{ value: "ms-sneha-kapoor", label: "Ms. Sneha Kapoor" }],
-  },
+  // This is now replaced by dynamic API calls, keeping for reference
+  // Remove this object if not needed elsewhere
 };
 
-const schoolOptions = [
-  { value: "SOT", label: "School of Technology" },
-  { value: "SOM", label: "School of Management" },
-  { value: "SOD", label: "School of Design" },
-];
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const AddCohortModal: React.FC<AddCohortModalProps> = ({
   isOpen,
   onClose,
   onCohortCreated,
   prefillLocation,
+  centerId,
+  isCreating = false,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     cohortName: "",
@@ -90,7 +88,80 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
   >("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  const [schools, setSchools] = useState<School[]>([]);
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const fetchSchools = async () => {
+      if (!centerId) return;
+      
+      setLoadingSchools(true);
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/schools/${centerId}`, {
+          withCredentials: true,
+        });
+        
+        const fetchedSchools: School[] = res.data.data.map((school: any) => ({
+          id: school.id,
+          name: school.name,
+        }));
+        
+        setSchools(fetchedSchools);
+      } catch (err) {
+        console.error("Error fetching schools:", err);
+        setSchools([]);
+      } finally {
+        setLoadingSchools(false);
+      }
+    };
+    
+    if (isOpen && centerId) {
+      fetchSchools();
+    }
+  }, [isOpen, centerId]);
+
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      if (!formData.school) {
+        setTeachers([]);
+        return;
+      }
+      
+      setLoadingTeachers(true);
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/teachers/school/${formData.school}`, {
+          withCredentials: true,
+        });
+        
+        const fetchedTeachers: Teacher[] = res.data.data.map((teacher: any) => ({
+          id: teacher.id,
+          name: teacher.name,
+          email: teacher.email,
+          phone: teacher.phone,
+          pwId: teacher.pwId,
+          gender: teacher.gender,
+          role: teacher.role,
+          designation: teacher.designation,
+          linkedin: teacher.linkedin,
+          github_link: teacher.github_link,
+          personal_mail: teacher.personal_mail,
+          createdAt: teacher.createdAt,
+        }));
+        
+        setTeachers(fetchedTeachers);
+      } catch (err) {
+        console.error("Error fetching teachers:", err);
+        setTeachers([]);
+      } finally {
+        setLoadingTeachers(false);
+      }
+    };
+    
+    fetchTeachers();
+  }, [formData.school]);
 
   useEffect(() => {
     if (isOpen) {
@@ -117,8 +188,7 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
   }, [isOpen, prefillLocation]);
 
   const getAvailableTeachers = () => {
-    if (!prefillLocation || !formData.school) return [];
-    return teachersData[prefillLocation]?.[formData.school] || [];
+    return teachers;
   };
 
   const handleInputChange = (
@@ -132,6 +202,8 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
         [name]: value,
         selectedTeachers: [],
       }));
+      // Clear teachers when school changes
+      setTeachers([]);
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -179,6 +251,10 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
 
     if (formData.selectedTeachers.length === 0) {
       errors.selectedTeachers = "At least one teacher must be selected";
+    }
+
+    if (!uploadedFile) {
+      errors.uploadedFile = "Student Excel file is required";
     }
 
     setFormErrors(errors);
@@ -254,40 +330,21 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
 
     if (!validateForm()) return;
 
-    if (
-      uploadedFile &&
-      uploadStatus !== "success" &&
-      uploadStatus !== "uploading"
-    ) {
-      setUploadStatus("uploading");
-      setTimeout(() => {
-        setUploadStatus("success");
-        setTimeout(() => {
-          onCohortCreated({
-            cohortName: formData.cohortName,
-            startDate: formData.startDate,
-            endDate: formData.endDate,
-            school: formData.school,
-          });
-          onClose();
-        }, 600);
-      }, 1500);
-      return;
-    }
-
-    if (!uploadedFile) {
-      onCohortCreated({
+    // Call the parent handler with all required data
+    onCohortCreated(
+      {
         cohortName: formData.cohortName,
         startDate: formData.startDate,
         endDate: formData.endDate,
         school: formData.school,
-      });
-      onClose();
-    }
+      },
+      formData.selectedTeachers,
+      uploadedFile
+    );
   };
 
   const handleClose = () => {
-    if (uploadStatus === "uploading") return;
+    if (isCreating) return; // Prevent closing while creating cohort
     setFormData({
       cohortName: "",
       startDate: "",
@@ -344,14 +401,17 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                   name="school"
                   value={formData.school}
                   onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
+                  disabled={loadingSchools}
+                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                     formErrors.school ? "border-red-500" : "border-gray-300"
                   }`}
                 >
-                  <option value="">Select School</option>
-                  {schoolOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
+                  <option value="">
+                    {loadingSchools ? "Loading schools..." : "Select School"}
+                  </option>
+                  {schools.map((school) => (
+                    <option key={school.id} value={school.id}>
+                      {school.name}
                     </option>
                   ))}
                 </select>
@@ -371,26 +431,36 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                   Teachers *
                 </label>
                 <div className="border rounded-md p-3 bg-gray-50 max-h-40 overflow-y-auto">
-                  {getAvailableTeachers().length === 0 ? (
+                  {loadingTeachers ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="animate-spin mr-2" size={16} />
+                      <span className="text-sm text-gray-500">Loading teachers...</span>
+                    </div>
+                  ) : getAvailableTeachers().length === 0 ? (
                     <p className="text-sm text-gray-500">
-                      No teachers available
+                      No teachers available for this school
                     </p>
                   ) : (
                     <div className="space-y-2">
                       {getAvailableTeachers().map((teacher) => (
                         <label
-                          key={teacher.value}
+                          key={teacher.id}
                           className="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-1 rounded"
                         >
                           <input
                             type="checkbox"
                             checked={formData.selectedTeachers.includes(
-                              teacher.value
+                              teacher.id
                             )}
-                            onChange={() => handleTeacherToggle(teacher.value)}
+                            onChange={() => handleTeacherToggle(teacher.id)}
                             className="rounded text-[#1B3A6A] focus:ring-[#1B3A6A]"
                           />
-                          <span className="text-sm">{teacher.label}</span>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">{teacher.name}</span>
+                            {teacher.designation && (
+                              <span className="text-xs text-gray-500">{teacher.designation}</span>
+                            )}
+                          </div>
                         </label>
                       ))}
                     </div>
@@ -448,14 +518,14 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
 
             <div className="border-t pt-6">
               <h4 className="text-sm font-semibold text-gray-800 mb-3">
-                Upload Student List (XLSX)
+                Upload Student List (XLSX) *
               </h4>
 
               <div
                 className={`relative border-2 border-dashed rounded-md p-6 text-center transition-all ${
                   dragActive
                     ? "border-blue-500 bg-blue-50"
-                    : uploadStatus === "error"
+                    : uploadStatus === "error" || formErrors.uploadedFile
                     ? "border-red-300 bg-red-50"
                     : uploadStatus === "success"
                     ? "border-green-300 bg-green-50"
@@ -573,8 +643,13 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
               </div>
 
               <p className="text-xs text-gray-500 mt-2">
-                You can drag & drop or click to select a file.
+                You can drag & drop or click to select a file. This file is required to create the cohort.
               </p>
+              {formErrors.uploadedFile && (
+                <p className="mt-1 text-sm text-red-600">
+                  {formErrors.uploadedFile}
+                </p>
+              )}
             </div>
           </div>
 
@@ -582,20 +657,20 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
             <button
               type="button"
               onClick={handleClose}
-              disabled={uploadStatus === "uploading"}
+              disabled={isCreating}
               className="px-4 py-2 border border-gray-300 rounded-sm text-slate-900 hover:bg-gray-100 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={uploadStatus === "uploading"}
+              disabled={isCreating}
               className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50"
             >
-              {uploadStatus === "uploading" ? (
+              {isCreating ? (
                 <>
                   <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                  Uploading...
+                  Creating Cohort...
                 </>
               ) : (
                 "Create Cohort"

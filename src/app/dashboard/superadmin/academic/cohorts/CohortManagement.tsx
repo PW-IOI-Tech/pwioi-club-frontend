@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Plus, ChevronDown, Users, Component } from "lucide-react";
 import Table from "../../Table";
 import AddCohortModal from "./AddCohortModal";
+import axios from "axios";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 interface TableCohort {
   id: string;
@@ -16,112 +19,250 @@ interface TableCohort {
   school: string;
 }
 
-const LOCATIONS = ["Bangalore", "Lucknow", "Pune", "Noida"] as const;
+interface Center {
+  id: string;
+  name: string;
+  location: string;
+  code: string;
+}
 
 const schoolOptions = [
   { value: "SOT", label: "School of Technology" },
   { value: "SOM", label: "School of Management" },
-  { value: "SOD", label: "School of Design" },
-];
-
-const initialCohorts: TableCohort[] = [
-  {
-    id: "1",
-    cohortName: "Web Dev Cohort A",
-    startDate: "2025-01-10",
-    endDate: "2025-06-15",
-    teacherCount: 2,
-    studentCount: 35,
-    center: "Bangalore",
-    school: "SOT",
-  },
-  {
-    id: "2",
-    cohortName: "MBA Leadership Batch",
-    startDate: "2025-02-01",
-    endDate: "2025-07-30",
-    teacherCount: 3,
-    studentCount: 42,
-    center: "Noida",
-    school: "SOM",
-  },
+  { value: "SOH", label: "School of Humanities" },
 ];
 
 export default function CohortManagement() {
-  const [cohorts, setCohorts] = useState<TableCohort[]>(initialCohorts);
-  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [cohorts, setCohorts] = useState<TableCohort[]>([]);
+  const [centers, setCenters] = useState<Center[]>([]);
+  const [selectedCenter, setSelectedCenter] = useState<Center | null>(null);
   const [isAddCohortModalOpen, setIsAddCohortModalOpen] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [creatingCohort, setCreatingCohort] = useState(false);
 
-  const filteredCohorts = useMemo(() => {
-    if (!selectedLocation) return [];
-    return cohorts.filter((c) => c.center === selectedLocation);
-  }, [cohorts, selectedLocation]);
+  // Fetch centers from backend
+  useEffect(() => {
+    const getCenters = async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/center/all`, {
+          withCredentials: true,
+        });
 
-  const statistics = useMemo(() => {
-    const filtered = cohorts.filter((c) => c.center === selectedLocation);
-    return {
-      totalCohorts: filtered.length,
-      totalStudents: filtered.reduce((sum, c) => sum + c.studentCount, 0),
-      totalTeachers: filtered.reduce((sum, c) => sum + c.teacherCount, 0),
+        const fetchedCenters: Center[] = res.data.data.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          location: c.location,
+          code: c.code,
+        }));
+
+        setCenters(fetchedCenters);
+      } catch (err) {
+        console.error("Error fetching centers:", err);
+      }
     };
-  }, [cohorts, selectedLocation]);
 
-  const handleUpdateCohort = useCallback((updatedItem: any) => {
-    const cohort = updatedItem as TableCohort;
-    setCohorts((prev) =>
-      prev.map((c) => (c.id === cohort.id ? { ...c, ...cohort } : c))
-    );
+    getCenters();
   }, []);
 
-  const handleDeleteCohort = useCallback((id: string | number) => {
+  // Fetch cohorts - either all cohorts or by center
+  const fetchCohorts = useCallback(async (centerId?: string, centerName?: string) => {
+    setLoading(true);
+    try {
+      const endpoint = centerId 
+        ? `${BACKEND_URL}/api/cohort/center/${centerId}`
+        : `${BACKEND_URL}/api/cohort/`;
+
+      const res = await axios.get(endpoint, {
+        withCredentials: true,
+      });
+
+      const fetchedCohorts: TableCohort[] = res.data.data.map((cohort: any) => ({
+        id: cohort.id,
+        cohortName: cohort.name,
+        startDate: cohort.start_date,
+        endDate: cohort.end_date || "",
+        teacherCount: cohort._count.teacherCohorts,
+        studentCount: cohort._count.students,
+        center: centerName || "", // For center-specific fetch, use provided name
+        school: cohort.school.name,
+      }));
+
+      setCohorts(fetchedCohorts);
+    } catch (err) {
+      console.error("Error fetching cohorts:", err);
+      setCohorts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch all cohorts on component mount if no center selected
+  useEffect(() => {
+    if (!selectedCenter) {
+      fetchCohorts();
+    }
+  }, [fetchCohorts, selectedCenter]);
+
+  const filteredCohorts = useMemo(() => {
+    if (!selectedCenter) return [];
+    return cohorts; // No need to filter since we fetch by center
+  }, [cohorts, selectedCenter]);
+
+  const statistics = useMemo(() => {
+    const cohortsToCount = selectedCenter ? cohorts : [];
+    return {
+      totalCohorts: cohortsToCount.length,
+      totalStudents: cohortsToCount.reduce((sum, c) => sum + c.studentCount, 0),
+      totalTeachers: cohortsToCount.reduce((sum, c) => sum + c.teacherCount, 0),
+    };
+  }, [cohorts, selectedCenter]);
+
+  const handleUpdateCohort = useCallback(async (updatedItem: any) => {
+    const cohort = updatedItem as TableCohort;
+    
+    try {
+      const updateData: any = {};
+      
+      // Map the fields for API
+      if (cohort.cohortName !== undefined) updateData.name = cohort.cohortName;
+      if (cohort.startDate !== undefined) updateData.start_date = cohort.startDate;
+      if (cohort.endDate !== undefined && cohort.endDate !== "") {
+        updateData.end_date = cohort.endDate;
+      } else if (cohort.endDate === "") {
+        updateData.end_date = null;
+      }
+
+      await axios.patch(
+        `${BACKEND_URL}/api/cohort/${cohort.id}`,
+        updateData,
+        { withCredentials: true }
+      );
+
+      setCohorts((prev) =>
+        prev.map((c) => (c.id === cohort.id ? { ...c, ...cohort } : c))
+      );
+    } catch (err) {
+      console.error("Error updating cohort:", err);
+      // Optionally show error message to user
+    }
+  }, []);
+
+  const handleDeleteCohort = useCallback(async (id: string | number) => {
     const deleteId = typeof id === "number" ? id.toString() : id;
-    setCohorts((prev) => prev.filter((c) => c.id !== deleteId));
+    
+    try {
+      await axios.delete(`${BACKEND_URL}/api/cohort/${deleteId}`, {
+        withCredentials: true,
+      });
+
+      setCohorts((prev) => prev.filter((c) => c.id !== deleteId));
+    } catch (err) {
+      console.error("Error deleting cohort:", err);
+      // Optionally show error message to user
+    }
   }, []);
 
   const handleAddCohort = useCallback(
-    (newCohortData: {
-      cohortName: string;
-      startDate: string;
-      endDate: string;
-      school: string;
-    }) => {
-      const newCohort: TableCohort = {
-        id: Date.now().toString(),
-        ...newCohortData,
-        center: selectedLocation,
-        teacherCount: 0,
-        studentCount: 0,
-      };
+    async (
+      newCohortData: {
+        cohortName: string;
+        startDate: string;
+        endDate: string;
+        school: string;
+      },
+      selectedTeachers: string[],
+      uploadedFile: File | null
+    ) => {
+      if (!selectedCenter) {
+        console.error("No center selected");
+        return;
+      }
 
-      setCohorts((prev) => [...prev, newCohort]);
-      setIsAddCohortModalOpen(false);
+      if (!uploadedFile) {
+        alert("Please upload a student Excel file to create the cohort.");
+        return;
+      }
+
+      setCreatingCohort(true);
+      
+      try {
+        const formData = new FormData();
+        
+        // Add cohort data
+        formData.append('name', newCohortData.cohortName);
+        formData.append('school_id', newCohortData.school);
+        formData.append('center_id', selectedCenter.id);
+        formData.append('start_date', newCohortData.startDate);
+        
+        if (newCohortData.endDate) {
+          formData.append('end_date', newCohortData.endDate);
+        }
+        
+        // Add teacher IDs as JSON string
+        formData.append('teacher_ids', JSON.stringify(selectedTeachers));
+        
+        // Add the uploaded file
+        formData.append('file', uploadedFile);
+
+        const response = await axios.post(
+          `${BACKEND_URL}/api/cohort/`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+            withCredentials: true,
+          }
+        );
+
+        if (response.data.success) {
+          // Refresh the cohorts list to get the latest data
+          await fetchCohorts(selectedCenter.id, selectedCenter.name);
+          setIsAddCohortModalOpen(false);
+          
+          // Show success message
+          alert("Cohort created successfully!");
+        }
+      } catch (err: any) {
+        console.error("Error creating cohort:", err);
+        
+        // Show error message to user
+        const errorMessage = err.response?.data?.message || "Failed to create cohort. Please try again.";
+        alert(errorMessage);
+      } finally {
+        setCreatingCohort(false);
+      }
     },
-    [selectedLocation]
+    [selectedCenter, fetchCohorts]
   );
 
   const handleOpenAddModal = useCallback(() => {
-    if (!selectedLocation) {
+    if (!selectedCenter) {
       alert("Please select a center location first.");
       return;
     }
     setIsAddCohortModalOpen(true);
-  }, [selectedLocation]);
+  }, [selectedCenter]);
 
   const handleCloseAddModal = useCallback(() => {
+    if (creatingCohort) return; // Prevent closing while creating
     setIsAddCohortModalOpen(false);
-  }, []);
+  }, [creatingCohort]);
 
   const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    setSelectedLocation(value);
+    const found = centers.find((c) => c.id === value) || null;
+    setSelectedCenter(found);
 
-    if (value) {
+    if (found) {
+      fetchCohorts(found.id, found.name);
       setTimeout(() => {
         setShowContent(true);
       }, 400);
     } else {
       setShowContent(false);
+      fetchCohorts(); // Fetch all cohorts when no center selected
     }
   };
 
@@ -140,14 +281,14 @@ export default function CohortManagement() {
           <div className="relative">
             <select
               id="location"
-              value={selectedLocation}
+              value={selectedCenter?.id || ""}
               onChange={handleLocationChange}
               className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer appearance-none text-sm"
             >
               <option value="">Select Location to Proceed</option>
-              {LOCATIONS.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
+              {centers.map((center) => (
+                <option key={center.id} value={center.id}>
+                  {center.name}
                 </option>
               ))}
             </select>
@@ -157,9 +298,7 @@ export default function CohortManagement() {
           </div>
         </div>
 
-        {!selectedLocation ? (
-          <ShimmerSkeleton />
-        ) : !showContent ? (
+        {!selectedCenter || !showContent || loading ? (
           <ShimmerSkeleton />
         ) : (
           <>
@@ -183,14 +322,17 @@ export default function CohortManagement() {
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 flex items-center justify-center p-6">
                 <button
                   onClick={handleOpenAddModal}
-                  className="flex flex-col items-center justify-center w-full h-full text-slate-900 hover:text-slate-700 transition-colors cursor-pointer"
+                  disabled={creatingCohort}
+                  className="flex flex-col items-center justify-center w-full h-full text-slate-900 hover:text-slate-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="bg-gray-200 rounded-full p-3 mb-2 hover:bg-gray-300 transition-colors">
                     <Plus size={24} />
                   </div>
-                  <h3 className="text-lg font-semibold">Add New Cohort</h3>
+                  <h3 className="text-lg font-semibold">
+                    {creatingCohort ? "Creating..." : "Add New Cohort"}
+                  </h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    Create a new cohort
+                    {creatingCohort ? "Please wait" : "Create a new cohort"}
                   </p>
                 </button>
               </div>
@@ -198,7 +340,7 @@ export default function CohortManagement() {
 
             <Table
               data={filteredCohorts}
-              title={`Cohorts in ${selectedLocation}`}
+              title={`Cohorts in ${selectedCenter.name}`}
               filterField="cohortName"
               badgeFields={["teacherCount", "studentCount"]}
               selectFields={{
@@ -221,7 +363,9 @@ export default function CohortManagement() {
           isOpen={isAddCohortModalOpen}
           onClose={handleCloseAddModal}
           onCohortCreated={handleAddCohort}
-          prefillLocation={selectedLocation}
+          prefillLocation={selectedCenter?.name || ""}
+          centerId={selectedCenter?.id || ""}
+          isCreating={creatingCohort}
         />
       </div>
     </div>

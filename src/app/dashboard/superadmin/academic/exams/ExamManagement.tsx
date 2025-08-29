@@ -6,6 +6,11 @@ import Table from "../../Table";
 import AddExamModal from "./AddExamModal";
 import axios from "axios";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+const examTypeOptions = ["FORTNIGHTLY", "INTERNAL_ASSESSMENT", "INTERVIEW", "PROJECT", "END_SEM"] as const;
+type ExamType = (typeof examTypeOptions)[number];
+
 interface TableExam {
   id: string;
   examName: string;
@@ -20,128 +25,141 @@ interface TableExam {
   semester: number;
 }
 
+interface Center {
+  id: string;
+  name: string;
+  location: string;
+  code: string;
+}
+
+interface School {
+  id: string;
+  name: string;
+}
+
+interface Batch {
+  id: string;
+  name: string;
+  year: number;
+}
+
+interface Division {
+  id: string;
+  code: string;
+  name: string;
+}
+
+interface Semester {
+  id: string;
+  number: number;
+  name: string;
+}
+
+interface Subject {
+  id: string;
+  name: string;
+  code: string;
+  teacher?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+interface ExamOption {
+  id: string;
+  name: string;
+}
+
+const initialExams: TableExam[] = [
+  {
+    id: "1",
+    examName: "Fortnightly Test 1",
+    weightage: 10,
+    maxMarks: 20,
+    passingMarks: 8,
+    examType: "FORTNIGHTLY",
+    examNumber: "F1",
+    subject: "CS201 Data Structures",
+    date: "2025-04-05",
+    center: "Bangalore",
+    school: "SOT",
+    batch: "23",
+    division: "B1",
+    semester: 3,
+  },
+  {
+    id: "2",
+    examName: "Internal Assessment",
+    weightage: 25,
+    maxMarks: 50,
+    passingMarks: 20,
+    examType: "INTERNAL_ASSESSMENT",
+    examNumber: "I1",
+    subject: "MG201 Marketing",
+    date: "2025-04-12",
+    center: "Noida",
+    school: "SOM",
+    batch: "22",
+    division: "B2",
+    semester: 5,
+  },
+  {
+    id: "3",
+    examName: "Interview Round 1",
+    weightage: 15,
+    maxMarks: 30,
+    passingMarks: 12,
+    examType: "INTERVIEW",
+    examNumber: "IR1",
+    subject: "DS101 Design Thinking",
+    date: "2025-04-08",
+    center: "Lucknow",
+    school: "SOD",
+    batch: "24",
+    division: "B1",
+    semester: 2,
+  },
+];
+
 export default function ExamManagement() {
-  const [centers, setCenters] = useState<any[]>([]);
-  const [schools, setSchools] = useState<any[]>([]);
-  const [batches, setBatches] = useState<any[]>([]);
-  const [divisions, setDivisions] = useState<any[]>([]);
-  const [semesters, setSemesters] = useState<any[]>([]);
-  const [subjects, setSubjects] = useState<any[]>([]);
+  // Data state
+  const [centers, setCenters] = useState<Center[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [semesters, setSemesters] = useState<Semester[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [examOptions, setExamOptions] = useState<ExamOption[]>([]);
+
+  // Filter state
+  const [selectedCenterId, setSelectedCenterId] = useState<string>("");
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>("");
+  const [selectedBatchId, setSelectedBatchId] = useState<string>("");
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>("");
+  const [selectedSemesterId, setSelectedSemesterId] = useState<string>("");
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
+  const [selectedExamType, setSelectedExamType] = useState<ExamType | "">("");
+  const [selectedExamId, setSelectedExamId] = useState<string>("");
+
+  // Loading states
+  const [loadingState, setLoadingState] = useState({
+    centersLoading: false,
+    schoolsLoading: false,
+    batchesLoading: false,
+    divisionsLoading: false,
+    semestersLoading: false,
+    subjectsLoading: false,
+    examsLoading: false,
+  });
+
+  // Exam data state
   const [exams, setExams] = useState<TableExam[]>([]);
   const [filteredExams, setFilteredExams] = useState<TableExam[]>([]);
   const [error, setError] = useState("");
   const [isAddExamModalOpen, setIsAddExamModalOpen] = useState(false);
+  const [filtersComplete, setFiltersComplete] = useState(false);
 
-  const [selectedCenter, setSelectedCenter] = useState("");
-  const [selectedSchool, setSelectedSchool] = useState("");
-  const [selectedBatch, setSelectedBatch] = useState("");
-  const [selectedDivision, setSelectedDivision] = useState("");
-  const [selectedSemester, setSelectedSemester] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("");
-
-  const allFiltersSelected =
-    selectedCenter &&
-    selectedSchool &&
-    selectedBatch &&
-    selectedDivision &&
-    selectedSemester;
-
-  // ----------------- FETCH FILTER DATA -----------------
-  useEffect(() => {
-    const fetchCenters = async () => {
-      try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
-          { withCredentials: true }
-        );
-        if (res.data.success) setCenters(res.data.data);
-      } catch (err: any) {
-        console.error(err.response?.data?.message || "Failed to fetch centers");
-      }
-    };
-    fetchCenters();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedCenter) return;
-    axios
-      .get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${selectedCenter}`,
-        { withCredentials: true }
-      )
-      .then((res) => setSchools(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch schools"));
-  }, [selectedCenter]);
-
-  useEffect(() => {
-    if (!selectedSchool) return;
-    axios
-      .get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
-        { withCredentials: true }
-      )
-      .then((res) => setBatches(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch batches"));
-  }, [selectedSchool]);
-
-  useEffect(() => {
-    if (!selectedBatch) return;
-    axios
-      .get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/by-batch/${selectedBatch}`,
-        { withCredentials: true }
-      )
-      .then((res) => setDivisions(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch divisions"));
-  }, [selectedBatch]);
-
-  useEffect(() => {
-    if (!selectedDivision) return;
-    axios
-      .get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${selectedDivision}`,
-        { withCredentials: true }
-      )
-      .then((res) => setSemesters(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch semesters"));
-  }, [selectedDivision]);
-
-  useEffect(() => {
-    if (!selectedSemester) return;
-    axios
-      .get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/semesters/${selectedSemester}`,
-        { withCredentials: true }
-      )
-      .then((res) => setSubjects(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch subjects"));
-  }, [selectedSemester]);
-
-  // ----------------- FETCH EXAMS -----------------
-  useEffect(() => {
-    if (!allFiltersSelected) return;
-
-    const fetchExams = async () => {
-      try {
-        const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${selectedSchool}`,
-          {
-            batch: selectedBatch,
-            division: selectedDivision,
-            semester: selectedSemester,
-          },
-          { withCredentials: true }
-        );
-        setExams(res.data.data || []);
-        setFilteredExams(res.data.data || []);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to fetch exams");
-      }
-    };
-    fetchExams();
-  }, [selectedSchool, selectedBatch, selectedDivision, selectedSemester]);
-
-  // ----------------- STATISTICS -----------------
   const statistics = useMemo(
     () => ({
       totalExams: filteredExams.length,
@@ -157,83 +175,425 @@ export default function ExamManagement() {
     [filteredExams]
   );
 
-  // ----------------- ADD / UPDATE / DELETE -----------------
-  const mapExamType = (type: TableExam["examType"]) => {
-    const map: Record<TableExam["examType"], string> = {
-      Midterm: "INTERNAL_ASSESSMENT",
-      Final: "END_SEM",
-      Quiz: "FORTNIGHTLY",
-      Assignment: "PROJECT",
-      Practical: "INTERVIEW",
+  // Fetch centers on component mount
+  useEffect(() => {
+    const getCenters = async () => {
+      try {
+        setLoadingState(prev => ({ ...prev, centersLoading: true }));
+        const res = await axios.get(`${BACKEND_URL}/api/center/all`, {
+          withCredentials: true,
+        });
+
+        const fetchedCenters: Center[] = res.data.data.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          location: c.location,
+          code: c.code,
+        }));
+
+        setCenters(fetchedCenters);
+      } catch (err) {
+        console.error("Error fetching centers:", err);
+        setError("Failed to fetch centers. Please try again.");
+      } finally {
+        setLoadingState(prev => ({ ...prev, centersLoading: false }));
+      }
     };
-    return map[type];
+
+    getCenters();
+    setExams(initialExams); // Keep initial exams for demo
+  }, []);
+
+  // Fetch schools when center is selected
+  useEffect(() => {
+    const fetchSchools = async () => {
+      if (!selectedCenterId) return;
+
+      setLoadingState(prev => ({ ...prev, schoolsLoading: true }));
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/schools/${selectedCenterId}`, {
+          withCredentials: true,
+        });
+
+        const fetchedSchools: School[] = res.data.data.map((school: any) => ({
+          id: school.id,
+          name: school.name,
+        }));
+
+        setSchools(fetchedSchools);
+      } catch (err) {
+        console.error("Error fetching schools:", err);
+        setSchools([]);
+      } finally {
+        setLoadingState(prev => ({ ...prev, schoolsLoading: false }));
+      }
+    };
+
+    if (selectedCenterId) {
+      fetchSchools();
+    } else {
+      setSchools([]);
+    }
+  }, [selectedCenterId]);
+
+  // Fetch batches when school is selected
+  useEffect(() => {
+    const fetchBatches = async () => {
+      if (!selectedSchoolId) return;
+
+      setLoadingState(prev => ({ ...prev, batchesLoading: true }));
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/batches/${selectedSchoolId}`, {
+          withCredentials: true,
+        });
+
+        const fetchedBatches: Batch[] = res.data.data.map((batch: any) => ({
+          id: batch.id,
+          name: batch.name,
+          year: batch.year,
+        }));
+
+        setBatches(fetchedBatches);
+      } catch (err) {
+        console.error("Error fetching batches:", err);
+        setBatches([]);
+      } finally {
+        setLoadingState(prev => ({ ...prev, batchesLoading: false }));
+      }
+    };
+
+    if (selectedSchoolId) {
+      fetchBatches();
+    } else {
+      setBatches([]);
+    }
+  }, [selectedSchoolId]);
+
+  // Fetch divisions when batch is selected
+  useEffect(() => {
+    const fetchDivisions = async () => {
+      if (!selectedBatchId) return;
+
+      setLoadingState(prev => ({ ...prev, divisionsLoading: true }));
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/division/by-batch/${selectedBatchId}`, {
+          withCredentials: true,
+        });
+
+        const fetchedDivisions: Division[] = res.data.data.map((division: any) => ({
+          id: division.id,
+          code: division.code,
+          name: division.name || division.code,
+        }));
+
+        setDivisions(fetchedDivisions);
+      } catch (err) {
+        console.error("Error fetching divisions:", err);
+        setDivisions([]);
+      } finally {
+        setLoadingState(prev => ({ ...prev, divisionsLoading: false }));
+      }
+    };
+
+    if (selectedBatchId) {
+      fetchDivisions();
+    } else {
+      setDivisions([]);
+    }
+  }, [selectedBatchId]);
+
+  // Fetch semesters when division is selected
+  useEffect(() => {
+    const fetchSemesters = async () => {
+      if (!selectedDivisionId) return;
+
+      setLoadingState(prev => ({ ...prev, semestersLoading: true }));
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/semester/all/${selectedDivisionId}`, {
+          withCredentials: true,
+        });
+
+        const fetchedSemesters: Semester[] = res.data.data.map((semester: any) => ({
+          id: semester.id,
+          number: semester.number,
+          name: semester.name || `Semester ${semester.number}`,
+        }));
+
+        setSemesters(fetchedSemesters);
+      } catch (err) {
+        console.error("Error fetching semesters:", err);
+        setSemesters([]);
+      } finally {
+        setLoadingState(prev => ({ ...prev, semestersLoading: false }));
+      }
+    };
+
+    if (selectedDivisionId) {
+      fetchSemesters();
+    } else {
+      setSemesters([]);
+    }
+  }, [selectedDivisionId]);
+
+  // Fetch subjects when semester is selected
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      if (!selectedSemesterId) return;
+
+      setLoadingState(prev => ({ ...prev, subjectsLoading: true }));
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/subjects/semesters/${selectedSemesterId}`, {
+          withCredentials: true,
+        });
+
+        const fetchedSubjects: Subject[] = res.data.data.map((subject: any) => ({
+          id: subject.id,
+          name: subject.name,
+          code: subject.code,
+          teacher: subject.teacher,
+        }));
+
+        setSubjects(fetchedSubjects);
+      } catch (err) {
+        console.error("Error fetching subjects:", err);
+        setSubjects([]);
+      } finally {
+        setLoadingState(prev => ({ ...prev, subjectsLoading: false }));
+      }
+    };
+
+    if (selectedSemesterId) {
+      fetchSubjects();
+    } else {
+      setSubjects([]);
+    }
+  }, [selectedSemesterId]);
+
+  // Fetch exams when subject and exam type are selected
+  useEffect(() => {
+    const fetchExams = async () => {
+      if (!selectedSubjectId || !selectedExamType) return;
+
+      setLoadingState(prev => ({ ...prev, examsLoading: true }));
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/exams/${selectedSubjectId}/?exam_type=${selectedExamType}`, {
+          withCredentials: true,
+        });
+
+        const fetchedExams: ExamOption[] = res.data.data.exams.map((exam: any) => ({
+          id: exam.id,
+          name: exam.name,
+        }));
+
+        setExamOptions(fetchedExams);
+      } catch (err) {
+        console.error("Error fetching exams:", err);
+        setExamOptions([]);
+      } finally {
+        setLoadingState(prev => ({ ...prev, examsLoading: false }));
+      }
+    };
+
+    if (selectedSubjectId && selectedExamType) {
+      fetchExams();
+    } else {
+      setExamOptions([]);
+    }
+  }, [selectedSubjectId, selectedExamType]);
+
+  // Handle filter changes with reset logic
+  const handleCenterChange = (centerId: string) => {
+    setSelectedCenterId(centerId);
+    setSelectedSchoolId("");
+    setSelectedBatchId("");
+    setSelectedDivisionId("");
+    setSelectedSemesterId("");
+    setSelectedSubjectId("");
+    setSelectedExamType("");
+    setSelectedExamId("");
+    setExamOptions([]);
+    setFiltersComplete(false);
+    setFilteredExams([]);
   };
+
+  const handleSchoolChange = (schoolId: string) => {
+    setSelectedSchoolId(schoolId);
+    setSelectedBatchId("");
+    setSelectedDivisionId("");
+    setSelectedSemesterId("");
+    setSelectedSubjectId("");
+    setSelectedExamType("");
+    setSelectedExamId("");
+    setExamOptions([]);
+    setFiltersComplete(false);
+    setFilteredExams([]);
+  };
+
+  const handleBatchChange = (batchId: string) => {
+    setSelectedBatchId(batchId);
+    setSelectedDivisionId("");
+    setSelectedSemesterId("");
+    setSelectedSubjectId("");
+    setSelectedExamType("");
+    setSelectedExamId("");
+    setExamOptions([]);
+    setFiltersComplete(false);
+    setFilteredExams([]);
+  };
+
+  const handleDivisionChange = (divisionId: string) => {
+    setSelectedDivisionId(divisionId);
+    setSelectedSemesterId("");
+    setSelectedSubjectId("");
+    setSelectedExamType("");
+    setSelectedExamId("");
+    setExamOptions([]);
+    setFiltersComplete(false);
+    setFilteredExams([]);
+  };
+
+  const handleSemesterChange = (semesterId: string) => {
+    setSelectedSemesterId(semesterId);
+    setSelectedSubjectId("");
+    setSelectedExamType("");
+    setSelectedExamId("");
+    setExamOptions([]);
+    setFiltersComplete(false);
+    setFilteredExams([]);
+  };
+
+  const handleSubjectChange = (subjectId: string) => {
+    setSelectedSubjectId(subjectId);
+    setSelectedExamType("");
+    setSelectedExamId("");
+    setExamOptions([]);
+    setFiltersComplete(false);
+    setFilteredExams([]);
+  };
+
+  const handleExamTypeChange = (type: string) => {
+    if (examTypeOptions.includes(type as ExamType)) {
+      setSelectedExamType(type as ExamType);
+    } else {
+      setSelectedExamType("");
+    }
+    setSelectedExamId("");
+    setFiltersComplete(false);
+    setFilteredExams([]);
+    // Note: examOptions will be updated by the useEffect when both subject and type are selected
+  };
+
+  const handleExamIdChange = (examId: string) => {
+    setSelectedExamId(examId);
+    const isComplete =
+      selectedCenterId &&
+      selectedSchoolId &&
+      selectedBatchId &&
+      selectedDivisionId &&
+      selectedSemesterId &&
+      selectedSubjectId &&
+      selectedExamType &&
+      examId;
+
+    setFiltersComplete(!!isComplete);
+
+    if (isComplete) {
+      // Filter exams based on selected criteria
+      // For demo purposes, using the initial exams - in production, this would filter based on API data
+      const filtered = exams.filter(
+        (exam) => exam.examType === selectedExamType
+      );
+      setFilteredExams(filtered);
+    } else {
+      setFilteredExams([]);
+    }
+  };
+
+  const handleUpdateExam = useCallback(
+    (updatedItem: any) => {
+      const examItem = updatedItem as TableExam;
+      setExams((prev) =>
+        prev.map((exam) =>
+          exam.id === examItem.id ? { ...exam, ...examItem } : exam
+        )
+      );
+
+      if (filtersComplete) {
+        setFilteredExams((prev) =>
+          prev.map((exam) =>
+            exam.id === examItem.id ? { ...exam, ...examItem } : exam
+          )
+        );
+      }
+    },
+    [filtersComplete]
+  );
+
+  const handleDeleteExam = useCallback((id: string | number) => {
+    const deleteId = typeof id === "number" ? id.toString() : id;
+    setExams((prev) => prev.filter((exam) => exam.id !== deleteId));
+    setFilteredExams((prev) => prev.filter((exam) => exam.id !== deleteId));
+  }, []);
 
   const handleAddExam = useCallback(
     async (
       newExamData: Omit<
         TableExam,
-        "id" | "school" | "batch" | "division" | "semester"
-      > & { subjectId: string }
+        | "id"
+        | "examNumber"
+        | "center"
+        | "school"
+        | "batch"
+        | "division"
+        | "semester"
+      >
     ) => {
-      if (!newExamData.subjectId) {
-        setError("Please select a subject for the exam");
-        return;
-      }
+      const selectedCenter = centers.find(c => c.id === selectedCenterId);
+      const selectedSchool = schools.find(s => s.id === selectedSchoolId);
+      const selectedBatch = batches.find(b => b.id === selectedBatchId);
+      const selectedDivision = divisions.find(d => d.id === selectedDivisionId);
+      const selectedSemester = semesters.find(s => s.id === selectedSemesterId);
 
-      try {
-        const payload = {
-          name: newExamData.examName,
-          weightage: Number(newExamData.weightage || 0),
-          full_marks: newExamData.maxMarks,
-          passing_marks: newExamData.passingMarks,
-          exam_type: mapExamType(newExamData.examType),
-          exam_date: newExamData.date,
-          subject_id: newExamData.subjectId,
-          school: selectedSchool,
-          batch: selectedBatch,
-          division: selectedDivision,
-          semester: parseInt(selectedSemester),
-          subjectId: selectedSubject,
-        };
+      const examNumber = selectedExamType
+        ? `${selectedExamType.charAt(0).toUpperCase()}${examOptions.length + 1}`
+        : "UNK";
 
-        const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams`,
-          payload,
-          { withCredentials: true }
-        );
+      const newExam: TableExam = {
+        id: Date.now().toString(),
+        ...newExamData,
+        examNumber,
+        center: selectedCenter?.name || "",
+        school: selectedSchool?.name || "",
+        batch: selectedBatch?.name || "",
+        division: selectedDivision?.code || "",
+        semester: selectedSemester?.number || 1,
+      };
 
-        setExams((prev) => [...prev, res.data.data]);
-        setFilteredExams((prev) => [...prev, res.data.data]);
-        setIsAddExamModalOpen(false);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to add exam");
-      }
+      setExams((prev) => [...prev, newExam]);
+      setFilteredExams((prev) => [...prev, newExam]);
+      setIsAddExamModalOpen(false);
     },
-    [selectedSchool, selectedBatch, selectedDivision, selectedSemester, selectedSubject]
+    [
+      selectedCenterId,
+      selectedSchoolId,
+      selectedBatchId,
+      selectedDivisionId,
+      selectedSemesterId,
+      selectedExamType,
+      centers,
+      schools,
+      batches,
+      divisions,
+      semesters,
+      examOptions,
+    ]
   );
 
-  const handleUpdateExam = useCallback((item: any) => {
-    const updatedExam = item as TableExam;
-    const updateExam = async () => {
-      try {
-        const res = await axios.patch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${updatedExam.id}`,
-          updatedExam,
-          { withCredentials: true }
-        );
-        setExams((prev) =>
-          prev.map((e) => (e.id === updatedExam.id ? res.data.data : e))
-        );
-        setFilteredExams((prev) =>
-          prev.map((e) => (e.id === updatedExam.id ? res.data.data : e))
-        );
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to update exam");
-      }
-    };
-    updateExam();
-  }, []);
+  const handleOpenAddModal = useCallback(() => {
+    if (filtersComplete && selectedExamType) {
+      setIsAddExamModalOpen(true);
+    }
+  }, [filtersComplete, selectedExamType]);
 
   const handleDeleteExam = useCallback((id: string | number) => {
     const deleteExam = async () => {
@@ -288,87 +648,234 @@ export default function ExamManagement() {
             Select Filters
           </h3>
 
-          <div className="flex space-x-3 flex-wrap space-y-2">
-            {[
-              {
-                label: "Center",
-                value: selectedCenter,
-                options: centers,
-                setter: setSelectedCenter,
-                disabled: false,
-              },
-              {
-                label: "School",
-                value: selectedSchool,
-                options: schools,
-                setter: setSelectedSchool,
-                disabled: !selectedCenter,
-              },
-
-              {
-                label: "Batch",
-                value: selectedBatch,
-                options: batches,
-                setter: setSelectedBatch,
-                disabled: !selectedSchool,
-              },
-              {
-                label: "Division",
-                value: selectedDivision,
-                options: divisions,
-                setter: setSelectedDivision,
-                disabled: !selectedBatch,
-              },
-              {
-                label: "Semester",
-                value: selectedSemester,
-                options: semesters,
-                setter: setSelectedSemester,
-                disabled: !selectedDivision,
-              },
-              {
-                label: "Subject",
-                value: selectedSubject,
-                options: subjects,
-                setter: setSelectedSubject,
-                disabled: !selectedSemester,
-              },
-            ].map((filter, idx) => (
-              <div key={idx} className="relative min-w-36">
-                <label className="block text-xs font-medium text-gray-100 mb-1">
-                  {filter.label}
-                </label>
-                <div className="relative">
-                  <select
-                    value={filter.value}
-                    onChange={(e) => filter.setter(e.target.value)}
-                    disabled={filter.disabled}
-                    className={`w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none bg-white cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed`}
-                  >
-                    <option value="">{`Select ${filter.label}`}</option>
-                    {filter.options.map((opt: any) => {
-                      const value = opt.id || opt;
-                      const label =
-                        typeof opt === "string"
-                          ? opt
-                          : opt.name ||
-                            opt.division ||
-                            opt.number ||
-                            opt.code ||
-                            opt.id ||
-                            "Unknown";
-
-                      return (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 w-4 h-4 text-gray-400 pointer-events-none -translate-y-1/2" />
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Center
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedCenterId}
+                  onChange={(e) => handleCenterChange(e.target.value)}
+                  disabled={loadingState.centersLoading}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {loadingState.centersLoading ? "Loading..." : "Select Center"}
+                  </option>
+                  {centers.map((center) => (
+                    <option key={center.id} value={center.id}>
+                      {center.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
               </div>
-            ))}
+            </div>
+
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                School
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedSchoolId}
+                  onChange={(e) => handleSchoolChange(e.target.value)}
+                  disabled={!selectedCenterId || loadingState.schoolsLoading}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">
+                    {loadingState.schoolsLoading ? "Loading..." : "Select School"}
+                  </option>
+                  {schools.map((school) => (
+                    <option key={school.id} value={school.id}>
+                      {school.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !selectedCenterId ? "text-gray-300" : "text-gray-400"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Batch
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedBatchId}
+                  onChange={(e) => handleBatchChange(e.target.value)}
+                  disabled={!selectedSchoolId || loadingState.batchesLoading}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">
+                    {loadingState.batchesLoading ? "Loading..." : "Select Batch"}
+                  </option>
+                  {batches.map((batch) => (
+                    <option key={batch.id} value={batch.id}>
+                      {batch.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !selectedSchoolId ? "text-gray-300" : "text-gray-400"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Division
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedDivisionId}
+                  onChange={(e) => handleDivisionChange(e.target.value)}
+                  disabled={!selectedBatchId || loadingState.divisionsLoading}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">
+                    {loadingState.divisionsLoading ? "Loading..." : "Select Division"}
+                  </option>
+                  {divisions.map((div) => (
+                    <option key={div.id} value={div.id}>
+                      {div.code}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !selectedBatchId ? "text-gray-300" : "text-gray-400"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Semester
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedSemesterId}
+                  onChange={(e) => handleSemesterChange(e.target.value)}
+                  disabled={!selectedDivisionId || loadingState.semestersLoading}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">
+                    {loadingState.semestersLoading ? "Loading..." : "Sem"}
+                  </option>
+                  {semesters.map((sem) => (
+                    <option key={sem.id} value={sem.id}>
+                      S{sem.number}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !selectedDivisionId ? "text-gray-300" : "text-gray-400"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Subject
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedSubjectId}
+                  onChange={(e) => handleSubjectChange(e.target.value)}
+                  disabled={!selectedSemesterId || loadingState.subjectsLoading}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">
+                    {loadingState.subjectsLoading ? "Loading..." : "Subject"}
+                  </option>
+                  {subjects.map((sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.code} {sub.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !selectedSemesterId ? "text-gray-300" : "text-gray-400"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Exam Type
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedExamType}
+                  onChange={(e) => handleExamTypeChange(e.target.value)}
+                  disabled={!selectedSubjectId} // Fixed: Changed from !selectedSubject to !selectedSubjectId
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">Type</option>
+                  {examTypeOptions.map((type) => (
+                    <option key={type} value={type}>
+                      {type.replace('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !selectedSubjectId ? "text-gray-300" : "text-gray-400"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Exam
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedExamId}
+                  onChange={(e) => handleExamIdChange(e.target.value)}
+                  disabled={!selectedExamType || loadingState.examsLoading}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">
+                    {loadingState.examsLoading ? "Loading..." : "Exam"}
+                  </option>
+                  {examOptions.map((exam) => (
+                    <option key={exam.id} value={exam.id}>
+                      {exam.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !selectedExamType ? "text-gray-300" : "text-gray-400"
+                  }`}
+                />
+              </div>
+            </div>
           </div>
 
           {!allFiltersSelected && (
@@ -414,13 +921,8 @@ export default function ExamManagement() {
               filterField="examName"
               badgeFields={["examType", "weightage"]}
               selectFields={{
-                examType: [
-                  "Midterm",
-                  "Final",
-                  "Quiz",
-                  "Assignment",
-                  "Practical",
-                ],
+                examType: [...examTypeOptions],
+                subject: subjects.map(s => `${s.code} ${s.name}`),
               }}
               nonEditableFields={[
                 "id",
@@ -433,18 +935,23 @@ export default function ExamManagement() {
               onEdit={handleUpdateExam}
               hiddenColumns={["id", "school", "batch", "division", "semester"]}
             />
-
-            <AddExamModal
-              isOpen={isAddExamModalOpen}
-              onClose={handleCloseAddModal}
-              onExamCreated={handleAddExam}
-              selectedSchool={selectedSchool}
-              selectedBatch={selectedBatch}
-              selectedDivision={selectedDivision}
-              selectedSemester={selectedSemester}
-              selectedSubject={selectedSubject}
-            />
           </>
+        )}
+
+        {filtersComplete && selectedExamType && (
+          <AddExamModal
+            isOpen={isAddExamModalOpen}
+            onClose={handleCloseAddModal}
+            onExamCreated={handleAddExam}
+            selectedCenter={centers.find(c => c.id === selectedCenterId)?.name || ""}
+            selectedSchool={schools.find(s => s.id === selectedSchoolId)?.name || ""}
+            selectedBatch={batches.find(b => b.id === selectedBatchId)?.name || ""}
+            selectedDivision={divisions.find(d => d.id === selectedDivisionId)?.code || ""}
+            selectedSemester={semesters.find(s => s.id === selectedSemesterId)?.number.toString() || ""}
+            selectedSubject={subjects.find(s => s.id === selectedSubjectId)?.name || ""}
+            selectedExamType={selectedExamType}
+            selectedExamNumber={examOptions.length.toString()}
+          />
         )}
       </div>
     </div>
