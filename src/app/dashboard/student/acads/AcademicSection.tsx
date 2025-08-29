@@ -44,7 +44,7 @@ interface FilterState {
 }
 
 interface StudentProfile {
-  batch: { name: string };
+  batch: string;
   semesterNo: number;
   id: string;
 }
@@ -58,11 +58,9 @@ interface AcademicData {
 const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/student-academics`;
 
 export default function AcademicsSection() {
-  const [studentProfile, _setStudentProfile] = useState<StudentProfile | null>({
-    batch: { name: "2023-2027" },
-    semesterNo: 1,
-    id: "Computer Science",
-  });
+  const [studentProfile, _setStudentProfile] = useState<StudentProfile | null>(
+    null
+  );
   const [academicData, setAcademicData] = useState<AcademicData | null>(null);
   const [activeFilters, setActiveFilters] = useState<FilterState | null>(null);
   const [pendingFilters, setPendingFilters] = useState<FilterState | null>(
@@ -83,24 +81,28 @@ export default function AcademicsSection() {
   const [error, setError] = useState<string | null>(null);
   const [exams, setExams] = useState<any[]>([]);
 
+const fetchExams = useCallback(
+  async (subjectId: string, examType: string) => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${subjectId}`,
+        {
+          params: { exam_type: examType },
+          withCredentials: true,
+        }
+      );
 
-const fetchExams = useCallback(async (subjectId: string, examType: string) => {
-  try {
-    const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${subjectId}`,
-      { exam_type: examType },
-      { withCredentials: true }
-    );
-
-    if (response.data.success) {
-      setExams(response.data.data.exams || []);
-      return response.data.data.exams;
+      if (response.data.success) {
+        setExams(response.data.data.exams || []);
+        return response.data.data.exams;
+      }
+    } catch (err) {
+      console.error("Error fetching exams:", err);
+      setExams([]);
     }
-  } catch (err) {
-    console.error("Error fetching exams:", err);
-    setExams([]);
-  }
-}, []);
+  },
+  []
+);
 
 
   const fetchCurrentSemester = useCallback(async () => {
@@ -117,7 +119,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
       }
     } catch (err) {
       console.error("Error fetching current semester:", err);
-      throw err;
+       return null;
     }
   }, []);
 
@@ -132,7 +134,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
       }
     } catch (err) {
       console.error("Error fetching past semesters:", err);
-      throw err;
+      return null;
     }
   }, []);
 
@@ -226,157 +228,165 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
     []
   );
 
-  useEffect(() => {
-    const initializeAcademicData = async () => {
-      if (!studentProfile) return;
+useEffect(() => {
+  const initializeAcademicData = async () => {
+    try {
+      setLoading(true);
 
-      try {
-        setLoading(true);
+      const [currentSemester, pastSemesters] = await Promise.all([
+        fetchCurrentSemester(),
+        fetchPastSemesters(),
+      ]);
 
-        const [currentSemester, pastSemesters] = await Promise.all([
-          fetchCurrentSemester(),
-          fetchPastSemesters(),
-        ]);
-
-        const allCourses: any[] = [];
-
-        // Handle current semester subjects
-        if (currentSemester?.subjects) {
-          currentSemester.subjects.forEach((subject: any) => {
-            allCourses.push({
-              id: subject.subject_id,
-              code: subject.subject_code,
-              name: subject.subject_name,
-              credits: subject.credits,
-              semester: currentSemester.semester_info.semester_number,
-              teacher_name: subject.teacher_name,
-              teacher_email: subject.teacher_email,
-            });
-          });
-        }
-
-        // Handle past semesters subjects (if any exist)
-        if (
-          pastSemesters?.past_semesters &&
-          pastSemesters.past_semesters.length > 0
-        ) {
-          pastSemesters.past_semesters.forEach((semester: any) => {
-            if (semester.subjects) {
-              semester.subjects.forEach((subject: any) => {
-                allCourses.push({
-                  id: subject.subject_id,
-                  code: subject.subject_code,
-                  name: subject.subject_name,
-                  credits: subject.credits,
-                  semester: semester.semester_number,
-                  teacher_name: subject.teacher_name,
-                  teacher_email: subject.teacher_email,
-                });
-              });
-            }
-          });
-        }
-
-        const academicData = {
-          current_semester: currentSemester,
-          past_semesters: pastSemesters?.past_semesters || [],
-          courses: allCourses,
-        };
-
-        setAcademicData(academicData);
-
-        // Initialize filters with first available course
-        if (allCourses.length > 0) {
-          const firstCourse = allCourses[0];
-          const initialFilters = {
-            semester: firstCourse.semester,
-            course: firstCourse.code,
-            testType: "FORTNIGHTLY",
-            testNumber: "1",
-          };
-
-          setActiveFilters(initialFilters);
-          setPendingFilters(initialFilters);
-        }
-      } catch (err) {
-        console.error("Error initializing academic data:", err);
-        setError("Failed to load academic data");
-      } finally {
-        setLoading(false);
+      // ✅ set student profile here
+      if (currentSemester?.semester_info) {
+        _setStudentProfile({
+          batch: currentSemester.semester_info.batch_name || "N/A",
+          semesterNo: currentSemester.semester_info.semester_number,
+          id: currentSemester.semester_info.student_id,
+        });
       }
-    };
 
-    initializeAcademicData();
-  }, [studentProfile, fetchCurrentSemester, fetchPastSemesters]);
+      const allCourses: any[] = [];
 
-  // Update trends and leaderboard when filters change
-  useEffect(() => {
-    const updateData = async () => {
-      if (!activeFilters || !academicData) return;
+      // Handle current semester subjects
+      if (currentSemester?.subjects) {
+        currentSemester.subjects.forEach((subject: any) => {
+          allCourses.push({
+            id: subject.subject_id,
+            code: subject.subject_code,
+            name: subject.subject_name,
+            credits: subject.credits,
+            semester: currentSemester.semester_info.semester_number,
+            teacher_name: subject.teacher_name,
+            teacher_email: subject.teacher_email,
+          });
+        });
+      }
 
-      const selectedCourse = academicData.courses.find(
-        (c) => c.code === activeFilters.course
-      );
-      if (!selectedCourse) return;
-
-      let semesterId = "";
-
-      // Find semester ID based on the selected semester
+      // Handle past semesters...
       if (
-        academicData.current_semester?.semester_info.semester_number ===
-        activeFilters.semester
+        pastSemesters?.past_semesters &&
+        pastSemesters.past_semesters.length > 0
       ) {
-        semesterId = academicData.current_semester.semester_info.semester_id;
-      } else {
-        const pastSemester = academicData.past_semesters?.find(
-          (s: any) => s.semester_number === activeFilters.semester
-        );
-        if (pastSemester) {
-          semesterId = pastSemester.semester_id;
-        }
+        pastSemesters.past_semesters.forEach((semester: any) => {
+          if (semester.subjects) {
+            semester.subjects.forEach((subject: any) => {
+              allCourses.push({
+                id: subject.subject_id,
+                code: subject.subject_code,
+                name: subject.subject_name,
+                credits: subject.credits,
+                semester: semester.semester_number,
+                teacher_name: subject.teacher_name,
+                teacher_email: subject.teacher_email,
+              });
+            });
+          }
+        });
       }
 
-      if (!semesterId) {
-        console.warn(
-          "No semester ID found for semester:",
-          activeFilters.semester
-        );
-        return;
+      setAcademicData({
+        current_semester: currentSemester,
+        past_semesters: pastSemesters?.past_semesters || [],
+        courses: allCourses,
+      });
+
+      // Initialize filters...
+      if (allCourses.length > 0) {
+        const firstCourse = allCourses[0];
+        const initialFilters = {
+          semester: firstCourse.semester,
+          course: firstCourse.code,
+          testType: "FORTNIGHTLY",
+          testNumber: "1",
+        };
+        setPendingFilters(initialFilters);
       }
+    } catch (err) {
+      console.error("Error initializing academic data:", err);
+      setError("Failed to load academic data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      const examName = `${getTestTypeLabel(activeFilters.testType)} ${
-        activeFilters.testNumber
-      }`;
+  initializeAcademicData();
+}, [fetchCurrentSemester, fetchPastSemesters]);
 
-      // Fetch performance trends
-      await fetchPerformanceTrends(
+
+// Update trends and leaderboard when filters change
+useEffect(() => {
+  const updateData = async () => {
+    if (
+      !activeFilters ||
+      !academicData ||
+      !activeFilters.semester ||
+      !activeFilters.course ||
+      !activeFilters.testType ||
+      !activeFilters.testNumber
+    ) {
+      return;
+    }
+
+    const selectedCourse = academicData.courses.find(
+      (c) => c.code === activeFilters.course
+    );
+    if (!selectedCourse) return;
+
+    let semesterId = "";
+
+    // Find semester ID based on the selected semester
+    if (
+      academicData.current_semester?.semester_info.semester_number ===
+      activeFilters.semester
+    ) {
+      semesterId = academicData.current_semester.semester_info.semester_id;
+    } else {
+      const pastSemester = academicData.past_semesters?.find(
+        (s: any) => s.semester_number === activeFilters.semester
+      );
+      if (pastSemester) {
+        semesterId = pastSemester.semester_id;
+      }
+    }
+
+    if (!semesterId) return;
+
+    const examName = `${getTestTypeLabel(activeFilters.testType)} ${
+      activeFilters.testNumber
+    }`;
+
+    // Fetch performance trends
+    await fetchPerformanceTrends(
+      semesterId,
+      selectedCourse.id,
+      activeFilters.testType,
+      examName
+    );
+
+    // Fetch both leaderboards
+    await Promise.all([
+      fetchLeaderboard(
+        "class",
         semesterId,
         selectedCourse.id,
         activeFilters.testType,
         examName
-      );
+      ),
+      fetchLeaderboard(
+        "overall",
+        semesterId,
+        selectedCourse.id,
+        activeFilters.testType,
+        examName
+      ),
+    ]);
+  };
 
-      // Fetch both leaderboards
-      await Promise.all([
-        fetchLeaderboard(
-          "class",
-          semesterId,
-          selectedCourse.id,
-          activeFilters.testType,
-          examName
-        ),
-        fetchLeaderboard(
-          "overall",
-          semesterId,
-          selectedCourse.id,
-          activeFilters.testType,
-          examName
-        ),
-      ]);
-    };
+  updateData();
+}, [activeFilters, academicData, fetchPerformanceTrends, fetchLeaderboard]);
 
-    updateData();
-  }, [activeFilters, academicData, fetchPerformanceTrends, fetchLeaderboard]);
 
   const hasFiltersChanged = () => {
     if (!activeFilters || !pendingFilters) return false;
@@ -538,7 +548,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
     );
   }
 
-  if (!studentProfile || !academicData || !activeFilters || !pendingFilters) {
+  if (!studentProfile || !academicData || !pendingFilters) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg text-gray-600">Loading academic data...</div>
@@ -570,7 +580,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
               <div className="bg-gradient-to-br from-white to-indigo-50 px-4 py-3 rounded-sm border border-gray-200">
                 <div className="text-sm text-slate-900 font-medium">Batch</div>
                 <div className="text-xl font-bold text-slate-800">
-                  {studentProfile.batch?.name || "N/A"}
+                  {studentProfile.batch || "N/A"}
                 </div>
               </div>
               <div className="bg-gradient-to-br from-white to-indigo-50 px-4 py-3 rounded-sm border border-gray-200">
@@ -634,47 +644,49 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
               </div>
             </div>
 
-           <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Course
-  </label>
-  <div className="relative">
-    <select
-      className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
-      value={pendingFilters.course}
-      onChange={(e) => {
-        const selectedCourse = e.target.value;
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Course
+              </label>
+              <div className="relative">
+                <select
+                  className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
+                  value={pendingFilters.course}
+                  onChange={(e) => {
+                    const selectedCourse = e.target.value;
 
-        setPendingFilters((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            course: selectedCourse, // ✅ update filter
-          };
-        });
+                    setPendingFilters((prev) => {
+                      if (!prev) return null;
+                      return {
+                        ...prev,
+                        course: selectedCourse, // ✅ update filter
+                      };
+                    });
 
-        // ✅ fetch exams only if we have testType
-        if (selectedCourse && pendingFilters?.testType) {
-          const selectedCourseObj = availableCourses.find(
-            (c: any) => c.code === selectedCourse
-          );
-          if (selectedCourseObj) {
-            fetchExams(selectedCourseObj.id, pendingFilters.testType);
-          }
-        }
-      }}
-    >
-      <option value="">Select Course</option>
-      {availableCourses.map((course: any, idx: number) => (
-        <option key={course.id || idx} value={course.code}>
-          {course.code?.toUpperCase?.() || ""}
-        </option>
-      ))}
-    </select>
-    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-  </div>
-</div>
-
+                    // ✅ fetch exams only if we have testType
+                    if (selectedCourse && pendingFilters?.testType) {
+                      const selectedCourseObj = availableCourses.find(
+                        (c: any) => c.code === selectedCourse
+                      );
+                      if (selectedCourseObj) {
+                        fetchExams(
+                          selectedCourseObj.id,
+                          pendingFilters.testType
+                        );
+                      }
+                    }
+                  }}
+                >
+                  <option value="">Select Course</option>
+                  {availableCourses.map((course: any, idx: number) => (
+                    <option key={course.id || idx} value={course.code}>
+                      {course.code?.toUpperCase?.() || ""}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -723,7 +735,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                 >
                   {exams.map((test) => (
                     <option key={test} value={test}>
-                       {test?.name}
+                      {test?.name}
                     </option>
                   ))}
                 </select>
@@ -772,8 +784,8 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
         <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
           <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 px-6 py-4 drop-shadow-sm">
             <h3 className="text-xl font-semibold text-slate-900">
-              {activeFilters.course.toUpperCase()} -{" "}
-              {getTestTypeLabel(activeFilters.testType)} Performance Trend
+              {activeFilters?.course.toUpperCase()} -{" "}
+                {getTestTypeLabel(activeFilters?.testType ?? "Exam")} Performance Trend
             </h3>
           </div>
           <div className="p-6">
@@ -834,7 +846,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                   <Users className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Class Leaderboard - Test {activeFilters.testNumber}
+                  Class Leaderboard - Test {activeFilters?.testNumber}
                 </h3>
               </div>
               <button
@@ -921,7 +933,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                   <Trophy className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Overall Leaderboard - Test {activeFilters.testNumber}
+                  Overall Leaderboard - Test {activeFilters?.testNumber}
                 </h3>
               </div>
               <button
@@ -1011,7 +1023,8 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                   <BookOpen className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Current Courses - Semester {currentSemester.semester_number}
+                  Current Courses - Semester{" "}
+                  {currentSemester?.semester_info?.semester_number}
                 </h3>
                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                   {ongoingCourses.length} courses
@@ -1197,7 +1210,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                     </div>
                     <h2 className="text-xl font-semibold text-white">
                       {leaderboardType === "class" ? "Class" : "Overall"}{" "}
-                      Leaderboard - Test {activeFilters.testNumber}
+                      Leaderboard - Test {activeFilters?.testNumber}
                     </h2>
                   </div>
                   <button

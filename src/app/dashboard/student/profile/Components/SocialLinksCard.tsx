@@ -16,7 +16,11 @@ import {
   LucideIcon,
   ChevronDown,
   ChevronUp,
+  Dribbble,
 } from "lucide-react";
+import type { IconType } from "react-icons";
+import { FaBehance, FaMedium } from "react-icons/fa";
+import { SiDevdotto } from "react-icons/si";
 
 interface SocialLink {
   id: string;
@@ -28,12 +32,12 @@ interface SocialLink {
 interface NewSocialLink {
   platform: string;
   link: string;
-  icon: LucideIcon;
+  icon: LucideIcon | IconType;
 }
 
 interface PlatformConfig {
   name: string;
-  icon: LucideIcon;
+  icon: LucideIcon | IconType;
   urlPattern: RegExp;
   placeholder: string;
 }
@@ -51,6 +55,12 @@ const platformConfigs: Record<string, PlatformConfig> = {
     icon: Twitter,
     urlPattern: /^https:\/\/(www\.)?(twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/?$/,
     placeholder: "https://twitter.com/your-username",
+  },
+  X: {
+    name: "X",
+    icon: Twitter, // reuse Twitter/X icon
+    urlPattern: /^https:\/\/(www\.)?x\.com\/[a-zA-Z0-9_]+\/?$/,
+    placeholder: "https://x.com/your-username",
   },
   GitHub: {
     name: "GitHub",
@@ -70,14 +80,39 @@ const platformConfigs: Record<string, PlatformConfig> = {
     urlPattern: /^https:\/\/(www\.)?facebook\.com\/[a-zA-Z0-9.]+\/?$/,
     placeholder: "https://facebook.com/your-profile",
   },
-  YouTube: {
-    name: "YouTube",
-    icon: Youtube,
+  Website: {
+    name: "Website",
+    icon: Globe, // pick a globe icon
     urlPattern:
-      /^https:\/\/(www\.)?youtube\.com\/(channel|c|user)\/[a-zA-Z0-9-_]+\/?$/,
-    placeholder: "https://youtube.com/channel/your-channel",
+      /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/,
+    placeholder: "https://yourwebsite.com",
+  },
+  Dribbble: {
+    name: "Dribbble",
+    icon: Dribbble, // use dribbble icon
+    urlPattern: /^https:\/\/(www\.)?dribbble\.com\/[a-zA-Z0-9-_.]+\/?$/,
+    placeholder: "https://dribbble.com/your-username",
+  },
+  Behance: {
+    name: "Behance",
+    icon: FaBehance, // use behance icon
+    urlPattern: /^https:\/\/(www\.)?behance\.net\/[a-zA-Z0-9-_.]+\/?$/,
+    placeholder: "https://behance.net/your-username",
+  },
+  Medium: {
+    name: "Medium",
+    icon: FaMedium, // use medium icon
+    urlPattern: /^https:\/\/(www\.)?medium\.com\/@[a-zA-Z0-9-_]+\/?$/,
+    placeholder: "https://medium.com/@your-username",
+  },
+  "Dev.to": {
+    name: "Dev.to",
+    icon: SiDevdotto, // use dev.to icon
+    urlPattern: /^https:\/\/(www\.)?dev\.to\/[a-zA-Z0-9-_]+\/?$/,
+    placeholder: "https://dev.to/your-username",
   },
 };
+
 
 interface ModalProps {
   isOpen: boolean;
