@@ -10,7 +10,6 @@ interface Achievement {
   startDate: string;
 }
 
-// Modal Component
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -39,7 +38,6 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   );
 };
 
-// Add Achievement Modal
 interface AddAchievementModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -218,7 +216,6 @@ const AddAchievementModal: React.FC<AddAchievementModalProps> = ({
   );
 };
 
-// Edit Achievement Modal
 interface EditAchievementModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -242,7 +239,6 @@ const EditAchievementModal: React.FC<EditAchievementModalProps> = ({
     Partial<Record<keyof Achievement, string>>
   >({});
 
-  // Update form data when achievement changes
   useState(() => {
     if (achievement) {
       setFormData(achievement);
@@ -251,7 +247,7 @@ const EditAchievementModal: React.FC<EditAchievementModalProps> = ({
 
   const handleInputChange = (field: keyof Achievement, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
+
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
@@ -380,7 +376,7 @@ const EditAchievementModal: React.FC<EditAchievementModalProps> = ({
             type="date"
             value={formData.startDate}
             onChange={(e) => handleInputChange("startDate", e.target.value)}
-            max={new Date().toISOString().split("T")[0]} // Prevent future dates
+            max={new Date().toISOString().split("T")[0]}
             className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-90ring-slate-900 ${
               errors.startDate ? "border-red-400" : "border-gray-400"
             }`}
@@ -410,7 +406,6 @@ const EditAchievementModal: React.FC<EditAchievementModalProps> = ({
   );
 };
 
-// Delete Confirmation Modal
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -464,7 +459,6 @@ const AchievementsCard: React.FC = () => {
   const user = storedUser ? JSON.parse(storedUser) : null;
   const studentId = user?.id;
 
-  // Fetch Achievements
   useEffect(() => {
     if (studentId) {
       axios
@@ -486,7 +480,6 @@ const AchievementsCard: React.FC = () => {
     }
   }, [studentId]);
 
-  // Add Achievement
   const handleAddAchievement = async (newAchievement: Achievement) => {
     try {
       const res = await axios.post(
@@ -515,7 +508,6 @@ const AchievementsCard: React.FC = () => {
     }
   };
 
-  // Edit Achievement
   const handleEditAchievement = async (updatedAchievement: Achievement) => {
     if (selectedAchievement?.id) {
       try {
@@ -551,7 +543,6 @@ const AchievementsCard: React.FC = () => {
     }
   };
 
-  // Delete Achievement
   const handleDeleteAchievement = async () => {
     if (selectedAchievement?.id) {
       try {
@@ -586,7 +577,6 @@ const AchievementsCard: React.FC = () => {
   return (
     <>
       <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
-        {/* Modals */}
         <AddAchievementModal
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}

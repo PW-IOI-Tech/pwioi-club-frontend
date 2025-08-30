@@ -51,10 +51,11 @@ const AttendanceTracker: React.FC = () => {
   const [userDetails, setUserDetails] = useState<any>(null);
   const [semesters, setSemesters] = useState<any[]>([]);
   const [selectedSemester, setSelectedSemester] = useState<string>("");
-  const [subjectAttendence, setSubjectAttendence] = useState<SubjectAttendance | null>(null);
+  const [subjectAttendence, setSubjectAttendence] =
+    useState<SubjectAttendance | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [modalView, setModalView] = useState<"monthly" | "daily">("monthly");
-  const[modalLoading,setModalLoading] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
   const [searchFilter, setSearchFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "present" | "absent"
@@ -165,14 +166,13 @@ const AttendanceTracker: React.FC = () => {
   };
 
   const handleSubjectAttendenceData = async (course: any) => {
-  setSelectedCourse(course);
-  setModalLoading(true);
+    setSelectedCourse(course);
+    setModalLoading(true);
 
-  await subjectWiseAttendance(course.subjectId, selectedSemester);
+    await subjectWiseAttendance(course.subjectId, selectedSemester);
 
-  setModalLoading(false);
-};
-
+    setModalLoading(false);
+  };
 
   const getBadgeColor = (percentage: number): string => {
     if (percentage >= 85)
@@ -210,8 +210,7 @@ const AttendanceTracker: React.FC = () => {
   }));
 
   const filteredDailyData = dailyDataArray.filter((day: any) => {
-    const matchesSearch =
-      day.date.includes(searchFilter);
+    const matchesSearch = day.date.includes(searchFilter);
 
     const matchesStatus = statusFilter === "all" || day.status === statusFilter;
 
@@ -228,53 +227,9 @@ const AttendanceTracker: React.FC = () => {
     return { text: "Poor", color: "text-red-600", icon: AlertCircle };
   };
 
-  const getAttendanceTrend = (current: number, previous: number | null) => {
-    if (previous === null)
-      return { text: "No Data", icon: "•", color: "text-gray-500" };
-
-    if (current > previous)
-      return { text: "Improving", icon: "↗", color: "text-emerald-600" };
-    if (current < previous)
-      return { text: "Declining", icon: "↘", color: "text-red-600" };
-    return { text: "Stable", icon: "→", color: "text-yellow-600" };
-  };
-
-  const trend = getAttendanceTrend(
-    userDetails?.overallAttendancePercentage || 0,
-    previousAttendance
-  );
-
-  const averageAttendance =
-    userDetails?.subjectWiseAttendance?.length > 0
-      ? userDetails.subjectWiseAttendance.reduce(
-          (sum: number, c: any) => sum + (c.attendancePercentage || 0),
-          0
-        ) / userDetails.subjectWiseAttendance.length
-      : 0;
-
-  const coursesAbove85 =
-    userDetails?.subjectWiseAttendance?.filter(
-      (c: any) => c.attendancePercentage >= 85
-    ).length || 0;
-
-  const coursesBelow75 =
-    userDetails?.subjectWiseAttendance?.filter(
-      (c: any) => c.attendancePercentage < 75
-    ).length || 0;
-
-  const classesNeededFor75 = userDetails
-    ? Math.max(
-        0,
-        Math.ceil(
-          (75 * userDetails.totalClasses) / 100 - userDetails.classesAttended
-        )
-      )
-    : 0;
-
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
-        {/* Header */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-sm border border-gray-200 p-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-2">
             <div className="flex items-center gap-3">
@@ -288,7 +243,6 @@ const AttendanceTracker: React.FC = () => {
               </div>
             </div>
 
-            {/* Semester Selector */}
             <div className="bg-gradient-to-br from-white/25 to-indigo-50/25 p-3 w-1/4 rounded-sm border border-gray-200/25 backdrop-blur-sm">
               <label className="block text-xs font-medium text-gray-100 mb-2">
                 Academic Term
@@ -311,9 +265,7 @@ const AttendanceTracker: React.FC = () => {
           </div>
         </div>
 
-        {/* Key Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {/* Overall Attendance */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
@@ -351,7 +303,6 @@ const AttendanceTracker: React.FC = () => {
             </div>
           </div>
 
-          {/* Classes Attended */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
@@ -374,7 +325,6 @@ const AttendanceTracker: React.FC = () => {
             </div>
           </div>
 
-          {/* Active Courses */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
@@ -396,10 +346,8 @@ const AttendanceTracker: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Content Area */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          {/* Course Cards */}
-          <div className="xl:col-span-2 space-y-4 border border-gray-400 p-4 rounded-sm">
+          <div className="xl:col-span-3 space-y-4 border border-gray-400 p-4 rounded-sm">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">
                 Course Breakdown
@@ -408,508 +356,360 @@ const AttendanceTracker: React.FC = () => {
                 {userDetails?.totalSubjects || 0} courses
               </span>
             </div>
-            {
-              userDetails?.totalSubjects > 0  ? ( <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {userDetails?.subjectWiseAttendance?.map((course: any) => {
-                const insight = getAttendanceInsight(
-                  course.attendancePercentage
-                );
-                const Icon = insight.icon;
+            {userDetails?.totalSubjects > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {userDetails?.subjectWiseAttendance?.map((course: any) => {
+                  const insight = getAttendanceInsight(
+                    course.attendancePercentage
+                  );
+                  const Icon = insight.icon;
 
-                return (
-                  <div
-                    key={course.subjectId}
-                    className="bg-white border border-gray-400 rounded-sm shadow-sm p-4 hover:shadow-md transition-all duration-300 cursor-pointer group ease-in-out"
-                    onClick={() => handleSubjectAttendenceData(course)}
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-gray-900 text-sm mb-2 group-hover:text-slate-900 transition-colors truncate">
-                          {course.subjectName}
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
-                            {course.subjectCode}
-                          </span>
-                          <span
-                            className={`px-2 py-1 rounded-md text-xs font-medium ${getBadgeColor(
-                              course.attendancePercentage
-                            )}`}
-                          >
-                            {course.attendancePercentage.toFixed(1)}%
-                          </span>
-                        </div>
-                      </div>
-                      <Icon
-                        className={`w-4 h-4 ${insight.color} flex-shrink-0`}
-                      />
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="mb-4">
-                      <div className="flex justify-between text-xs text-gray-600 mb-2">
-                        <span className={insight.color + " font-medium"}>
-                          {insight.text}
-                        </span>
-                        <span className="font-medium">
-                          {course.classesAttended}/
-                          {course.classesAttended + course.classesMissed}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(
-                            course.attendancePercentage
-                          )}`}
-                          style={{ width: `${course.attendancePercentage}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Statistics */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="text-center p-2 bg-green-50 rounded-sm">
-                        <p className="text-sm font-bold text-green-600">
-                          {course.classesAttended}
-                        </p>
-                        <p className="text-xs text-green-700">Attended</p>
-                      </div>
-                      <div className="text-center p-2 bg-red-50 rounded-sm">
-                        <p className="text-sm font-bold text-red-600">
-                          {course?.classesMissed}
-                        </p>
-                        <p className="text-xs text-red-700">Missed</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 pt-3 border-t border-gray-300">
-                      <p className="text-xs text-gray-500 text-center group-hover:text-slate-900 transition-colors">
-                        Click to view details →
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>):(<div className="flex justify-center items-center h-full w-full">Loading Course Information...</div>)
-            }
-
-           
-          </div>
-
-          <div className="space-y-4">
-            <div className="bg-white rounded-sm shadow-sm border border-gray-400 p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-blue-100 rounded-md flex items-center justify-center">
-                  <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
-                </div>
-                <h3 className="text-sm font-semibold text-gray-900">
-                  Quick Insights
-                </h3>
-              </div>
-
-              <div className="space-y-3">
-                {/* Best Performing Course */}
-                {userDetails?.subjectWiseAttendance?.length > 0 && (
-                  <div className="p-3 bg-green-50 rounded-sm border border-green-100">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Award className="text-green-600 w-3 h-3" />
-                      <span className="text-xs font-medium text-green-900">
-                        Best Performing
-                      </span>
-                    </div>
-                    <p className="font-semibold text-green-800 text-sm">
-                      {
-                        userDetails.subjectWiseAttendance.reduce(
-                          (best: any, course: any) =>
-                            course.attendancePercentage >
-                            best.attendancePercentage
-                              ? course
-                              : best
-                        ).subjectCode
-                      }
-                    </p>
-                    <p className="text-xs text-green-700">
-                      {userDetails.subjectWiseAttendance
-                        .reduce((best: any, course: any) =>
-                          course.attendancePercentage >
-                          best.attendancePercentage
-                            ? course
-                            : best
-                        )
-                        .attendancePercentage.toFixed(1)}
-                      % attendance
-                    </p>
-                  </div>
-                )}
-
-                {/* Average Performance */}
-                <div className="p-3 bg-blue-50 rounded-sm border border-blue-100">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Target className="text-blue-600 w-3 h-3" />
-                    <span className="text-xs font-medium text-blue-900">
-                      Average Performance
-                    </span>
-                  </div>
-                  <p className="font-semibold text-blue-800 text-sm">
-                    {averageAttendance.toFixed(1)}%
-                  </p>
-                  <p className="text-xs text-blue-700">Across all courses</p>
-                </div>
-
-                {/* Excellent Courses */}
-                {coursesAbove85 > 0 && (
-                  <div className="p-3 bg-emerald-50 rounded-sm border border-emerald-100">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Award className="text-emerald-600 w-3 h-3" />
-                      <span className="text-xs font-medium text-emerald-900">
-                        Excellent Courses
-                      </span>
-                    </div>
-                    <p className="font-semibold text-emerald-800 text-sm">
-                      {coursesAbove85} courses
-                    </p>
-                    <p className="text-xs text-emerald-700">
-                      Above 85% attendance
-                    </p>
-                  </div>
-                )}
-
-                {/* At-Risk Courses */}
-                {coursesBelow75 > 0 && (
-                  <div className="p-3 bg-red-50 rounded-sm border border-red-100">
-                    <div className="flex items-center gap-2 mb-1">
-                      <AlertCircle className="text-red-600 w-3 h-3" />
-                      <span className="text-xs font-medium text-red-900">
-                        Attention Needed
-                      </span>
-                    </div>
-                    <p className="font-semibold text-red-800 text-sm">
-                      {coursesBelow75} courses
-                    </p>
-                    <p className="text-xs text-red-700">Below 75% threshold</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {userDetails?.overallAttendancePercentage < 75 && (
-              <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-sm p-4 text-white">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 bg-white/20 rounded-md flex items-center justify-center">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                  </div>
-                  <h3 className="text-sm font-semibold">Action Required</h3>
-                </div>
-                <p className="text-red-100 text-xs leading-relaxed mb-3">
-                  Your overall attendance is below the 75% minimum requirement.
-                  Focus on attending upcoming classes to improve your standing.
-                </p>
-                <div className="pt-3 border-t border-white/20">
-                  <p className="text-xs text-red-100">
-                    Need {classesNeededFor75} more classes to reach 75%
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="bg-white rounded-sm shadow-sm border border-gray-400 p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                Performance Summary
-              </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-600">Target</span>
-                  <span className="font-medium text-gray-900 text-sm">75%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-600">Current</span>
-                  <span
-                    className={`font-medium text-sm ${
-                      userDetails?.overallAttendancePercentage >= 75
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }`}
-                  >
-                    {userDetails?.overallAttendancePercentage}%
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-600">Average</span>
-                  <span className="font-medium text-blue-600 text-sm">
-                    {averageAttendance.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-600">Trend</span>
-                  <span className={`font-medium text-sm ${trend.color}`}>
-                    {trend.icon} {trend.text}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      {selectedCourse && (
-  <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] border border-slate-900 overflow-hidden shadow-2xl">
-      {modalLoading ? (
-        <div className="w-full min-h-[90vh] flex justify-center items-center">
-        Loading Attendance Details...
-        </div>
-      ) : (
-        <>
-          {/* Header */}
-          <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-blue-900 p-4 text-white">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">
-                  {subjectAttendence?.subjectName}
-                </h3>
-                <div className="flex items-center gap-3">
-                  <span className="bg-white/20 px-2 py-1 rounded-md text-xs font-medium">
-                    {subjectAttendence?.subjectCode}
-                  </span>
-                  <span className="bg-white/20 px-2 py-1 rounded-md text-xs font-medium">
-                    {subjectAttendence?.attendancePercentage.toFixed(1)}% Attendance
-                  </span>
-                  <span className="bg-white/20 px-2 py-1 rounded-md text-xs font-medium">
-                    {subjectAttendence?.classesAttended} Classes Attended
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedCourse(null)}
-                className="p-1.5 hover:bg-white/20 rounded-md transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Main Body */}
-          <div className="p-4 overflow-y-auto max-h-[calc(90vh-100px)]">
-            {/* Tabs */}
-            <div className="flex flex-wrap gap-2 mb-6">
-              <button
-                onClick={() => setModalView("monthly")}
-                className={`px-4 py-2 rounded-sm text-sm font-medium transition-all cursor-pointer ${
-                  modalView === "monthly"
-                    ? "bg-slate-900 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                <Calendar className="w-3.5 h-3.5 inline mr-1.5" />
-                Monthly Overview
-              </button>
-              <button
-                onClick={() => setModalView("daily")}
-                className={`px-4 py-2 rounded-sm text-sm font-medium transition-all cursor-pointer ${
-                  modalView === "daily"
-                    ? "bg-slate-900 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5 inline mr-1.5" />
-                Daily Records
-              </button>
-            </div>
-
-            {/* Stats */}
-            <div className="bg-gradient-to-r from-white to-indigo-50 rounded-sm p-4 mb-6 border border-gray-400">
-              <h4 className="text-sm font-semibold text-gray-900 mb-3">
-                Course Statistics
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-blue-600">
-                    {subjectAttendence?.attendancePercentage?.toFixed(1)}%
-                  </p>
-                  <p className="text-xs text-gray-600">Overall</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-green-600">
-                    {subjectAttendence?.classesAttended}
-                  </p>
-                  <p className="text-xs text-gray-600">Present</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-red-600">
-                    {subjectAttendence?.classesMissed}
-                  </p>
-                  <p className="text-xs text-gray-600">Absent</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Monthly View */}
-            {modalView === "monthly" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {subjectAttendence?.monthlyBreakdown?.map(
-                  (month: any, index: number) => {
-                    const percentage = month.totalClasses
-                      ? (month.attended / month.totalClasses) * 100
-                      : 0;
-
-                    const formattedMonth = new Date(
-                      `${month.month}-01`
-                    ).toLocaleString("en-US", {
-                      month: "long",
-                      year: "numeric",
-                    });
-
-                    return (
-                      <div
-                        key={index}
-                        className="bg-gradient-to-br from-white to-indigo-50 rounded-sm p-4 border border-gray-400"
-                      >
-                        <div className="flex justify-between items-center mb-3">
-                          <h4 className="font-semibold text-gray-900 text-sm">
-                            {formattedMonth}
+                  return (
+                    <div
+                      key={course.subjectId}
+                      className="bg-white border border-gray-400 rounded-sm shadow-sm p-4 hover:shadow-md transition-all duration-300 cursor-pointer group ease-in-out"
+                      onClick={() => handleSubjectAttendenceData(course)}
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-gray-900 text-sm mb-2 group-hover:text-slate-900 transition-colors truncate">
+                            {course.subjectName}
                           </h4>
-                          <span
-                            className={`px-2 py-1 rounded-md text-xs font-medium ${getBadgeColor(
-                              percentage
-                            )}`}
-                          >
-                            {percentage.toFixed(1)}%
-                          </span>
-                        </div>
-
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="text-center p-2 bg-white rounded-sm border border-gray-400">
-                              <p className="text-lg font-bold text-green-600">
-                                {month.attended}
-                              </p>
-                              <p className="text-xs text-gray-600">Attended</p>
-                            </div>
-                            <div className="text-center p-2 bg-white rounded-sm border border-gray-400">
-                              <p className="text-lg font-bold text-gray-900">
-                                {month.totalClasses}
-                              </p>
-                              <p className="text-xs text-gray-600">Total</p>
-                            </div>
-                          </div>
-
-                          <div className="w-full bg-white rounded-full h-2 border border-gray-400">
-                            <div
-                              className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(
-                                percentage
-                              )}`}
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-                )}
-              </div>
-            )}
-
-            {/* Daily View */}
-            {modalView === "daily" && (
-              <div className="space-y-4">
-                {/* Search & Filter */}
-                <div className="bg-gray-50 rounded-sm p-4 border border-gray-200">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="text"
-                        placeholder="Search by date..."
-                        value={searchFilter}
-                        onChange={(e) => setSearchFilter(e.target.value)}
-                        className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                      />
-                    </div>
-                    <div className="relative">
-                      <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value as any)}
-                        className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-sm appearance-none bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="all">All Status</option>
-                        <option value="present">Present Only</option>
-                        <option value="absent">Absent Only</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Daily Records */}
-                <div className="space-y-3">
-                  {filteredDailyData.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                      <h4 className="text-sm font-semibold text-gray-600 mb-1">
-                        No Records Found
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        No attendance records match your search criteria.
-                      </p>
-                    </div>
-                  ) : (
-                    filteredDailyData.map((day: any, index: number) => (
-                      <div
-                        key={index}
-                        className="bg-white rounded-sm border border-gray-400 p-4"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-8 h-8 rounded-sm flex items-center justify-center ${
-                                day.status === "present"
-                                  ? "bg-green-100"
-                                  : "bg-red-100"
-                              }`}
-                            >
-                              {getStatusIcon(day.status)}
-                            </div>
-                            <div>
-                              <p className="font-semibold text-gray-900 text-sm">
-                                {new Date(day.date).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    weekday: "long",
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                  }
-                                )}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="text-right">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
+                              {course.subjectCode}
+                            </span>
                             <span
-                              className={`px-3 py-1 rounded-sm text-xs font-medium ${
-                                day.status === "present"
-                                  ? "bg-green-50 text-green-700 border border-green-200"
-                                  : "bg-red-50 text-red-700 border border-red-200"
-                              }`}
+                              className={`px-2 py-1 rounded-md text-xs font-medium ${getBadgeColor(
+                                course.attendancePercentage
+                              )}`}
                             >
-                              {day.status.charAt(0).toUpperCase() +
-                                day.status.slice(1)}
+                              {course.attendancePercentage.toFixed(1)}%
                             </span>
                           </div>
                         </div>
+                        <Icon
+                          className={`w-4 h-4 ${insight.color} flex-shrink-0`}
+                        />
                       </div>
-                    ))
-                  )}
-                </div>
+
+                      <div className="mb-4">
+                        <div className="flex justify-between text-xs text-gray-600 mb-2">
+                          <span className={insight.color + " font-medium"}>
+                            {insight.text}
+                          </span>
+                          <span className="font-medium">
+                            {course.classesAttended}/
+                            {course.classesAttended + course.classesMissed}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(
+                              course.attendancePercentage
+                            )}`}
+                            style={{ width: `${course.attendancePercentage}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="text-center p-2 bg-green-50 rounded-sm">
+                          <p className="text-sm font-bold text-green-600">
+                            {course.classesAttended}
+                          </p>
+                          <p className="text-xs text-green-700">Attended</p>
+                        </div>
+                        <div className="text-center p-2 bg-red-50 rounded-sm">
+                          <p className="text-sm font-bold text-red-600">
+                            {course?.classesMissed}
+                          </p>
+                          <p className="text-xs text-red-700">Missed</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 pt-3 border-t border-gray-300">
+                        <p className="text-xs text-gray-500 text-center group-hover:text-slate-900 transition-colors">
+                          Click to view details →
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex justify-center items-center h-full w-full">
+                Loading Course Information...
               </div>
             )}
           </div>
-        </>
-      )}
-    </div>
-  </div>
-)}
+        </div>
 
+        {selectedCourse && (
+          <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] border border-slate-900 overflow-hidden shadow-2xl">
+              {modalLoading ? (
+                <div className="w-full min-h-[90vh] flex justify-center items-center">
+                  Loading Attendance Details...
+                </div>
+              ) : (
+                <>
+                  <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-blue-900 p-4 text-white">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">
+                          {subjectAttendence?.subjectName}
+                        </h3>
+                        <div className="flex items-center gap-3">
+                          <span className="bg-white/20 px-2 py-1 rounded-md text-xs font-medium">
+                            {subjectAttendence?.subjectCode}
+                          </span>
+                          <span className="bg-white/20 px-2 py-1 rounded-md text-xs font-medium">
+                            {subjectAttendence?.attendancePercentage.toFixed(1)}
+                            % Attendance
+                          </span>
+                          <span className="bg-white/20 px-2 py-1 rounded-md text-xs font-medium">
+                            {subjectAttendence?.classesAttended} Classes
+                            Attended
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setSelectedCourse(null)}
+                        className="p-1.5 hover:bg-white/20 rounded-md transition-colors cursor-pointer"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-4 overflow-y-auto max-h-[calc(90vh-100px)]">
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      <button
+                        onClick={() => setModalView("monthly")}
+                        className={`px-4 py-2 rounded-sm text-sm font-medium transition-all cursor-pointer ${
+                          modalView === "monthly"
+                            ? "bg-slate-900 text-white shadow-lg"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        <Calendar className="w-3.5 h-3.5 inline mr-1.5" />
+                        Monthly Overview
+                      </button>
+                      <button
+                        onClick={() => setModalView("daily")}
+                        className={`px-4 py-2 rounded-sm text-sm font-medium transition-all cursor-pointer ${
+                          modalView === "daily"
+                            ? "bg-slate-900 text-white shadow-lg"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        <Clock className="w-3.5 h-3.5 inline mr-1.5" />
+                        Daily Records
+                      </button>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-white to-indigo-50 rounded-sm p-4 mb-6 border border-gray-400">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                        Course Statistics
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="text-center">
+                          <p className="text-3xl font-bold text-blue-600">
+                            {subjectAttendence?.attendancePercentage?.toFixed(
+                              1
+                            )}
+                            %
+                          </p>
+                          <p className="text-xs text-gray-600">Overall</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-3xl font-bold text-green-600">
+                            {subjectAttendence?.classesAttended}
+                          </p>
+                          <p className="text-xs text-gray-600">Present</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-3xl font-bold text-red-600">
+                            {subjectAttendence?.classesMissed}
+                          </p>
+                          <p className="text-xs text-gray-600">Absent</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {modalView === "monthly" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {subjectAttendence?.monthlyBreakdown?.map(
+                          (month: any, index: number) => {
+                            const percentage = month.totalClasses
+                              ? (month.attended / month.totalClasses) * 100
+                              : 0;
+
+                            const formattedMonth = new Date(
+                              `${month.month}-01`
+                            ).toLocaleString("en-US", {
+                              month: "long",
+                              year: "numeric",
+                            });
+
+                            return (
+                              <div
+                                key={index}
+                                className="bg-gradient-to-br from-white to-indigo-50 rounded-sm p-4 border border-gray-400"
+                              >
+                                <div className="flex justify-between items-center mb-3">
+                                  <h4 className="font-semibold text-gray-900 text-sm">
+                                    {formattedMonth}
+                                  </h4>
+                                  <span
+                                    className={`px-2 py-1 rounded-md text-xs font-medium ${getBadgeColor(
+                                      percentage
+                                    )}`}
+                                  >
+                                    {percentage.toFixed(1)}%
+                                  </span>
+                                </div>
+
+                                <div className="space-y-3">
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="text-center p-2 bg-white rounded-sm border border-gray-400">
+                                      <p className="text-lg font-bold text-green-600">
+                                        {month.attended}
+                                      </p>
+                                      <p className="text-xs text-gray-600">
+                                        Attended
+                                      </p>
+                                    </div>
+                                    <div className="text-center p-2 bg-white rounded-sm border border-gray-400">
+                                      <p className="text-lg font-bold text-gray-900">
+                                        {month.totalClasses}
+                                      </p>
+                                      <p className="text-xs text-gray-600">
+                                        Total
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="w-full bg-white rounded-full h-2 border border-gray-400">
+                                    <div
+                                      className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(
+                                        percentage
+                                      )}`}
+                                      style={{ width: `${percentage}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                        )}
+                      </div>
+                    )}
+
+                    {modalView === "daily" && (
+                      <div className="space-y-4">
+                        <div className="bg-gray-50 rounded-sm p-4 border border-gray-200">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                              <input
+                                type="text"
+                                placeholder="Search by date..."
+                                value={searchFilter}
+                                onChange={(e) =>
+                                  setSearchFilter(e.target.value)
+                                }
+                                className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                              />
+                            </div>
+                            <div className="relative">
+                              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                              <select
+                                value={statusFilter}
+                                onChange={(e) =>
+                                  setStatusFilter(e.target.value as any)
+                                }
+                                className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-sm appearance-none bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="all">All Status</option>
+                                <option value="present">Present Only</option>
+                                <option value="absent">Absent Only</option>
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          {filteredDailyData.length === 0 ? (
+                            <div className="text-center py-8">
+                              <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                              <h4 className="text-sm font-semibold text-gray-600 mb-1">
+                                No Records Found
+                              </h4>
+                              <p className="text-xs text-gray-500">
+                                No attendance records match your search
+                                criteria.
+                              </p>
+                            </div>
+                          ) : (
+                            filteredDailyData.map((day: any, index: number) => (
+                              <div
+                                key={index}
+                                className="bg-white rounded-sm border border-gray-400 p-4"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`w-8 h-8 rounded-sm flex items-center justify-center ${
+                                        day.status === "present"
+                                          ? "bg-green-100"
+                                          : "bg-red-100"
+                                      }`}
+                                    >
+                                      {getStatusIcon(day.status)}
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold text-gray-900 text-sm">
+                                        {new Date(day.date).toLocaleDateString(
+                                          "en-US",
+                                          {
+                                            weekday: "long",
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                          }
+                                        )}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="text-right">
+                                    <span
+                                      className={`px-3 py-1 rounded-sm text-xs font-medium ${
+                                        day.status === "present"
+                                          ? "bg-green-50 text-green-700 border border-green-200"
+                                          : "bg-red-50 text-red-700 border border-red-200"
+                                      }`}
+                                    >
+                                      {day.status.charAt(0).toUpperCase() +
+                                        day.status.slice(1)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

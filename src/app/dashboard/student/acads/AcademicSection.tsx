@@ -81,29 +81,28 @@ export default function AcademicsSection() {
   const [error, setError] = useState<string | null>(null);
   const [exams, setExams] = useState<any[]>([]);
 
-const fetchExams = useCallback(
-  async (subjectId: string, examType: string) => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${subjectId}`,
-        {
-          params: { exam_type: examType },
-          withCredentials: true,
+  const fetchExams = useCallback(
+    async (subjectId: string, examType: string) => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${subjectId}`,
+          {
+            params: { exam_type: examType },
+            withCredentials: true,
+          }
+        );
+
+        if (response.data.success) {
+          setExams(response.data.data.exams || []);
+          return response.data.data.exams;
         }
-      );
-
-      if (response.data.success) {
-        setExams(response.data.data.exams || []);
-        return response.data.data.exams;
+      } catch (err) {
+        console.error("Error fetching exams:", err);
+        setExams([]);
       }
-    } catch (err) {
-      console.error("Error fetching exams:", err);
-      setExams([]);
-    }
-  },
-  []
-);
-
+    },
+    []
+  );
 
   const fetchCurrentSemester = useCallback(async () => {
     try {
@@ -119,7 +118,7 @@ const fetchExams = useCallback(
       }
     } catch (err) {
       console.error("Error fetching current semester:", err);
-       return null;
+      return null;
     }
   }, []);
 
@@ -218,7 +217,6 @@ const fetchExams = useCallback(
         }
       } catch (err) {
         console.error(`Error fetching ${type} leaderboard:`, err);
-        // Set empty leaderboard data on error
         setLeaderboardData((prev: any) => ({
           ...prev,
           [type]: [],
@@ -228,165 +226,155 @@ const fetchExams = useCallback(
     []
   );
 
-useEffect(() => {
-  const initializeAcademicData = async () => {
-    try {
-      setLoading(true);
+  useEffect(() => {
+    const initializeAcademicData = async () => {
+      try {
+        setLoading(true);
 
-      const [currentSemester, pastSemesters] = await Promise.all([
-        fetchCurrentSemester(),
-        fetchPastSemesters(),
-      ]);
+        const [currentSemester, pastSemesters] = await Promise.all([
+          fetchCurrentSemester(),
+          fetchPastSemesters(),
+        ]);
 
-      // ✅ set student profile here
-      if (currentSemester?.semester_info) {
-        _setStudentProfile({
-          batch: currentSemester.semester_info.batch_name || "N/A",
-          semesterNo: currentSemester.semester_info.semester_number,
-          id: currentSemester.semester_info.student_id,
-        });
-      }
-
-      const allCourses: any[] = [];
-
-      // Handle current semester subjects
-      if (currentSemester?.subjects) {
-        currentSemester.subjects.forEach((subject: any) => {
-          allCourses.push({
-            id: subject.subject_id,
-            code: subject.subject_code,
-            name: subject.subject_name,
-            credits: subject.credits,
-            semester: currentSemester.semester_info.semester_number,
-            teacher_name: subject.teacher_name,
-            teacher_email: subject.teacher_email,
+        if (currentSemester?.semester_info) {
+          _setStudentProfile({
+            batch: currentSemester.semester_info.batch_name || "N/A",
+            semesterNo: currentSemester.semester_info.semester_number,
+            id: currentSemester.semester_info.student_id,
           });
-        });
-      }
+        }
 
-      // Handle past semesters...
-      if (
-        pastSemesters?.past_semesters &&
-        pastSemesters.past_semesters.length > 0
-      ) {
-        pastSemesters.past_semesters.forEach((semester: any) => {
-          if (semester.subjects) {
-            semester.subjects.forEach((subject: any) => {
-              allCourses.push({
-                id: subject.subject_id,
-                code: subject.subject_code,
-                name: subject.subject_name,
-                credits: subject.credits,
-                semester: semester.semester_number,
-                teacher_name: subject.teacher_name,
-                teacher_email: subject.teacher_email,
-              });
+        const allCourses: any[] = [];
+
+        if (currentSemester?.subjects) {
+          currentSemester.subjects.forEach((subject: any) => {
+            allCourses.push({
+              id: subject.subject_id,
+              code: subject.subject_code,
+              name: subject.subject_name,
+              credits: subject.credits,
+              semester: currentSemester.semester_info.semester_number,
+              teacher_name: subject.teacher_name,
+              teacher_email: subject.teacher_email,
             });
-          }
+          });
+        }
+
+        if (
+          pastSemesters?.past_semesters &&
+          pastSemesters.past_semesters.length > 0
+        ) {
+          pastSemesters.past_semesters.forEach((semester: any) => {
+            if (semester.subjects) {
+              semester.subjects.forEach((subject: any) => {
+                allCourses.push({
+                  id: subject.subject_id,
+                  code: subject.subject_code,
+                  name: subject.subject_name,
+                  credits: subject.credits,
+                  semester: semester.semester_number,
+                  teacher_name: subject.teacher_name,
+                  teacher_email: subject.teacher_email,
+                });
+              });
+            }
+          });
+        }
+
+        setAcademicData({
+          current_semester: currentSemester,
+          past_semesters: pastSemesters?.past_semesters || [],
+          courses: allCourses,
         });
+
+        if (allCourses.length > 0) {
+          const firstCourse = allCourses[0];
+          const initialFilters = {
+            semester: firstCourse.semester,
+            course: firstCourse.code,
+            testType: "FORTNIGHTLY",
+            testNumber: "1",
+          };
+          setPendingFilters(initialFilters);
+        }
+      } catch (err) {
+        console.error("Error initializing academic data:", err);
+        setError("Failed to load academic data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAcademicData();
+  }, [fetchCurrentSemester, fetchPastSemesters]);
+
+  useEffect(() => {
+    const updateData = async () => {
+      if (
+        !activeFilters ||
+        !academicData ||
+        !activeFilters.semester ||
+        !activeFilters.course ||
+        !activeFilters.testType ||
+        !activeFilters.testNumber
+      ) {
+        return;
       }
 
-      setAcademicData({
-        current_semester: currentSemester,
-        past_semesters: pastSemesters?.past_semesters || [],
-        courses: allCourses,
-      });
-
-      // Initialize filters...
-      if (allCourses.length > 0) {
-        const firstCourse = allCourses[0];
-        const initialFilters = {
-          semester: firstCourse.semester,
-          course: firstCourse.code,
-          testType: "FORTNIGHTLY",
-          testNumber: "1",
-        };
-        setPendingFilters(initialFilters);
-      }
-    } catch (err) {
-      console.error("Error initializing academic data:", err);
-      setError("Failed to load academic data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  initializeAcademicData();
-}, [fetchCurrentSemester, fetchPastSemesters]);
-
-
-// Update trends and leaderboard when filters change
-useEffect(() => {
-  const updateData = async () => {
-    if (
-      !activeFilters ||
-      !academicData ||
-      !activeFilters.semester ||
-      !activeFilters.course ||
-      !activeFilters.testType ||
-      !activeFilters.testNumber
-    ) {
-      return;
-    }
-
-    const selectedCourse = academicData.courses.find(
-      (c) => c.code === activeFilters.course
-    );
-    if (!selectedCourse) return;
-
-    let semesterId = "";
-
-    // Find semester ID based on the selected semester
-    if (
-      academicData.current_semester?.semester_info.semester_number ===
-      activeFilters.semester
-    ) {
-      semesterId = academicData.current_semester.semester_info.semester_id;
-    } else {
-      const pastSemester = academicData.past_semesters?.find(
-        (s: any) => s.semester_number === activeFilters.semester
+      const selectedCourse = academicData.courses.find(
+        (c) => c.code === activeFilters.course
       );
-      if (pastSemester) {
-        semesterId = pastSemester.semester_id;
+      if (!selectedCourse) return;
+
+      let semesterId = "";
+
+      if (
+        academicData.current_semester?.semester_info.semester_number ===
+        activeFilters.semester
+      ) {
+        semesterId = academicData.current_semester.semester_info.semester_id;
+      } else {
+        const pastSemester = academicData.past_semesters?.find(
+          (s: any) => s.semester_number === activeFilters.semester
+        );
+        if (pastSemester) {
+          semesterId = pastSemester.semester_id;
+        }
       }
-    }
 
-    if (!semesterId) return;
+      if (!semesterId) return;
 
-    const examName = `${getTestTypeLabel(activeFilters.testType)} ${
-      activeFilters.testNumber
-    }`;
+      const examName = `${getTestTypeLabel(activeFilters.testType)} ${
+        activeFilters.testNumber
+      }`;
 
-    // Fetch performance trends
-    await fetchPerformanceTrends(
-      semesterId,
-      selectedCourse.id,
-      activeFilters.testType,
-      examName
-    );
-
-    // Fetch both leaderboards
-    await Promise.all([
-      fetchLeaderboard(
-        "class",
+      await fetchPerformanceTrends(
         semesterId,
         selectedCourse.id,
         activeFilters.testType,
         examName
-      ),
-      fetchLeaderboard(
-        "overall",
-        semesterId,
-        selectedCourse.id,
-        activeFilters.testType,
-        examName
-      ),
-    ]);
-  };
+      );
 
-  updateData();
-}, [activeFilters, academicData, fetchPerformanceTrends, fetchLeaderboard]);
+      await Promise.all([
+        fetchLeaderboard(
+          "class",
+          semesterId,
+          selectedCourse.id,
+          activeFilters.testType,
+          examName
+        ),
+        fetchLeaderboard(
+          "overall",
+          semesterId,
+          selectedCourse.id,
+          activeFilters.testType,
+          examName
+        ),
+      ]);
+    };
 
+    updateData();
+  }, [activeFilters, academicData, fetchPerformanceTrends, fetchLeaderboard]);
 
   const hasFiltersChanged = () => {
     if (!activeFilters || !pendingFilters) return false;
@@ -563,7 +551,6 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
-        {/* Header Section */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm border border-gray-400 shadow-sm p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -575,7 +562,6 @@ useEffect(() => {
               </p>
             </div>
 
-            {/* Quick Stats */}
             <div className="flex flex-wrap gap-4">
               <div className="bg-gradient-to-br from-white to-indigo-50 px-4 py-3 rounded-sm border border-gray-200">
                 <div className="text-sm text-slate-900 font-medium">Batch</div>
@@ -603,7 +589,6 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Filter Controls */}
         <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg p-6 border border-gray-400">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 bg-blue-100 rounded-sm flex items-center justify-center">
@@ -659,11 +644,10 @@ useEffect(() => {
                       if (!prev) return null;
                       return {
                         ...prev,
-                        course: selectedCourse, // ✅ update filter
+                        course: selectedCourse,
                       };
                     });
 
-                    // ✅ fetch exams only if we have testType
                     if (selectedCourse && pendingFilters?.testType) {
                       const selectedCourseObj = availableCourses.find(
                         (c: any) => c.code === selectedCourse
@@ -744,7 +728,6 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <button
@@ -780,12 +763,12 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Performance Chart */}
         <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
           <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 px-6 py-4 drop-shadow-sm">
             <h3 className="text-xl font-semibold text-slate-900">
               {activeFilters?.course.toUpperCase()} -{" "}
-                {getTestTypeLabel(activeFilters?.testType ?? "Exam")} Performance Trend
+              {getTestTypeLabel(activeFilters?.testType ?? "Exam")} Performance
+              Trend
             </h3>
           </div>
           <div className="p-6">
@@ -836,9 +819,7 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Leaderboards Side by Side */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {/* Class Leaderboard */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -858,7 +839,6 @@ useEffect(() => {
             </div>
 
             <div className="p-6">
-              {/* Compact Info Tiles */}
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <div className="bg-gradient-to-br from-white to-indigo-50 p-3 rounded-sm shadow-sm border border-gray-400 text-center">
                   <div className="text-xs text-slate-900 font-medium mb-1">
@@ -883,7 +863,6 @@ useEffect(() => {
                 </div>
               </div>
 
-              {/* Top 3 Students */}
               <div className="space-y-3">
                 {getLeaderboardData("class")
                   .slice(0, 3)
@@ -925,7 +904,6 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Overall Leaderboard */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -945,7 +923,6 @@ useEffect(() => {
             </div>
 
             <div className="p-6">
-              {/* Compact Info Tiles */}
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <div className="bg-gradient-to-br from-white to-indigo-50 p-3 rounded-sm shadow-sm border border-gray-400 text-center">
                   <div className="text-xs text-slate-900 font-medium mb-1">
@@ -970,7 +947,6 @@ useEffect(() => {
                 </div>
               </div>
 
-              {/* Top 3 Students */}
               <div className="space-y-3">
                 {getLeaderboardData("overall")
                   .slice(0, 3)
@@ -1013,9 +989,7 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Course Tables - Collapsible Sections */}
         <div className="space-y-6">
-          {/* Ongoing Courses */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
               <div className="flex items-center gap-3">
@@ -1074,7 +1048,6 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Completed Courses - Collapsible */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
               <div className="flex items-center justify-between">
@@ -1194,7 +1167,6 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Leaderboard Modal */}
         {isLeaderboardModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
