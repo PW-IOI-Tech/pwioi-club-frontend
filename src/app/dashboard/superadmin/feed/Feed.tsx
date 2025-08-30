@@ -14,8 +14,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
-// --- INTERFACES ---
-
 interface User {
   batch: string;
   studentId: string;
@@ -99,8 +97,6 @@ interface ReportModalProps {
   setReportDetails: (details: string) => void;
   onSubmit: () => void;
 }
-
-// --- COMPONENTS ---
 
 const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ userName }) => (
   <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-sm border border-gray-400 p-6 py-8">
@@ -411,7 +407,6 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
   );
 };
 
-// ... rest of the frontend code remains the same ...
 const PostHeader: React.FC<any> = ({ post,getRoleBadgeColor }) => (
   <div className="p-4 pb-3">
     <div className="flex items-start justify-between">
@@ -429,9 +424,9 @@ const PostHeader: React.FC<any> = ({ post,getRoleBadgeColor }) => (
             <h3 className="font-semibold text-gray-900 text-sm">
               {post?.userInfo?.name}
             </h3>
-            {/* <span  className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
+            <span  className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
                 post?.author_type
-              )}`}>{post?.author_type}</span> */}
+              )}`}>{post?.author_type}</span>
             {post.assignedBy && (
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-br from-white to-indigo-50 text-slate-800 border border-slate-400">
                 📌 {post?.author_type}
@@ -761,12 +756,13 @@ const PostActions: React.FC<PostActionsProps> = ({
   );
 };
 
-const Post: React.FC<{
-  post: Post;
-  likedPosts: Set<string>;
-  onLike: (postId: string) => void;
-  onFlag: (postId: string) => void;
-}> = ({ post, likedPosts, onLike, onFlag }) => {
+const Post: React.FC<any> = ({
+  post,
+  likedPosts,
+  onLike,
+  onFlag,
+  getRoleBadgeColor,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const contentLines = post.content.split("\n");
@@ -786,7 +782,7 @@ const Post: React.FC<{
 
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
-      <PostHeader post={post} />
+      <PostHeader post={post} getRoleBadgeColor={getRoleBadgeColor} />
 
       <div className="px-4 py-3">
         <div className="text-gray-800 text-sm">
@@ -817,7 +813,7 @@ const Post: React.FC<{
 
       {post?.media?.length > 0 && (
         <div className="px-4 pb-3 grid grid-cols-1 gap-2">
-          {post.media.map((mediaItem) => (
+          {post.media.map((mediaItem:any) => (
             <div key={mediaItem.id}>
               {mediaItem.type === "IMAGE" ? (
                 <img
@@ -862,6 +858,8 @@ const Feed: React.FC<FeedProps> = ({
         likedPosts={likedPosts}
         onLike={onLike}
         onFlag={onFlag}
+        getRoleBadgeColor={getRoleBadgeColor}
+
       />
     ))}
   </div>
@@ -978,8 +976,6 @@ const ReportModal: React.FC<ReportModalProps> = ({
   );
 };
 
-// --- MAIN PAGE COMPONENT ---
-
 const AdminFeed: React.FC<any> = () => {
   const [user, setUser] = useState<any>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -1062,7 +1058,6 @@ const AdminFeed: React.FC<any> = () => {
       }
     } catch (error) {
       console.error("Error liking/unliking:", error);
-      // Revert UI on error
       setLikedPosts(originalLikedPosts);
     }
   };
@@ -1071,18 +1066,28 @@ const AdminFeed: React.FC<any> = () => {
     setReportModal({ isOpen: true, postId });
   };
 
-  const handleReportSubmit = (): void => {
-    console.log(
-      "Reporting post:",
-      reportModal.postId,
-      "Reason:",
-      reportReason,
-      "Details:",
-      reportDetails
-    );
-    // Add actual API call to submit report here
+const handleReportSubmit = async (): Promise<void> => {
+  if (!reportModal.postId || !reportReason.trim()) {
+    alert("Please provide a reason for reporting.");
+    return;
+  }
+
+  try {
+    const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags`, {
+      postId: reportModal.postId,
+      reason: reportReason,  
+    }, {withCredentials:true});
+
+    console.log("Report submitted:", res.data);
+    alert("Report submitted successfully!");
+  } catch (err: any) {
+    console.error("Error reporting:", err.response?.data || err.message);
+    alert(err.response?.data?.message || "Failed to submit report");
+  } finally {
     handleReportClose();
-  };
+  }
+};
+
 
   const handleReportClose = (): void => {
     setReportModal({ isOpen: false, postId: null });
@@ -1119,7 +1124,6 @@ const AdminFeed: React.FC<any> = () => {
               onFlag={handleFlag}
               getRoleBadgeColor={getRoleBadgeColor}
             />
-            {/* Add logic for infinite scroll trigger here if needed */}
           </div>
 
           <div className="lg:col-span-3 space-y-4 hidden sm:block">

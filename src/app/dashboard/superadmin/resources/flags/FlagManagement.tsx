@@ -23,6 +23,7 @@ interface FlaggedPost {
   postCreatedAt: string;
   mediaUrl?: string;
   flagCount: number;
+  flagIds: string[];
   flaggedBy: FlaggedUser[];
   status: "pending" | "approved" | "rejected";
   createdAt: string;
@@ -70,41 +71,58 @@ export default function FlagManagement() {
   const [isFlaggedByModalOpen, setIsFlaggedByModalOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
-  useEffect(() => {
-    const fetchFlags = async () => {
-      try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags`, {withCredentials:true});
+useEffect(() => {
+  const fetchFlags = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags`,
+        { withCredentials: true }
+      );
 
-        const mapped: FlaggedPost[] = res.data.data.map((f: any) => ({
-          id: f.id,
-          postId: f.post_id,
-          postContent: f.post?.content || "",
-          postAuthor: f.post?.author?.name || "Unknown",
-          postAuthorEmail: f.post?.author?.email || "N/A",
-          postCreatedAt: f.post?.createdAt || "",
-          mediaUrl: f.post?.media?.[0]?.url || undefined,
-          flagCount: 1,
-          flaggedBy: [
-            {
-              userId: f.flagged_by,
-              userName: f.user?.name || "Unknown",
-              userEmail: f.user?.email || "N/A",
-              flagReason: f.content,
-              flaggedAt: f.createdAt,
-            },
-          ],
-          status: f.is_verified ? "rejected" : "pending",
-          createdAt: f.createdAt,
-        }));
+      // Group flags by postId
+      const grouped: Record<string, FlaggedPost> = {};
 
-        setFlaggedPosts(mapped);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to fetch flags");
-      }
-    };
+      res.data.data.forEach((f: any) => {
+        const postId = f.post?.id || f.post_id;
 
-    fetchFlags();
-  }, []);
+        if (!grouped[postId]) {
+          grouped[postId] = {
+            id: postId,
+            postId: postId,
+            flagIds: [],
+            postContent: f.post?.content || "",
+            postAuthor: f.post?.author_type || "Unknown",
+            postAuthorEmail: f.post?.author?.email || "N/A",
+            postCreatedAt: f.post?.createdAt || "",
+            mediaUrl: f.post?.media?.[0]?.url || undefined,
+            flagCount: 0,
+            flaggedBy: [],
+            status: f.is_verified ? "rejected" : "pending",
+            createdAt: f.createdAt,
+          };
+        }
+
+        // increment flag count + add user
+        grouped[postId].flagCount += 1;
+        grouped[postId].flagIds.push(f.id);
+        grouped[postId].flaggedBy.push({
+          userId: f.flagged_by,
+          userName: f.user?.name || "Unknown",
+          userEmail: f.user?.email || "N/A",
+          flagReason: f.content,
+          flaggedAt: f.createdAt,
+        });
+      });
+
+      setFlaggedPosts(Object.values(grouped));
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch flags");
+    }
+  };
+
+  fetchFlags();
+}, []);
+
 
   const showToast = useCallback((message: string, type: "success" | "error" | "info") => {
     setToast({ message, type });
@@ -112,39 +130,49 @@ export default function FlagManagement() {
 
   const hideToast = useCallback(() => setToast(null), []);
 
-  const handleApproveFlag = useCallback(
-    async (flagId: string) => {
-      try {
-        await axios.patch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags/${flagId}/review`,
-          { action: "approve" },
-          {withCredentials:true}
-        );
-        setFlaggedPosts((prev) => prev.map((p) => (p.id === flagId ? { ...p, status: "approved" } : p)));
-        showToast("Flag approved successfully. Post has been deleted.", "success");
-      } catch (err: any) {
-        showToast(err.response?.data?.message || "Failed to approve flag", "error");
-      }
-    },
-    [showToast]
-  );
+const handleApproveFlag = useCallback(
+  async (post: FlaggedPost) => {
+    try {
+      const flagId = post.flagIds[0]; // 👈 use real flag id
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags/${flagId}/review`,
+        { action: "approve" },
+        { withCredentials: true }
+      );
+      setFlaggedPosts((prev) =>
+        prev.map((p) =>
+          p.id === post.id ? { ...p, status: "approved" } : p
+        )
+      );
+      showToast("Flag approved successfully. Post has been deleted.", "success");
+    } catch (err: any) {
+      showToast(err.response?.data?.message || "Failed to approve flag", "error");
+    }
+  },
+  [showToast]
+);
 
-  const handleRejectFlag = useCallback(
-    async (flagId: string) => {
-      try {
-        await axios.patch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags/${flagId}/review`,
-          { action: "reject" },
-          {withCredentials:true}
-        );
-        setFlaggedPosts((prev) => prev.map((p) => (p.id === flagId ? { ...p, status: "rejected" } : p)));
-        showToast("Flag rejected successfully. Post has been unflagged.", "info");
-      } catch (err: any) {
-        showToast(err.response?.data?.message || "Failed to reject flag", "error");
-      }
-    },
-    [showToast]
-  );
+const handleRejectFlag = useCallback(
+  async (post: FlaggedPost) => {
+    try {
+      const flagId = post.flagIds[0]; // 👈 use real flag id
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags/${flagId}/review`,
+        { action: "dismiss" },
+        { withCredentials: true }
+      );
+      setFlaggedPosts((prev) =>
+        prev.map((p) =>
+          p.id === post.id ? { ...p, status: "rejected" } : p
+        )
+      );
+      showToast("Flag dismissed successfully. Post has been restored.", "info");
+    } catch (err: any) {
+      showToast(err.response?.data?.message || "Failed to dismiss flag", "error");
+    }
+  },
+  [showToast]
+);
 
   const handleViewFlaggedBy = useCallback((post: FlaggedPost) => {
     setSelectedPost(post);
@@ -168,41 +196,54 @@ export default function FlagManagement() {
     };
   }, [flaggedPosts]);
 
-  const tableData = useMemo(
-    () =>
-      flaggedPosts.map((post) => ({
-        id: post.id,
-        postId: post.postId,
-        postContent: post.postContent.length > 50 ? post.postContent.substring(0, 50) + "..." : post.postContent,
-        postAuthor: post.postAuthor,
-        postCreatedAt: post.postCreatedAt,
-        flagCount: post.flagCount,
-        status: post.status,
-        actions:
-          post.status === "pending" ? (
-            <div className="flex space-x-2">
-              <button onClick={() => handleViewFlaggedBy(post)} className="text-blue-600 hover:text-blue-800 p-1">
-                <Eye size={16} />
-              </button>
-              <button onClick={() => handleApproveFlag(post.id)} className="text-green-600 hover:text-green-800 p-1">
-                <CheckCircle size={16} />
-              </button>
-              <button onClick={() => handleRejectFlag(post.id)} className="text-red-600 hover:text-red-800 p-1">
-                <X size={16} />
-              </button>
-            </div>
-          ) : (
-            <span
-              className={`px-2 py-1 rounded text-xs ${
-                post.status === "approved" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-              }`}
-            >
-              {post.status === "approved" ? "Deleted" : "Restored"}
-            </span>
-          ),
-      })),
-    [flaggedPosts, handleApproveFlag, handleRejectFlag, handleViewFlaggedBy]
-  );
+const tableData = useMemo(() => {
+  if (!flaggedPosts || flaggedPosts.length === 0) return [];
+
+  return flaggedPosts.map((post) => ({
+    id: post.id,
+    postContent:
+      post.postContent.length > 50
+        ? post.postContent.substring(0, 50) + "..."
+        : post.postContent,
+    postAuthor: post.postAuthor,
+    postCreatedAt: new Date(post.postCreatedAt).toLocaleString(), // nicer formatting
+    flagCount: post.flagCount,
+    status: post.status,
+    actions:
+      post.status === "pending" ? (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleViewFlaggedBy(post)}
+            className="text-blue-600 hover:text-blue-800 p-1"
+          >
+            <Eye size={16} />
+          </button>
+          <button
+            onClick={() => handleApproveFlag(post)}
+            className="text-green-600 hover:text-green-800 p-1"
+          >
+            <CheckCircle size={16} />
+          </button>
+          <button
+            onClick={() => handleRejectFlag(post)}
+            className="text-red-600 hover:text-red-800 p-1"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      ) : (
+        <span
+          className={`px-2 py-1 rounded text-xs ${
+            post.status === "approved"
+              ? "bg-green-100 text-green-800"
+              : "bg-gray-100 text-gray-800"
+          }`}
+        >
+          {post.status === "approved" ? "Deleted" : "Restored"}
+        </span>
+      ),
+  }));
+}, [flaggedPosts, handleApproveFlag, handleRejectFlag, handleViewFlaggedBy]);
 
   if (error) {
     return (

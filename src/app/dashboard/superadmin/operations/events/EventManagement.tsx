@@ -30,6 +30,16 @@ export default function EventManagement() {
   const [error, setError] = useState("");
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
 
+  const typeMapping: Record<string, string> = {
+  workshop: "WORKSHOP",
+  seminar: "SEMINAR",
+  conference: "ACTIVITY",   
+  hackathon: "HACKATHON",
+  webinar: "CLUB_EVENT",    
+  networking: "CLUB_EVENT", 
+};
+
+
   const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/event`;
   const token = localStorage.getItem("token");
 
@@ -84,25 +94,39 @@ export default function EventManagement() {
     [events]
   );
 
-  const handleUpdateEvent = useCallback(
-    async (updatedItem: any) => {
-      try {
-        const eventItem = updatedItem as TableEvent;
-        await axios.put(`${API_BASE}/${eventItem.id}`, eventItem, {
-          withCredentials: true,
-        });
+const handleUpdateEvent = useCallback(
+  async (updatedItem: any) => {
+    try {
+      const eventItem = updatedItem as TableEvent;
 
-        setEvents((prev) =>
-          prev.map((event) =>
-            event.id === eventItem.id ? { ...event, ...eventItem } : event
-          )
-        );
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to update event");
-      }
-    },
-    [token]
-  );
+      const payload = {
+        name: eventItem.eventName,
+        organiser: eventItem.organizer,
+        venue: eventItem.venue,
+        type: typeMapping[eventItem.type] || eventItem.type, // map to backend
+        start_date: new Date(eventItem.startDate).toISOString(),
+        end_date: new Date(eventItem.endDate).toISOString(),
+        description: eventItem.description,
+        is_visible: eventItem.isVisible === "true",
+        thumbnail: eventItem.thumbnailUrl,
+      };
+
+      await axios.put(`${API_BASE}/${eventItem.id}`, payload, {
+        withCredentials: true,
+      });
+
+      setEvents((prev) =>
+        prev.map((event) =>
+          event.id === eventItem.id ? { ...event, ...eventItem } : event
+        )
+      );
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to update event");
+    }
+  },
+  [token]
+);
+
 
   const handleDeleteEvent = useCallback(
     async (id: string | number) => {
@@ -120,50 +144,35 @@ export default function EventManagement() {
     [token]
   );
 
-  const handleAddEvent = useCallback(
-    async (newEventData: {
-      eventName: string;
-      organizer: string;
-      venue: string;
-      type:
-        | "workshop"
-        | "seminar"
-        | "conference"
-        | "hackathon"
-        | "webinar"
-        | "networking";
-      startDate: string;
-      endDate: string;
-      description: string;
-      isVisible: string;
-      thumbnailUrl: string;
-    }) => {
-      try {
-        const payload = {
-          name: newEventData.eventName,
-          organiser: newEventData.organizer,
-          venue: newEventData.venue,
-          type: newEventData.type.toUpperCase(),
-          start_date: new Date(newEventData.startDate).toISOString(),
-          end_date: new Date(newEventData.endDate).toISOString(),
-          description: newEventData.description,
-          isVisible: newEventData.isVisible,
-          thumbnailUrl: newEventData.thumbnailUrl,
-        };
+const handleAddEvent = useCallback(
+  async (newEventData: any) => {
+    try {
+      const payload = {
+        name: newEventData.eventName,
+        organiser: newEventData.organizer,
+        venue: newEventData.venue,
+        type: typeMapping[newEventData.type] || newEventData.type, 
+        start_date: new Date(newEventData.startDate).toISOString(),
+        end_date: new Date(newEventData.endDate).toISOString(),
+        description: newEventData.description,
+        is_visible: newEventData.isVisible === "true",
+        thumbnail: newEventData.thumbnailUrl,
+      };
 
-        const res = await axios.post(`${API_BASE}`, payload, {
-          withCredentials: true,
-        });
+      const res = await axios.post(`${API_BASE}`, payload, {
+        withCredentials: true,
+      });
 
-        const createdEvent = res.data.data;
-        setEvents((prev) => [...prev, createdEvent]);
-        setIsAddEventModalOpen(false);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to create event");
-      }
-    },
-    [token]
-  );
+      const createdEvent = res.data.data;
+      setEvents((prev) => [...prev, createdEvent]);
+      setIsAddEventModalOpen(false);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to create event");
+    }
+  },
+  [token]
+);
+
 
   const handleOpenAddModal = useCallback(() => {
     setIsAddEventModalOpen(true);

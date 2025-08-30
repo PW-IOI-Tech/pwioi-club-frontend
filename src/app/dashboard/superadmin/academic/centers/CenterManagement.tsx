@@ -23,7 +23,7 @@ export default function CenterManagement() {
     const fetchCenters = async () => {
       try {
         setLoading(true);
-        const res = await axios.get("http://localhost:8000/api/center/all", {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`, {
           withCredentials: true,
         });
 

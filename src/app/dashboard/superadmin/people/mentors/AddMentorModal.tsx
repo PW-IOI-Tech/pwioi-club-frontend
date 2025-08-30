@@ -5,13 +5,14 @@ import axios from "axios";
 interface AddMentorModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onMentorAdded: (mentor: any) => void;
 }
 
 interface FormData {
   name: string;
   email: string;
   phone: string;
-  linkedin : string;
+  linkedin: string;
   designation: string;
   company: string;
 }
@@ -36,11 +37,12 @@ const designations = [
   { value: "Architect", label: "Architect" },
 ];
 
-
 const AddMentorModal: React.FC<AddMentorModalProps> = ({
   isOpen,
   onClose,
+  onMentorAdded, 
 }) => {
+
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
@@ -85,9 +87,7 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
     if (!formData.phone.trim()) {
       errors.phone = "Phone number is required";
     } else if (
-      !/^[\+]?[1-9][\d]{0,15}$/.test(
-        formData.phone.replace(/[\s\-\(\)]/g, "")
-      )
+      !/^[\+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/[\s\-\(\)]/g, ""))
     ) {
       errors.phone = "Please enter a valid phone number";
     }
@@ -100,17 +100,13 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
       errors.company = "Company is required";
     }
 
-    if (
-      formData.linkedin &&
-      !formData.linkedin.includes("linkedin.com")
-    ) {
+    if (formData.linkedin && !formData.linkedin.includes("linkedin.com")) {
       errors.linkedin = "Please enter a valid LinkedIn URL";
     }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +115,7 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
     setIsSubmitting(true);
     try {
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mentor/create`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mentor`,
         {
           name: formData.name,
           email: formData.email,
@@ -134,6 +130,7 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
       );
 
       if (res.data.success) {
+        onMentorAdded(res.data.data);
         handleClose();
       }
     } catch (error: any) {
@@ -233,9 +230,7 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
                 disabled={isSubmitting}
               />
               {formErrors.phone && (
-                <p className="mt-1 text-sm text-red-600">
-                  {formErrors.phone}
-                </p>
+                <p className="mt-1 text-sm text-red-600">{formErrors.phone}</p>
               )}
             </div>
 

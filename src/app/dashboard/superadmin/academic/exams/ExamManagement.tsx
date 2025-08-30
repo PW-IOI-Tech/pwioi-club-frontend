@@ -498,8 +498,6 @@ export default function ExamManagement() {
     setFiltersComplete(!!isComplete);
 
     if (isComplete) {
-      // Filter exams based on selected criteria
-      // For demo purposes, using the initial exams - in production, this would filter based on API data
       const filtered = exams.filter(
         (exam) => exam.examType === selectedExamType
       );
@@ -528,13 +526,7 @@ export default function ExamManagement() {
     },
     [filtersComplete]
   );
-
-  const handleDeleteExam = useCallback((id: string | number) => {
-    const deleteId = typeof id === "number" ? id.toString() : id;
-    setExams((prev) => prev.filter((exam) => exam.id !== deleteId));
-    setFilteredExams((prev) => prev.filter((exam) => exam.id !== deleteId));
-  }, []);
-
+  
   const handleAddExam = useCallback(
     async (
       newExamData: Omit<
@@ -612,10 +604,6 @@ export default function ExamManagement() {
     };
     deleteExam();
   }, []);
-
-  const handleOpenAddModal = useCallback(() => {
-    if (allFiltersSelected) setIsAddExamModalOpen(true);
-  }, [allFiltersSelected]);
 
   const handleCloseAddModal = useCallback(
     () => setIsAddExamModalOpen(false),

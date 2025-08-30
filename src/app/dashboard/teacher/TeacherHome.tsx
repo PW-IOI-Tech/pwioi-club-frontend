@@ -298,7 +298,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/media/remove`,
         {
           withCredentials: true,
-          data: { key:key },
+          data: { key: key },
         }
       );
 
@@ -532,9 +532,13 @@ const PostHeader: React.FC<any> = ({ post, getRoleBadgeColor }) => (
             <h3 className="font-semibold text-gray-900 text-sm">
               {post?.userInfo?.name}
             </h3>
-           <span  className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
+            <span
+              className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
                 post?.author_type
-              )}`}>{post?.author_type}</span>
+              )}`}
+            >
+              {post?.author_type}
+            </span>
             {post.assignedBy && (
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-br from-white to-indigo-50 text-slate-800 border border-slate-400">
                 📌 {post?.author_type}
@@ -573,7 +577,6 @@ const PostActions: React.FC<PostActionsProps> = ({
     { id: "3", name: "Mike Johnson", avatar: "👨" },
     { id: "4", name: "Sarah Wilson", avatar: "👩‍💼" },
   ];
-  
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -933,7 +936,7 @@ const Post: React.FC<any> = ({
 
       {post?.media?.length > 0 && (
         <div className="px-4 pb-3 grid grid-cols-1 gap-2">
-          {post.media.map((mediaItem:any) => (
+          {post.media.map((mediaItem: any) => (
             <div key={mediaItem.id}>
               {mediaItem.type === "IMAGE" ? (
                 <img
@@ -978,7 +981,7 @@ const Feed: React.FC<FeedProps> = ({
     <div className="space-y-6">
       {uniquePosts.map((post, index) => (
         <Post
-          key={`${post.id}-${index}`} 
+          key={`${post.id}-${index}`}
           post={post}
           likedPosts={likedPosts}
           onLike={onLike}
@@ -989,7 +992,6 @@ const Feed: React.FC<FeedProps> = ({
     </div>
   );
 };
-
 
 const ProfileHeader: React.FC<any> = ({ user }) => {
   const storedUser = localStorage.getItem("user");
@@ -1161,18 +1163,30 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
     setReportModal({ isOpen: true, postId });
   };
 
-  const handleReportSubmit = (): void => {
-    console.log(
-      "Reporting post:",
-      reportModal.postId,
-      "Reason:",
-      reportReason,
-      "Details:",
-      reportDetails
-    );
-    setReportModal({ isOpen: false, postId: null });
-    setReportReason("");
-    setReportDetails("");
+  const handleReportSubmit = async (): Promise<void> => {
+    if (!reportModal.postId || !reportReason.trim()) {
+      alert("Please provide a reason for reporting.");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags`,
+        {
+          postId: reportModal.postId,
+          reason: reportReason,
+        },
+        { withCredentials: true }
+      );
+
+      console.log("Report submitted:", res.data);
+      alert("Report submitted successfully!");
+    } catch (err: any) {
+      console.error("Error reporting:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to submit report");
+    } finally {
+      handleReportClose();
+    }
   };
 
   const handleReportClose = (): void => {
@@ -1223,9 +1237,9 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/me/active-subject-attendance`,
-        { withCredentials: true } // ✅ send cookies/JWT
+        { withCredentials: true }
       );
-      setCounts(response.data?.data); // adjust depending on backend response shape
+      setCounts(response.data?.data);
     } catch (error) {
       console.error("Error fetching teacher counts:", error);
     }
@@ -1234,7 +1248,6 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
   useEffect(() => {
     fetchAttendence();
   }, []);
-
 
   useEffect(() => {
     fetchPosts();

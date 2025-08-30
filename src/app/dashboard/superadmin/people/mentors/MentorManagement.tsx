@@ -31,19 +31,18 @@ export default function MentorManagement() {
           { withCredentials: true }
         );
 
-         if (res.data.success) {
+        if (res.data.success) {
           const mappedMentors: TableMentor[] = res.data.data.map((c: any) => ({
             id: c.id,
             centerName: c.name,
-            email:c.email,
-            phone:c.phone,
-            linkedin:c.linkedin,
-            designation:c.designation,
-            company:c.company,
+            email: c.email,
+            phone: c.phone,
+            linkedin: c.linkedin,
+            designation: c.designation,
+            company: c.company,
           }));
           setMentors(mappedMentors);
         }
-
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to fetch mentors");
       } finally {
@@ -182,13 +181,16 @@ export default function MentorManagement() {
             nonEditableFields={["id"]}
             onDelete={handleDeleteMentor}
             onEdit={handleUpdateMentor}
-            hiddenColumns={["id"]}
+            hiddenColumns={["id","createdAt","updatedAt"]}
           />
         )}
 
         <AddMentorModal
           isOpen={isAddMentorModalOpen}
           onClose={handleCloseAddModal}
+          onMentorAdded={(newMentor) => {
+            setMentors((prev) => [...prev, newMentor]);
+          }}
         />
       </div>
     </div>

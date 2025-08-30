@@ -6,6 +6,16 @@ import Table from "../../Table";
 import AddPolicyModal from "./AddPolicyModal";
 import axios from "axios";
 
+const formatDate = (dateStr: string) => {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+
 interface TablePolicy {
   id: string;
   policyName: string;
@@ -52,7 +62,7 @@ useEffect(() => {
         id: p.id,
         policyName: p.name,
         pdfUrl: p.pdf_url,
-        effectiveDate: p.effective_date,
+         effectiveDate: formatDate(p.effective_date),
         isActive: String(p.is_active), 
         version: p.policy_version,
         centerLocation: centers.find((c) => c.id === p.center_id)?.location || "",
@@ -103,13 +113,25 @@ const handleAddPolicy = useCallback(
         { withCredentials: true }
       );
 
-      setPolicies((prev) => [...prev, res.data.data]);
+      const p = res.data.data;
+      const mappedPolicy: TablePolicy = {
+        id: p.id,
+        policyName: p.name,
+        pdfUrl: p.pdf_url,
+         effectiveDate: formatDate(p.effective_date),
+        isActive: String(p.is_active),
+        version: p.policy_version,
+        centerLocation:
+          centers.find((c) => c.id === p.center_id)?.location || "",
+      };
+
+      setPolicies((prev) => [...prev, mappedPolicy]);
       setIsAddPolicyModalOpen(false);
     } catch (err) {
       console.error("Failed to create policy:", err);
     }
   },
-  [selectedCenterId]
+  [selectedCenterId, centers]
 );
 
 const handleUpdatePolicy = useCallback(async (updatedItem: any) => {
@@ -126,13 +148,26 @@ const handleUpdatePolicy = useCallback(async (updatedItem: any) => {
       { withCredentials: true }
     );
 
+    const p = res.data.data;
+    const mappedPolicy: TablePolicy = {
+      id: p.id,
+      policyName: p.name,
+      pdfUrl: p.pdf_url,
+      effectiveDate: p.effective_date,
+      isActive: String(p.is_active),
+      version: p.policy_version,
+      centerLocation:
+        centers.find((c) => c.id === p.center_id)?.location || "",
+    };
+
     setPolicies((prev) =>
-      prev.map((policy) => (policy.id === updatedItem.id ? res.data.data : policy))
+      prev.map((policy) => (policy.id === mappedPolicy.id ? mappedPolicy : policy))
     );
   } catch (err) {
     console.error("Failed to update policy:", err);
   }
-}, []);
+}, [centers]);
+
 
 
   const handleDeletePolicy = useCallback(async (id: string | number) => {
@@ -191,7 +226,7 @@ const handleUpdatePolicy = useCallback(async (updatedItem: any) => {
               <option value="">Select Location to Proceed</option>
               {centers.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.location}
+                  {c.name}
                 </option>
               ))}
             </select>
