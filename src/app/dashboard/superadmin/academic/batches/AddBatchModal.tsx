@@ -197,7 +197,6 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
     return `${department}${year}${centerCode}`;
   };
 
-  // Auto-generate batch name when center or department changes
   useEffect(() => {
     if (formData.centerName && formData.depName) {
       const suggestedName = generateBatchName(
@@ -305,7 +304,7 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
                 name="batchName"
                 value={formData.batchName}
                 onChange={handleInputChange}
-                placeholder="e.g., 25"
+                placeholder="e.g., SOT24BAN"
                 className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.batchName ? "border-red-500" : "border-gray-300"
                 }`}

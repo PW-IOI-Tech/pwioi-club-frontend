@@ -11,13 +11,7 @@ interface TableEvent {
   eventName: string;
   organizer: string;
   venue: string;
-  type:
-    | "workshop"
-    | "seminar"
-    | "conference"
-    | "hackathon"
-    | "webinar"
-    | "networking";
+  type: "hackathon" | "seminar" | "workshop" | "activity" | "club_event";
   startDate: string;
   endDate: string;
   description: string;
@@ -25,23 +19,29 @@ interface TableEvent {
   thumbnailUrl: string;
 }
 
+const typeMapping: Record<string, string> = {
+  workshop: "WORKSHOP",
+  seminar: "SEMINAR",
+  activity: "ACTIVITY",
+  hackathon: "HACKATHON",
+  club_event: "CLUB_EVENT",
+};
+
 export default function EventManagement() {
   const [events, setEvents] = useState<TableEvent[]>([]);
   const [error, setError] = useState("");
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
 
   const typeMapping: Record<string, string> = {
-  workshop: "WORKSHOP",
-  seminar: "SEMINAR",
-  conference: "ACTIVITY",   
-  hackathon: "HACKATHON",
-  webinar: "CLUB_EVENT",    
-  networking: "CLUB_EVENT", 
-};
-
+    workshop: "WORKSHOP",
+    seminar: "SEMINAR",
+    conference: "ACTIVITY",
+    hackathon: "HACKATHON",
+    webinar: "CLUB_EVENT",
+    networking: "CLUB_EVENT",
+  };
 
   const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/event`;
-  const token = localStorage.getItem("token");
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -56,16 +56,16 @@ export default function EventManagement() {
           organizer: rest.organiser,
           venue: rest.venue,
           type: rest.type.toLowerCase(),
-          startDate: new Date(rest.start_date).toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }),
-          endDate: new Date(rest.end_date).toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }),
+startDate: new Date(rest.start_date).toLocaleDateString("en-GB", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+}),
+endDate: new Date(rest.end_date).toLocaleDateString("en-GB", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+}),
           description: rest.description,
           isVisible: is_visible ? "true" : "false",
           thumbnailUrl: thumbnail || "",
@@ -76,7 +76,7 @@ export default function EventManagement() {
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to fetch events");
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchEvents();
@@ -94,8 +94,7 @@ export default function EventManagement() {
     [events]
   );
 
-const handleUpdateEvent = useCallback(
-  async (updatedItem: any) => {
+  const handleUpdateEvent = useCallback(async (updatedItem: any) => {
     try {
       const eventItem = updatedItem as TableEvent;
 
@@ -103,7 +102,7 @@ const handleUpdateEvent = useCallback(
         name: eventItem.eventName,
         organiser: eventItem.organizer,
         venue: eventItem.venue,
-        type: typeMapping[eventItem.type] || eventItem.type, // map to backend
+        type: typeMapping[eventItem.type], // always uppercase
         start_date: new Date(eventItem.startDate).toISOString(),
         end_date: new Date(eventItem.endDate).toISOString(),
         description: eventItem.description,
@@ -123,40 +122,35 @@ const handleUpdateEvent = useCallback(
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to update event");
     }
-  },
-  [token]
-);
+  }, []);
 
-
-  const handleDeleteEvent = useCallback(
-    async (id: string | number) => {
-      try {
-        const deleteId = typeof id === "number" ? id.toString() : id;
-        await axios.delete(`${API_BASE}/${deleteId}`, {
-          withCredentials: true,
-        });
-
-        setEvents((prev) => prev.filter((event) => event.id !== deleteId));
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to delete event");
-      }
-    },
-    [token]
-  );
-
-const handleAddEvent = useCallback(
-  async (newEventData: any) => {
+  const handleDeleteEvent = useCallback(async (id: string | number) => {
     try {
+      const deleteId = typeof id === "number" ? id.toString() : id;
+      await axios.delete(`${API_BASE}/${deleteId}`, {
+        withCredentials: true,
+      });
+
+      setEvents((prev) => prev.filter((event) => event.id !== deleteId));
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to delete event");
+    }
+  }, []);
+
+  const handleAddEvent = useCallback(async (newEventData: any) => {
+    try {
+      const eventItem = newEventData as TableEvent;
+
       const payload = {
-        name: newEventData.eventName,
-        organiser: newEventData.organizer,
-        venue: newEventData.venue,
-        type: typeMapping[newEventData.type] || newEventData.type, 
-        start_date: new Date(newEventData.startDate).toISOString(),
-        end_date: new Date(newEventData.endDate).toISOString(),
-        description: newEventData.description,
-        is_visible: newEventData.isVisible === "true",
-        thumbnail: newEventData.thumbnailUrl,
+        name: eventItem.eventName,
+        organiser: eventItem.organizer,
+        venue: eventItem.venue,
+        type: typeMapping[eventItem.type], // always uppercase
+        start_date: new Date(eventItem.startDate).toISOString(),
+        end_date: new Date(eventItem.endDate).toISOString(),
+        description: eventItem.description,
+        is_visible: eventItem.isVisible === "true",
+        thumbnail: eventItem.thumbnailUrl,
       };
 
       const res = await axios.post(`${API_BASE}`, payload, {
@@ -169,10 +163,7 @@ const handleAddEvent = useCallback(
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to create event");
     }
-  },
-  [token]
-);
-
+  }, []);
 
   const handleOpenAddModal = useCallback(() => {
     setIsAddEventModalOpen(true);
@@ -260,19 +251,18 @@ const handleAddEvent = useCallback(
           badgeFields={["type"]}
           selectFields={{
             type: [
-              "workshop",
-              "seminar",
-              "conference",
               "hackathon",
-              "webinar",
-              "networking",
+              "seminar",
+              "workshop",
+              "activity",
+              "club_event",
             ],
             isVisible: ["true", "false"],
           }}
           nonEditableFields={["id"]}
           onDelete={handleDeleteEvent}
           onEdit={handleUpdateEvent}
-          hiddenColumns={["id"]}
+          hiddenColumns={["id", "isVisible", "createdAt", "updatedAt"]}
         />
 
         <AddEventModal

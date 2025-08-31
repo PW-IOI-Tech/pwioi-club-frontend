@@ -67,8 +67,8 @@ export default function BatchManagement() {
       const fetchedBatches: TableBatch[] = res.data.data.map((batch: any) => ({
         id: batch.id,
         name: batch.name,
-        department: batch.school.name, // school.name is the department
-        center: centerName, // use the center name passed as parameter
+        department: batch.school.name, 
+        center: centerName, 
       }));
 
       setBatches(fetchedBatches);
@@ -241,7 +241,6 @@ export default function BatchManagement() {
               </div>
             </div>
 
-            {/* Table */}
             <Table
               data={filteredBatches}
               title={`Batches in ${selectedCenter.name}`}
@@ -257,8 +256,6 @@ export default function BatchManagement() {
             />
           </>
         )}
-
-        {/* Add Batch Modal */}
        
         <AddBatchModal
           isOpen={isAddBatchModalOpen}

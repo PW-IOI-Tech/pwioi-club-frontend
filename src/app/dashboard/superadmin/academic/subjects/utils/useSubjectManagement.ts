@@ -159,7 +159,7 @@ export const useSubjectManagement = () => {
           // Add other fields as needed
         };
 
-        await axios.put(`${BACKEND_URL}/api/subjects/${subjectItem.id}`, updateData, {
+        await axios.patch(`${BACKEND_URL}/api/subjects/${subjectItem.id}`, updateData, {
           withCredentials: true,
           headers: {
             'Content-Type': 'application/json',

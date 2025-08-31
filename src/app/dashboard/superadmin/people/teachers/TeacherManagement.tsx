@@ -97,13 +97,55 @@ export default function TeacherManagement() {
     };
   }, [teachers]);
 
-  const handleUpdateTeacher = useCallback((updatedItem: any) => {
-    console.log("Updating teacher:", updatedItem);
-  }, []);
+const handleUpdateTeacher = useCallback(
+  async (updatedItem: any) => {
+    try {
+      const allowedFields = (({ name, email,pwId, phoneNumber, gender,role }) => ({
+        name,
+        email,
+        pwId,
+        phoneNumber,
+        gender,
+        role,
+      }))(updatedItem);
 
-  const handleDeleteTeacher = useCallback((id: string | number) => {
-    console.log("Deleting teacher with id:", id);
-  }, []);
+      const res = await axios.patch(
+        `${backendUrl}/api/teachers/${updatedItem.id}`,
+        allowedFields,
+        { withCredentials: true }
+      );
+
+      setTeachers((prev) =>
+        prev.map((t) => (t.id === updatedItem.id ? res.data?.data || { ...t, ...allowedFields } : t))
+      );
+
+      console.log("Teacher updated:", res.data);
+    } catch (err: any) {
+      console.error("Failed to update teacher:", err.response?.data || err);
+    }
+  },
+  [backendUrl]
+);
+
+const handleDeleteTeacher = useCallback(
+  async (id: string | number) => {
+    if (!confirm("Are you sure you want to delete this teacher?")) return;
+
+    try {
+      await axios.delete(`${backendUrl}/api/teachers/${id}`, {
+        withCredentials: true,
+      });
+
+      // Remove from state
+      setTeachers((prev) => prev.filter((t) => t.id !== id));
+
+      console.log("Teacher deleted:", id);
+    } catch (err: any) {
+      console.error("Failed to delete teacher:", err);
+    }
+  },
+  [backendUrl]
+);
 
   const handleUploadComplete = () => {
     if (selectedSchool) {

@@ -34,7 +34,7 @@ export default function MentorManagement() {
         if (res.data.success) {
           const mappedMentors: TableMentor[] = res.data.data.map((c: any) => ({
             id: c.id,
-            centerName: c.name,
+            mentorName: c.name,
             email: c.email,
             phone: c.phone,
             linkedin: c.linkedin,
@@ -158,25 +158,6 @@ export default function MentorManagement() {
             filterField="company"
             badgeFields={["company"]}
             selectFields={{
-              company: [
-                "TechCorp",
-                "Innovate Solutions",
-                "DataTech Analytics",
-                "Microsoft",
-                "Google",
-                "Amazon",
-                "Meta",
-                "Apple",
-              ],
-              designation: [
-                "Software Engineer",
-                "Senior Software Engineer",
-                "Product Manager",
-                "Data Scientist",
-                "Engineering Manager",
-                "Tech Lead",
-                "Architect",
-              ],
             }}
             nonEditableFields={["id"]}
             onDelete={handleDeleteMentor}

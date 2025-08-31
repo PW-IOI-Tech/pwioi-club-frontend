@@ -30,7 +30,7 @@ const transformJobPayload = (job: Omit<TableJob, "id">) => ({
       : job.workMode.toUpperCase(),
   type: job.jobType.toUpperCase().replace("-", "_"),
   company_name: job.companyName,
-  vacancy_count: job.vacancy,
+  vacancy: job.vacancy,
   eligibility: job.eligibility,
   description: job.desc,
   closing_date: new Date(job.closingDate).toISOString(),

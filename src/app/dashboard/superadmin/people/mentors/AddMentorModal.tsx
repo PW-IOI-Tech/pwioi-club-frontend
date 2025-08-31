@@ -16,26 +16,6 @@ interface FormData {
   designation: string;
   company: string;
 }
-const companies = [
-  { value: "TechCorp", label: "TechCorp" },
-  { value: "Innovate Solutions", label: "Innovate Solutions" },
-  { value: "DataTech Analytics", label: "DataTech Analytics" },
-  { value: "Microsoft", label: "Microsoft" },
-  { value: "Google", label: "Google" },
-  { value: "Amazon", label: "Amazon" },
-  { value: "Meta", label: "Meta" },
-  { value: "Apple", label: "Apple" },
-];
-
-const designations = [
-  { value: "Software Engineer", label: "Software Engineer" },
-  { value: "Senior Software Engineer", label: "Senior Software Engineer" },
-  { value: "Product Manager", label: "Product Manager" },
-  { value: "Data Scientist", label: "Data Scientist" },
-  { value: "Engineering Manager", label: "Engineering Manager" },
-  { value: "Tech Lead", label: "Tech Lead" },
-  { value: "Architect", label: "Architect" },
-];
 
 const AddMentorModal: React.FC<AddMentorModalProps> = ({
   isOpen,
@@ -264,28 +244,17 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
                 Designation *
               </label>
               <div className="relative">
-                <select
-                  name="designation"
-                  value={formData.designation}
-                  onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
-                    formErrors.designation
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting}
-                >
-                  <option value="">Select Designation</option>
-                  {designations.map((designation) => (
-                    <option key={designation.value} value={designation.value}>
-                      {designation.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                  size={18}
-                />
+                <input
+                type="text"
+                name="designation"
+                value={formData.designation}
+                onChange={handleInputChange}
+                placeholder="e.g., Software Engineer"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                  formErrors.designation ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isSubmitting}
+              />
               </div>
               {formErrors.designation && (
                 <p className="mt-1 text-sm text-red-600">
@@ -299,26 +268,17 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
                 Company *
               </label>
               <div className="relative">
-                <select
-                  name="company"
-                  value={formData.company}
-                  onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
-                    formErrors.company ? "border-red-500" : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting}
-                >
-                  <option value="">Select Company</option>
-                  {companies.map((company) => (
-                    <option key={company.value} value={company.value}>
-                      {company.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                  size={18}
-                />
+                <input
+                type="text"
+                name="company"
+                value={formData.company}
+                onChange={handleInputChange}
+                placeholder="e.g.,Google"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                  formErrors.company ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isSubmitting}
+              />
               </div>
               {formErrors.company && (
                 <p className="mt-1 text-sm text-red-600">

@@ -40,35 +40,40 @@ export default function AdminManagement() {
 
   const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin`;
 
-  const fetchAdmins = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/superadmin/all`,
-        { withCredentials: true }
+const fetchAdmins = useCallback(async () => {
+  try {
+    setLoading(true);
+    const res = await axios.get(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/superadmin`,
+      { withCredentials: true }
+    );
+
+    if (res.data.success) {
+      // Flatten admins_by_role
+      const allAdmins = res.data.admins_by_role.flatMap((roleGroup: any) =>
+        roleGroup.admins.map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          email: a.email,
+          phone: a.phone,
+          pwId: a.pwId || "N/A",
+          linkedin: a.linkedin || "N/A",
+          designation: a.designation,
+          role: typeof a.role === "object" ? a.role.role : a.role,
+          createdAt: a.createdAt,
+          updatedAt: a.updatedAt,
+        }))
       );
-      if (res.data.success) {
-        setAdmins(
-          res.data.data.map((a: any) => ({
-            id: a.id,
-            name: a.name,
-            email: a.email,
-            phone: a.phone,
-            pwId: a.pwId || "N/A",
-            linkedin: a.linkedin || "N/A",
-            designation: a.designation,
-            role: typeof a.role === "object" ? a.role.role : a.role,
-            createdAt: a.createdAt,
-            updatedAt: a.updatedAt,
-          }))
-        );
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch admins");
-    } finally {
-      setLoading(false);
+
+      setAdmins(allAdmins);
     }
-  }, []);
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Failed to fetch admins");
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
 
   useEffect(() => {
     fetchAdmins();

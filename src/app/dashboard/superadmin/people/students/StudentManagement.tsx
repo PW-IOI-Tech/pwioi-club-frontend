@@ -73,12 +73,12 @@ export default function StudentManagement() {
   const [schools, setSchools] = useState<any[]>([]);
   const [batches, setBatches] = useState<any[]>([]);
   const [divisions, setDivisions] = useState<any[]>([]);
-    const [semesters, setSemesters] = useState<any[]>([]);
+  const [semesters, setSemesters] = useState<any[]>([]);
   const [selectedCenter, setSelectedCenter] = useState<string>("");
   const [selectedSchool, setSelectedSchool] = useState<string>("");
   const [selectedBatch, setSelectedBatch] = useState<string>("");
   const [selectedDivision, setSelectedDivision] = useState<string>("");
-    const [selectedSemester, setSelectedSemester] = useState<string>("");
+  const [selectedSemester, setSelectedSemester] = useState<string>("");
   const [students] = useState<Student[]>(initialStudents);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -159,7 +159,7 @@ export default function StudentManagement() {
     fetchDivisions();
   }, [selectedBatch]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (!selectedDivision) return;
     const fetchSemesters = async () => {
       try {
@@ -180,7 +180,7 @@ export default function StudentManagement() {
     !!selectedSchool &&
     !!selectedDivision &&
     !!selectedBatch &&
-    !!selectedSemester
+    !!selectedSemester;
 
   const filteredStudents = useMemo(() => {
     if (!allFiltersSelected) return [];
@@ -338,7 +338,7 @@ export default function StudentManagement() {
               </div>
             </div>
 
-               <div className="relative">
+            <div className="relative">
               <label
                 htmlFor="division"
                 className="block text-xs font-medium text-gray-100 mb-2"
@@ -392,15 +392,14 @@ export default function StudentManagement() {
 
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 flex items-center justify-center">
                 <UploadSection
-  onSuccess={handleUploadComplete}
-  uploadUrl={`${backendUrl}/api/students/bulk-excel`}
-  schemaInfo={studentSchemaInfo}
-  extraData={{
-    divisionId: selectedDivision,
-    semesterId: selectedSemester,
-  }}
-/>
-
+                  onSuccess={handleUploadComplete}
+                  uploadUrl={`${backendUrl}/api/students/bulk-excel`}
+                  schemaInfo={studentSchemaInfo}
+                  extraData={{
+                    divisionId: selectedDivision,
+                    semesterId: selectedSemester,
+                  }}
+                />
               </div>
             </div>
 

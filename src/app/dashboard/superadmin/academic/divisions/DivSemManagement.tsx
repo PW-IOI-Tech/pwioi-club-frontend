@@ -48,32 +48,34 @@ export default function DivSemManagement() {
   const [selectedBatch, setSelectedBatch] = useState("");
   const [filtersComplete, setFiltersComplete] = useState(false);
 
-const fetchSemesters = useCallback(async (divisionId: string) => {
-  try {
-    const res = await axios.get(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${divisionId}`,
-      { withCredentials: true }
-    );
-    if (res.data.success) {
-     const mapped = res.data.data.map((sem: any) => {
-  const division = divisions.find((d) => d.id === sem.division_id);
-  return {
-    id: sem.id,
-    division: division ? division.code : sem.division_id,
-    number: sem.number, // ✅ instead of sem.semester_number
-    startDate: new Date(sem.start_date).toLocaleDateString(),
-    endDate: new Date(sem.end_date).toLocaleDateString(),
-  };
-});
+  const fetchSemesters = useCallback(
+    async (divisionId: string) => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${divisionId}`,
+          { withCredentials: true }
+        );
+        if (res.data.success) {
+          const mapped = res.data.data.map((sem: any) => {
+            const division = divisions.find((d) => d.id === sem.division_id);
+            return {
+              id: sem.id,
+              division: division ? division.code : sem.division_id,
+              number: sem.number, 
+              startDate: new Date(sem.start_date).toLocaleDateString(),
+              endDate: new Date(sem.end_date).toLocaleDateString(),
+            };
+          });
 
-      setSemesters((prev) => [...prev, ...mapped]);
-      setFilteredSemesters((prev) => [...prev, ...mapped]);
-    }
-  } catch (err: any) {
-    setError(err.response?.data?.message || "Failed to fetch semesters");
-  }
-}, [divisions]);
-
+          setSemesters((prev) => [...prev, ...mapped]);
+          setFilteredSemesters((prev) => [...prev, ...mapped]);
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to fetch semesters");
+      }
+    },
+    [selectedBatch]
+  );
 
   const handleAddSemester = useCallback(
     async (semesterData: {
@@ -94,17 +96,19 @@ const fetchSemesters = useCallback(async (divisionId: string) => {
           { withCredentials: true }
         );
 
-if (res.data.success) {
-  const division = divisions.find((d) => d.id === res.data.data.division_id);
-  const newSemester: Semester = {
-    id: res.data.data.id,
-    division: division ? division.code : res.data.data.division_id, // ✅
-    number: res.data.data.number,
-    startDate: new Date(res.data.data.start_date).toLocaleDateString(),
-    endDate: new Date(res.data.data.end_date).toLocaleDateString(),
-  };
-  setSemesters((prev) => [...prev, newSemester]);
-  setFilteredSemesters((prev) => [...prev, newSemester]);
+        if (res.data.success) {
+          const division = divisions.find(
+            (d) => d.id === res.data.data.division_id
+          );
+          const newSemester: Semester = {
+            id: res.data.data.id,
+            division: division ? division.code : res.data.data.division_id, // ✅
+            number: res.data.data.number,
+            startDate: new Date(res.data.data.start_date).toLocaleDateString(),
+            endDate: new Date(res.data.data.end_date).toLocaleDateString(),
+          };
+          setSemesters((prev) => [...prev, newSemester]);
+          setFilteredSemesters((prev) => [...prev, newSemester]);
 
           setDivisions((prev) =>
             prev.map((d) =>
@@ -239,8 +243,11 @@ if (res.data.success) {
                 schools.find((s) => s.id === div.school_id)?.name ||
                 div.school_id,
               batch:
-                batches.find((b) => b.id === div.batch_id)?.name || div.batch_id,
-              currentSemester: div.current_semester || null,
+                batches.find((b) => b.id === div.batch_id)?.name ||
+                div.batch_id,
+              currentSemester: div.currentSemester
+                ? div.currentSemester.number
+                : "N/A",
               semesterCount: 0,
               studentCount: 0,
               teacherCount: 0,
@@ -250,7 +257,7 @@ if (res.data.success) {
             setFilteredDivisions(mapped);
 
             // fetch semesters for each division
-            mapped.forEach((d:any) => fetchSemesters(d.id));
+            mapped.forEach((d: any) => fetchSemesters(d.id));
           }
         } catch (err: any) {
           setError(err.response?.data?.message || "Failed to fetch divisions");
@@ -393,8 +400,7 @@ if (res.data.success) {
     [selectedCenter, selectedSchool, selectedBatch]
   );
 
-  // ---- MODAL HANDLERS ----
-  const canAddSemester = filtersComplete && filteredDivisions.length > 0;
+  const canAddSemester = filtersComplete && divisions.length > 0;
 
   const handleOpenAddDivisionModal = useCallback(() => {
     if (filtersComplete) {
@@ -541,15 +547,19 @@ if (res.data.success) {
               </button>
             </div>
 
-{/* Table: Divisions */}
             <Table
               data={filteredDivisions}
               title="Divisions"
               filterField="code"
-              nonEditableFields={["id", "semesterCount", "studentCount", "teacherCount"]}
+              nonEditableFields={[
+                "id",
+                "semesterCount",
+                "studentCount",
+                "teacherCount",
+              ]}
               onDelete={handleDeleteDivision}
               onEdit={handleUpdateDivision}
-              hiddenColumns={["id"]}
+              hiddenColumns={["id","centerId","schoolId","batchId","startDate","endDate","createdAt","updatedAt"]}
               columns={[
                 { accessorKey: "code", header: "Code" },
                 { accessorKey: "center", header: "Center" },
@@ -557,6 +567,7 @@ if (res.data.success) {
                 { accessorKey: "batch", header: "Batch" },
                 { accessorKey: "startDate", header: "Start Date" },
                 { accessorKey: "endDate", header: "End Date" },
+                { accessorKey: "currentSemester", header: "Current Semester" },
               ]}
             />
 
@@ -573,26 +584,27 @@ if (res.data.success) {
               </div>
             )}
 
-            {/* Table: Semesters */}
             {canAddSemester && (
               <Table
-  data={filteredSemesters.filter((sem) =>
-    filteredDivisions.some((div) => div.code === sem.division)
-  )}
-  title="Semesters"
-  filterField="division"
-  nonEditableFields={["id"]}
-  onDelete={handleDeleteSemester}
-  onEdit={handleUpdateSemester}
-  hiddenColumns={["id"]}
-  columns={[
-    { accessorKey: "division", header: "Division" },
-    { accessorKey: "number", header: "Number" },
-    { accessorKey: "startDate", header: "Start Date" },
-    { accessorKey: "endDate", header: "End Date" },
-  ]}
-/>
-
+                data={filteredSemesters.filter((sem) =>
+    filteredDivisions.some((div) => div.id === sem.division) // match by id ✅
+  ).map((sem) => ({
+    ...sem,
+    division: filteredDivisions.find((d) => d.id === sem.division)?.code || sem.division
+  }))}
+                title="Semesters"
+                filterField="division"
+                nonEditableFields={["id"]}
+                onDelete={handleDeleteSemester}
+                onEdit={handleUpdateSemester}
+                hiddenColumns={["id"]}
+                columns={[
+                  { accessorKey: "division", header: "Division" },
+                  { accessorKey: "number", header: "Number" },
+                  { accessorKey: "startDate", header: "Start Date" },
+                  { accessorKey: "endDate", header: "End Date" },
+                ]}
+              />
             )}
           </>
         )}
