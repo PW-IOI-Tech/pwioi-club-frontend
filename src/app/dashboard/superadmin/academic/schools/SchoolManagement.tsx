@@ -291,6 +291,7 @@ export default function SchoolManagement() {
           onClose={handleCloseAddModal}
           onSchoolCreated={handleAddSchool}
           prefillLocation={selectedLocation}
+          centers={centers}    
         />
       </div>
     </div>

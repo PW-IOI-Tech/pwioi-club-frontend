@@ -91,6 +91,7 @@ interface FeedProps {
   onLike: (postId: string) => void;
   onFlag: (postId: string) => void;
   getRoleBadgeColor: (role: string) => string;
+  loading:boolean;
 }
 
 interface ProfileHeaderProps {
@@ -972,7 +973,11 @@ const Feed: React.FC<FeedProps> = ({
   onLike,
   onFlag,
   getRoleBadgeColor,
+  loading
 }) => {
+  if (loading) {
+    return <p className="text-center py-4">Loading Feed...</p>;
+  }
   const uniquePosts = posts.filter(
     (post, index, self) => index === self.findIndex((p) => p.id === post.id)
   );
@@ -1268,6 +1273,7 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
               onLike={handleLike}
               onFlag={handleFlag}
               getRoleBadgeColor={getRoleBadgeColor}
+              loading={loading}
             />
           </div>
 

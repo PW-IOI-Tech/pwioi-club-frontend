@@ -18,6 +18,7 @@ interface AddBatchModalProps {
 }
 
 interface FormData {
+  centerId: string;
   centerName: string;
   depName: string;
   batchName: string;
@@ -28,14 +29,6 @@ interface School {
   id: string;
   name: string;
 }
-
-const centers = [
-  { value: "Bengaluru", label: "Bengaluru" },
-  { value: "Lucknow", label: "Lucknow" },
-  { value: "Pune", label: "Pune" },
-  { value: "Noida", label: "Noida" },
-];
-
 const AddBatchModal: React.FC<AddBatchModalProps> = ({
   isOpen,
   onClose,
@@ -44,11 +37,13 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
   centerId,
 }) => {
   const [formData, setFormData] = useState<FormData>({
+    centerId: "",
     centerName: "",
     depName: "",
     batchName: "",
     schoolId: "",
   });
+
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [schools, setSchools] = useState<School[]>([]);
@@ -58,7 +53,7 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
   useEffect(() => {
     const fetchSchools = async () => {
       if (!centerId) return;
-      
+
       setLoadingSchools(true);
       try {
         const res = await axios.get(`${BACKEND_URL}/api/schools/${centerId}`, {
@@ -86,16 +81,17 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      if (prefillLocation) {
-        setFormData((prev) => ({
-          ...prev,
+      if (prefillLocation && centerId) {
+        setFormData({
+          centerId,
           centerName: prefillLocation,
           depName: "",
           batchName: "",
           schoolId: "",
-        }));
+        });
       } else {
         setFormData({
+          centerId: "",
           centerName: "",
           depName: "",
           batchName: "",
@@ -104,20 +100,19 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
       }
       setFormErrors({});
     }
-  }, [isOpen, prefillLocation]);
+  }, [isOpen, prefillLocation, centerId]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    
+
     if (name === "depName") {
-      // Find the selected school and update both depName and schoolId
-      const selectedSchool = schools.find(school => school.name === value);
-      setFormData((prev) => ({ 
-        ...prev, 
-        [name]: value,
-        schoolId: selectedSchool?.id || ""
+      const selectedSchool = schools.find((s) => s.name === value);
+      setFormData((prev) => ({
+        ...prev,
+        depName: value,
+        schoolId: selectedSchool?.id || "",
       }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
@@ -167,6 +162,7 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
     try {
       await onBatchCreated(formData);
       setFormData({
+        centerId: centerId || "",
         centerName: prefillLocation || "",
         depName: "",
         batchName: "",
@@ -183,7 +179,8 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
   const handleClose = () => {
     if (!isSubmitting) {
       setFormData({
-        centerName: "",
+        centerId: centerId || "",
+        centerName: prefillLocation || "",
         depName: "",
         batchName: "",
         schoolId: "",
@@ -240,18 +237,16 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
                   name="centerName"
                   value={formData.centerName}
                   onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none ${
+                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-gray-50 cursor-not-allowed ${
                     formErrors.centerName ? "border-red-500" : "border-gray-300"
-                  } ${prefillLocation ? "bg-gray-50 cursor-not-allowed" : ""}`}
-                  disabled={!!prefillLocation || isSubmitting}
+                  }`}
+                  disabled
                 >
-                  <option value="">Select Center</option>
-                  {centers.map((center) => (
-                    <option key={center.value} value={center.value}>
-                      {center.label}
-                    </option>
-                  ))}
+                  <option value={formData.centerName}>
+                    {formData.centerName}
+                  </option>
                 </select>
+
                 {!prefillLocation && !isSubmitting && (
                   <ChevronDown
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
@@ -310,7 +305,7 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
                 name="batchName"
                 value={formData.batchName}
                 onChange={handleInputChange}
-                placeholder="e.g., SOT24BAN"
+                placeholder="e.g., 25"
                 className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.batchName ? "border-red-500" : "border-gray-300"
                 }`}

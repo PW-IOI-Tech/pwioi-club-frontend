@@ -82,6 +82,7 @@ interface FeedProps {
   onLike: (postId: string) => void;
   onFlag: (postId: string) => void;
   getRoleBadgeColor: (role: string) => string;
+  loading:boolean;
 }
 
 interface ProfileHeaderProps {
@@ -693,7 +694,7 @@ const PostActions: React.FC<PostActionsProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
                       <div className="font-medium text-sm text-gray-900">
-                        {comment?.userInfo?.name}
+                        {comment?.userInfo?.username}
                       </div>
                       <div className="text-sm text-gray-700">
                         {comment.content}
@@ -849,21 +850,27 @@ const Feed: React.FC<FeedProps> = ({
   onLike,
   onFlag,
   getRoleBadgeColor,
-}) => (
-  <div className="space-y-6">
-    {posts.map((post) => (
-      <Post
-        key={post.id}
-        post={post}
-        likedPosts={likedPosts}
-        onLike={onLike}
-        onFlag={onFlag}
-        getRoleBadgeColor={getRoleBadgeColor}
+  loading,
+}) => {
+  if (loading) {
+    return <p className="text-center py-4">Loading Feed...</p>;
+  }
 
-      />
-    ))}
-  </div>
-);
+  return (
+    <div className="space-y-6">
+      {posts.map((post) => (
+        <Post
+          key={post.id}
+          post={post}
+          likedPosts={likedPosts}
+          onLike={onLike}
+          onFlag={onFlag}
+          getRoleBadgeColor={getRoleBadgeColor}
+        />
+      ))}
+    </div>
+  );
+};
 
 const ProfileHeader: React.FC<any> = ({ user }) => (
   <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5 overflow-hidden">
@@ -1123,6 +1130,7 @@ const handleReportSubmit = async (): Promise<void> => {
               onLike={handleLike}
               onFlag={handleFlag}
               getRoleBadgeColor={getRoleBadgeColor}
+              loading={loading}
             />
           </div>
 

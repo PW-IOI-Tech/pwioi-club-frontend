@@ -9,6 +9,7 @@ interface AddSchoolModalProps {
     schoolName: string;
   }) => void;
   prefillLocation?: string;
+ centers?: { id: string; name: string }[];
 }
 
 interface FormData {
@@ -26,7 +27,7 @@ const locations = [
 const schoolNames = [
   { value: "SOT", label: "SOT - School of Technology" },
   { value: "SOM", label: "SOM - School of Management" },
-  { value: "SOH", label: "SOH - School of Humanities" },
+  { value: "SOH", label: "SOH - School of Healthcare" },
 ];
 
 const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
@@ -34,6 +35,7 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
   onClose,
   onSchoolCreated,
   prefillLocation,
+  centers
 }) => {
   const [formData, setFormData] = useState<FormData>({
     location: "",
@@ -42,19 +44,20 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      if (prefillLocation) {
-        setFormData((prev) => ({
-          ...prev,
-          location: prefillLocation.toLowerCase(),
-        }));
-      } else {
-        setFormData({ location: "", schoolName: "" });
-      }
-      setFormErrors({});
+useEffect(() => {
+  if (isOpen) {
+    if (prefillLocation) {
+      setFormData((prev) => ({
+        ...prev,
+        location: prefillLocation, 
+      }));
+    } else {
+      setFormData({ location: "", schoolName: "" });
     }
-  }, [isOpen, prefillLocation]);
+    setFormErrors({});
+  }
+}, [isOpen, prefillLocation]);
+
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -137,23 +140,24 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
               </label>
               <div className="relative">
                 <select
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none ${
-                    formErrors.location ? "border-red-500" : "border-gray-300"
-                  } ${prefillLocation ? "bg-gray-50 cursor-not-allowed" : ""}`}
-                  disabled={isSubmitting || !!prefillLocation}
-                >
-                  <option value="">
-                    {prefillLocation ? "" : "Select Location"}
-                  </option>
-                  {locations.map((location) => (
-                    <option key={location.value} value={location.value}>
-                      {location.label}
-                    </option>
-                  ))}
-                </select>
+  name="location"
+  value={formData.location}
+  onChange={handleInputChange}
+  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none ${
+    formErrors.location ? "border-red-500" : "border-gray-300"
+  } ${prefillLocation ? "bg-gray-50 cursor-not-allowed" : ""}`}
+  disabled={isSubmitting || !!prefillLocation}
+>
+  <option value="">
+    {prefillLocation ? "" : "Select Location"}
+  </option>
+  {centers?.map((center) => (
+    <option key={center.id} value={center.id}>
+      {center.name}
+    </option>
+  ))}
+</select>
+
                 {!prefillLocation && !isSubmitting && (
                   <ChevronDown
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"

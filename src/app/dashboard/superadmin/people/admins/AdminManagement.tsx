@@ -18,6 +18,19 @@ interface TableAdmin {
   createdAt?: string;
   updatedAt?: string;
 }
+const getRoleApiPath = (role: string) => {
+  switch (role) {
+    case "SUPER_ADMIN":
+      return `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/superadmin`;
+    case "OPS":
+      return `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/ops`;
+    case "BATCHOPS":
+      return `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batch-ops`;
+    case "ADMIN":
+    default:
+      return `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin`;
+  }
+};
 
 export default function AdminManagement() {
   const [admins, setAdmins] = useState<TableAdmin[]>([]);
@@ -25,14 +38,14 @@ export default function AdminManagement() {
   const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin`; 
+  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin`;
 
-
-  // ✅ Fetch all admins
   const fetchAdmins = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${backendUrl}/all`, {withCredentials:true}
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/superadmin/all`,
+        { withCredentials: true }
       );
       if (res.data.success) {
         setAdmins(
@@ -41,10 +54,10 @@ export default function AdminManagement() {
             name: a.name,
             email: a.email,
             phone: a.phone,
-            pwId: a.pwId,
-            linkedin: a.linkedin,
+            pwId: a.pwId || "N/A",
+            linkedin: a.linkedin || "N/A",
             designation: a.designation,
-            role: a.role.role,
+            role: typeof a.role === "object" ? a.role.role : a.role,
             createdAt: a.createdAt,
             updatedAt: a.updatedAt,
           }))
@@ -68,35 +81,38 @@ export default function AdminManagement() {
     [admins]
   );
 
-  // ✅ Update admin
-  const handleUpdateAdmin = useCallback(
-    async (updatedItem: any) => {
-      try {
-        const res = await axios.put(
-          `${backendUrl}/${updatedItem.id}`,
-          updatedItem,
-         {withCredentials:true}
-        );
-        if (res.data.success) {
-          setAdmins((prev) =>
-            prev.map((a) =>
-              a.id === updatedItem.id ? { ...a, ...updatedItem } : a
-            )
-          );
-        }
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to update admin");
-      }
-    },
-    []
-  );
+  const handleUpdateAdmin = useCallback(async (updatedItem: any) => {
+    try {
+      const apiPath = getRoleApiPath(updatedItem.role);
+      const res = await axios.put(`${apiPath}/${updatedItem.id}`, updatedItem, {
+        withCredentials: true,
+      });
 
-  // ✅ Delete admin
+      if (res.data.success) {
+        const updated = {
+          ...updatedItem,
+          role:
+            typeof updatedItem.role === "object"
+              ? updatedItem.role.role
+              : updatedItem.role,
+        };
+
+        setAdmins((prev) =>
+          prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a))
+        );
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to update admin");
+    }
+  }, []);
+
   const handleDeleteAdmin = useCallback(
-    async (id: string | number) => {
+    async (id: string | number, role?: string) => {
       try {
         const deleteId = typeof id === "number" ? id.toString() : id;
-        await axios.delete(`${backendUrl}/${deleteId}`, {withCredentials:true});
+        const apiPath = getRoleApiPath(role || "ADMIN");
+
+        await axios.delete(`${apiPath}/${deleteId}`, { withCredentials: true });
         setAdmins((prev) => prev.filter((a) => a.id !== deleteId));
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to delete admin");
@@ -105,54 +121,50 @@ export default function AdminManagement() {
     []
   );
 
-// ✅ Add new admin
-const handleAddAdmin = useCallback(
-  async (newAdminData: {
-    name: string;
-    email: string;
-    phoneNumber: string;       // frontend field
-    linkedinLink: string;      // frontend field
-    designation: string;
-    role: "admin" | "ops" | "teacher" | "manager" | "developer";
-    pwId?: string; 
-  }) => {
-    try {
-      // ✅ sanitize before sending
-      const payload = {
-        name: newAdminData.name,
-        email: newAdminData.email,
-        phone: newAdminData.phoneNumber,   
-        designation: newAdminData.designation,
-        role: newAdminData.role,
+  const handleAddAdmin = useCallback(
+    async (newAdminData: {
+      name: string;
+      email: string;
+      phoneNumber: string;
+      linkedinLink: string;
+      designation: string;
+      role: "ADMIN" | "OPS" | "BATCHOPS" | "SUPER_ADMIN";
+      pwId?: string;
+    }) => {
+      try {
+        const payload = {
+          name: newAdminData.name,
+          email: newAdminData.email,
+          phone: newAdminData.phoneNumber,
+          designation: newAdminData.designation,
+          role: newAdminData.role,
+          ...(newAdminData.pwId ? { pwId: newAdminData.pwId } : {}),
+          ...(newAdminData.linkedinLink?.trim().startsWith("http")
+            ? { linkedin: newAdminData.linkedinLink.trim() }
+            : {}),
+          businessHeadCenters: [],
+          academicHeadCenters: [],
+        };
 
-        // only send pwId if present, else omit
-        ...(newAdminData["pwId"] ? { pwId: newAdminData["pwId"] } : {}),
-
-        // send linkedin only if valid url
-        ...(newAdminData.linkedinLink?.trim().startsWith("http")
-          ? { linkedin: newAdminData.linkedinLink.trim() }
-          : {}),
-
-        businessHeadCenters: [],
-        academicHeadCenters: [],
-      };
-
-      const res = await axios.post(`${backendUrl}/create`, payload, {
-        withCredentials: true,
-      });
-
-      if (res.data.success) {
-        setAdmins((prev) => [...prev, res.data.data.admin]);
-        setIsAddAdminModalOpen(false);
+        const apiPath = getRoleApiPath(newAdminData.role);
+        const res = await axios.post(`${apiPath}/`, payload, {
+          withCredentials: true,
+        });
+        if (res.data.success) {
+          const added = res.data.data;
+          const normalized = {
+            ...added,
+            role: typeof added.role === "object" ? added.role.role : added.role,
+          };
+          setAdmins((prev) => [...prev, normalized]);
+          setIsAddAdminModalOpen(false);
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to add admin");
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to add admin");
-    }
-  },
-  []
-);
-
-
+    },
+    []
+  );
 
   const handleOpenAddModal = useCallback(() => {
     setIsAddAdminModalOpen(true);
@@ -221,7 +233,7 @@ const handleAddAdmin = useCallback(
           filterField="role"
           badgeFields={["role"]}
           selectFields={{
-            role: ["admin", "ops", "teacher", "manager", "developer"],
+            role: ["ADMIN", "OPS", "BATCHOPS", "SUPER_ADMIN"],
             designation: [
               "System Administrator",
               "Operations Lead",
@@ -232,7 +244,10 @@ const handleAddAdmin = useCallback(
             ],
           }}
           nonEditableFields={["id"]}
-          onDelete={handleDeleteAdmin}
+          onDelete={(id) => {
+            const role = admins.find((a) => a.id === id)?.role;
+            handleDeleteAdmin(id, role);
+          }}
           onEdit={handleUpdateAdmin}
           hiddenColumns={["id", "pwId", "createdAt", "updatedAt"]}
         />

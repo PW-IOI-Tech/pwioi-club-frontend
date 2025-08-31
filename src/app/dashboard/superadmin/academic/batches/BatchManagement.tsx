@@ -264,7 +264,7 @@ export default function BatchManagement() {
           isOpen={isAddBatchModalOpen}
           onClose={handleCloseAddModal}
           onBatchCreated={handleAddBatch}
-          prefillLocation={selectedCenter?.name || ""}
+          prefillLocation={selectedCenter?.location ||""}
           centerId={selectedCenter?.id || ""}
         />
       </div>
