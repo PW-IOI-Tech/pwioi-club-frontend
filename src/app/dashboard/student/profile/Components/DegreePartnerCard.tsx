@@ -45,14 +45,17 @@ const DegreePartnerCard = () => {
       if (response.data?.success) {
         const { externalDegree } = response.data.data;
         if (externalDegree) {
-          setDegreePartner(externalDegree);
-          setFormData({
-            collegeName: externalDegree.collegeName,
-            degreeName: externalDegree.degreeName,
+          // Map backend snake_case → frontend camelCase
+          const mappedData: DegreePartnerData = {
+            collegeName: externalDegree.college_name,
+            degreeName: externalDegree.degree_name,
             specialization: externalDegree.specialization,
-            startDate: externalDegree.startDate.split("T")[0],
-            endDate: externalDegree.endDate.split("T")[0],
-          });
+            startDate: externalDegree.start_date.split("T")[0],
+            endDate: externalDegree.end_date.split("T")[0],
+          };
+
+          setDegreePartner(mappedData);
+          setFormData(mappedData);
         } else {
           setDegreePartner(null);
         }
@@ -112,7 +115,15 @@ const DegreePartnerCard = () => {
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/degree-partner`,
-        { externalDegree: formData },
+        {
+          college_name: formData.collegeName,
+          degree_name: formData.degreeName,
+          specialisation: formData.specialization,
+          start_date: new Date(formData.startDate).toISOString(),
+          end_date: formData.endDate
+            ? new Date(formData.endDate).toISOString()
+            : null,
+        },
         { withCredentials: true }
       );
 
