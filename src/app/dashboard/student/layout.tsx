@@ -327,39 +327,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
           </div>
         </div>
-
-        <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-b border-slate-200">
-          <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
-            Academic Overview
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gradient-to-br from-white to-blue-50 rounded-lg p-3 border border-blue-100 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 ">
-              <div className="flex items-center space-x-1.5">
-                <Award className="w-3.5 h-3.5 text-blue-600" />
-                <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
-                  GPA
-                </span>
-              </div>
-              <p className="text-xl font-bold text-slate-800 mt-0.5">
-                {userData.gpa}
-              </p>
-              <p className="text-[11px] text-slate-500">{userData.semester}</p>
-            </div>
-            <div className="bg-gradient-to-br from-white to-indigo-50 rounded-lg p-3 border border-indigo-100 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 ">
-              <div className="flex items-center space-x-1.5">
-                <TrendingUp className="w-3.5 h-3.5 text-indigo-600" />
-                <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
-                  Rank
-                </span>
-              </div>
-              <p className="text-xl font-bold text-slate-800 mt-0.5">
-                {userData.rank}
-              </p>
-              <p className="text-[11px] text-slate-500">Class Position</p>
-            </div>
-          </div>
-        </div>
-
         <div className="p-4 py-6 bg-gradient-to-b from-white to-slate-50">
           <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
             Quick Actions
