@@ -992,9 +992,14 @@ const Feed: React.FC<FeedProps> = ({
 };
 
 const ProfileHeader: React.FC<any> = ({ user }) => {
-  const storedUser = localStorage.getItem("user");
-  const userDetail = storedUser ? JSON.parse(storedUser) : null;
+   const [userDetail, setUserDetail] = useState<any>(null);
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUserDetail(JSON.parse(storedUser));
+    }
+  }, []);
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5 overflow-hidden">
       <div className="flex items-center space-x-3 mb-3">

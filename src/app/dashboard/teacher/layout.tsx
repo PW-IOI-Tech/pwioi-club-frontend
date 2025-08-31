@@ -19,9 +19,11 @@ import {
   Calendar,
   Users,
   School,
+  Upload,
   CircleCheckBig,
 } from "lucide-react";
 import Image from "next/image";
+import axios from "axios";
 
 interface UserData {
   id: string;
@@ -41,6 +43,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
   const [userDetails, setUserDetails] = useState<UserData | null>(null);
+  const [counts,setCounts]=useState<any>();
 
   const pathname = usePathname();
   const router = useRouter();
@@ -56,15 +59,34 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
+    useEffect(() => {
+  const fetchTeacherCounts = async () => {
+
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/counts`,
+        {
+          withCredentials: true,
+        }
+      );
+      setCounts(response?.data?.data)
+    } catch (err) {
+      console.error("Failed to fetch teacher counts", err);
+    }
+  };
+
+  fetchTeacherCounts();
+}, [userDetails]);
+
   const userData = {
     name: userDetails?.name,
     email: userDetails?.email,
     profilePicture: "/api/placeholder/120/120",
-    teacherId: "TCHR2024001",
+    role: "Teacher",
     course: userDetails?.designation,
     phone: userDetails?.phone,
-    ttlStudents: "120",
-    ttlBatches: "4",
+    ttlStudents: counts?.totalStudents,
+    ttlBatches: counts?.totalDivisions,
   };
 
   const menuItems = [
@@ -81,12 +103,12 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
       icon: Calendar,
       href: "/dashboard/teacher/attendance",
     },
-    // {
-    //   id: "upload",
-    //   label: "Upload Marks",
-    //   icon: Upload,
-    //   href: "/dashboard/teacher/upload",
-    // },
+    {
+      id: "upload",
+      label: "Upload Marks",
+      icon: Upload,
+      href: "/dashboard/teacher/upload",
+    },
     {
       id: "cpr",
       label: "CPR Management",
@@ -104,7 +126,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   const getActiveSection = () => {
     if (pathname.includes("/acads")) return "academics";
     if (pathname.includes("/attendance")) return "attendance";
-    // if (pathname.includes("/upload")) return "upload";
+    if (pathname.includes("/upload")) return "upload";
     if (pathname.includes("/cpr")) return "cpr";
     if (pathname.includes("/help")) return "help";
     return "home";
@@ -155,7 +177,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
-    router.push("/auth/teacher/login");
+    router.push("/auth/login/student");
   };
 
   const handleCodingPlatformRedirect = () => {
@@ -300,7 +322,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
                     {userData.name}
                   </p>
                   <p className="text-xs text-slate-400 truncate font-medium">
-                    {userData.teacherId}
+                    {userData.role}
                   </p>
                 </div>
               )}
@@ -349,7 +371,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
                     {userData.course}
                   </p>
                   <p className="text-slate-300 text-[11px] font-medium mt-1">
-                    {userData.teacherId}
+                    {userData.role}
                   </p>
                 </div>
               </div>
