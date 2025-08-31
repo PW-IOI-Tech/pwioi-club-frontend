@@ -261,7 +261,6 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
       const { uploadUrl, key } = data;
       await fetch(uploadUrl, { method: "PUT", body: file });
 
-      // Calculate duration for videos
       let duration = null;
       if (type === "video") {
         duration = await getVideoDuration(file);
@@ -271,7 +270,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         {
           type: type.toUpperCase(),
           mime_type: file.type,
-          s3_key: key, // Changed from 'key' to 's3_key'
+          s3_key: key,
           thumbnail_url: null,
           duration: duration,
         },
@@ -298,7 +297,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/media/remove`,
         {
           withCredentials: true,
-          data: { key:key },
+          data: { key: key },
         }
       );
 
@@ -502,7 +501,6 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         </div>
       )}
 
-      {/* Toast */}
       {showToast && (
         <div className="fixed top-4 right-4 z-50">
           <div className="bg-slate-900 text-white text-sm px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
@@ -532,9 +530,13 @@ const PostHeader: React.FC<any> = ({ post, getRoleBadgeColor }) => (
             <h3 className="font-semibold text-gray-900 text-sm">
               {post?.userInfo?.name}
             </h3>
-           <span  className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
+            <span
+              className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
                 post?.author_type
-              )}`}>{post?.author_type}</span>
+              )}`}
+            >
+              {post?.author_type}
+            </span>
             {post.assignedBy && (
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-br from-white to-indigo-50 text-slate-800 border border-slate-400">
                 📌 {post?.author_type}
@@ -573,7 +575,6 @@ const PostActions: React.FC<PostActionsProps> = ({
     { id: "3", name: "Mike Johnson", avatar: "👨" },
     { id: "4", name: "Sarah Wilson", avatar: "👩‍💼" },
   ];
-  
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -933,7 +934,7 @@ const Post: React.FC<any> = ({
 
       {post?.media?.length > 0 && (
         <div className="px-4 pb-3 grid grid-cols-1 gap-2">
-          {post.media.map((mediaItem:any) => (
+          {post.media.map((mediaItem: any) => (
             <div key={mediaItem.id}>
               {mediaItem.type === "IMAGE" ? (
                 <img
@@ -978,7 +979,7 @@ const Feed: React.FC<FeedProps> = ({
     <div className="space-y-6">
       {uniquePosts.map((post, index) => (
         <Post
-          key={`${post.id}-${index}`} 
+          key={`${post.id}-${index}`}
           post={post}
           likedPosts={likedPosts}
           onLike={onLike}
@@ -989,7 +990,6 @@ const Feed: React.FC<FeedProps> = ({
     </div>
   );
 };
-
 
 const ProfileHeader: React.FC<any> = ({ user }) => {
   const storedUser = localStorage.getItem("user");
@@ -1223,9 +1223,9 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/me/active-subject-attendance`,
-        { withCredentials: true } // ✅ send cookies/JWT
+        { withCredentials: true }
       );
-      setCounts(response.data?.data); // adjust depending on backend response shape
+      setCounts(response.data?.data);
     } catch (error) {
       console.error("Error fetching teacher counts:", error);
     }
@@ -1234,7 +1234,6 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
   useEffect(() => {
     fetchAttendence();
   }, []);
-
 
   useEffect(() => {
     fetchPosts();

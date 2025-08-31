@@ -19,7 +19,6 @@ import {
   Calendar,
   Users,
   School,
-  Upload,
   CircleCheckBig,
 } from "lucide-react";
 import Image from "next/image";
@@ -57,7 +56,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-    const userData = {
+  const userData = {
     name: userDetails?.name,
     email: userDetails?.email,
     profilePicture: "/api/placeholder/120/120",
@@ -67,7 +66,6 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
     ttlStudents: "120",
     ttlBatches: "4",
   };
-
 
   const menuItems = [
     { id: "home", label: "Home", icon: House, href: "/dashboard/teacher" },
@@ -83,12 +81,12 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
       icon: Calendar,
       href: "/dashboard/teacher/attendance",
     },
-    {
-      id: "upload",
-      label: "Upload Marks",
-      icon: Upload,
-      href: "/dashboard/teacher/upload",
-    },
+    // {
+    //   id: "upload",
+    //   label: "Upload Marks",
+    //   icon: Upload,
+    //   href: "/dashboard/teacher/upload",
+    // },
     {
       id: "cpr",
       label: "CPR Management",
@@ -106,7 +104,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   const getActiveSection = () => {
     if (pathname.includes("/acads")) return "academics";
     if (pathname.includes("/attendance")) return "attendance";
-    if (pathname.includes("/upload")) return "upload";
+    // if (pathname.includes("/upload")) return "upload";
     if (pathname.includes("/cpr")) return "cpr";
     if (pathname.includes("/help")) return "help";
     return "home";
@@ -157,7 +155,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
-    router.push("/auth/login/student");
+    router.push("/auth/teacher/login");
   };
 
   const handleCodingPlatformRedirect = () => {
@@ -165,7 +163,11 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   };
 
   if (!userData) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -526,4 +528,3 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default TeacherLayout;
-
