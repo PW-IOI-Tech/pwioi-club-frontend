@@ -47,8 +47,8 @@ export default function SchoolManagement() {
               location:
                 centers.find((c) => c.id === selectedLocation)?.name || "",
               schoolName: school.name,
-              divisionsCount: stats.divisions,
               batchesCount: stats.batches,
+              divisionsCount: stats.divisions,
               stdCount: stats.students,
               teachersCount: stats.teachers,
             };
