@@ -339,6 +339,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
               <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
               <span className="font-medium">My Profile</span>
             </a>
+            </nav>
           <div className="p-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-red-50 shadow-t-lg">
             <button
               onClick={handleLogout}
