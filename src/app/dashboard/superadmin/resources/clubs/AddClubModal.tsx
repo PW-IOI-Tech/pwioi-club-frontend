@@ -16,10 +16,7 @@ interface AddClubModalProps {
   }) => void;
   prefillLocation: string;
   faculties: string[];
-  students: string[];
 }
-
-const categories = ["Tech", "Social", "Sports", "Arts", "Academic", "Cultural"];
 
 const AddClubModal: React.FC<AddClubModalProps> = ({
   isOpen,
@@ -27,7 +24,6 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
   onClubCreated,
   prefillLocation,
   faculties,
-  students,
 }) => {
   const [formData, setFormData] = useState({
     clubName: "",
@@ -89,27 +85,11 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
       .map((id) => id.trim())
       .filter((id) => id.length > 0);
 
-    const validIds = inputIds.filter((id) => students.includes(id));
-    const invalidIds = inputIds.filter((id) => !students.includes(id));
-
     setFormData((prev) => ({
       ...prev,
-      coreMembers: validIds,
+      coreMembers: inputIds,
     }));
-
-    if (invalidIds.length > 0) {
-      setFormErrors((prev) => ({
-        ...prev,
-        coreMembers: `Invalid enrollment ID(s): ${invalidIds.join(", ")}`,
-      }));
-    } else {
-      setFormErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.coreMembers;
-        return newErrors;
-      });
-    }
-  }, [coreMembersInput, students]);
+  }, [coreMembersInput]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -127,14 +107,12 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
       errors.clubName = "Club name must be at least 3 characters";
     }
 
-    if (!formData.category) {
+    if (!formData.category.trim()) {
       errors.category = "Category is required";
     }
 
     if (!formData.leaderId.trim()) {
-      errors.leaderId = "Leader enrollment ID is required";
-    } else if (!students.includes(formData.leaderId.trim())) {
-      errors.leaderId = "Leader must be a valid student enrollment ID";
+      errors.leaderId = "Leader ID is required";
     }
 
     if (!formData.description.trim()) {
@@ -218,6 +196,7 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
+            {/* Club Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Club Name *
@@ -240,32 +219,22 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
               )}
             </div>
 
-            <div className="relative">
+            {/* Category (Free Text Input) */}
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Category *
               </label>
-              <div className="relative">
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
-                    formErrors.category ? "border-red-500" : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting}
-                >
-                  <option value="">Select Category</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                  size={18}
-                />
-              </div>
+              <input
+                type="text"
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                placeholder="e.g., Robotics, Dance, Debate"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                  formErrors.category ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isSubmitting}
+              />
               {formErrors.category && (
                 <p className="mt-1 text-sm text-red-600">
                   {formErrors.category}
@@ -273,16 +242,17 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
               )}
             </div>
 
+            {/* Leader ID (Free Text) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Club Leader (Student ID) *
+                Club Leader ID *
               </label>
               <input
                 type="text"
                 name="leaderId"
                 value={formData.leaderId}
                 onChange={handleInputChange}
-                placeholder="e.g., STD001"
+                placeholder="e.g., STD001 or John Doe"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.leaderId ? "border-red-500" : "border-gray-300"
                 }`}
@@ -295,6 +265,7 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
               )}
             </div>
 
+            {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Description *
@@ -317,6 +288,7 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
               )}
             </div>
 
+            {/* Established Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Established Date *
@@ -341,6 +313,7 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
               )}
             </div>
 
+            {/* Faculty Officials */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Faculty Officials (Teachers) * ({formData.clubOfficials.length}{" "}
@@ -402,10 +375,10 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
               )}
             </div>
 
+            {/* Core Members (Free-form comma-separated) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Core Members (Student IDs) * ({formData.coreMembers.length}{" "}
-                selected)
+                Core Members * ({formData.coreMembers.length} selected)
               </label>
               <div
                 className={`border rounded-md p-2 min-h-10 bg-gray-50 flex flex-wrap gap-1 mb-2 ${
@@ -429,14 +402,14 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
               </div>
               <input
                 type="text"
-                placeholder="e.g., STD001, STD002, STD003"
+                placeholder="e.g., Alice, Bob, Charlie or STD001, STD002"
                 value={coreMembersInput}
                 onChange={(e) => setCoreMembersInput(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A]"
                 disabled={isSubmitting}
               />
               <p className="mt-1 text-xs text-gray-500">
-                Enter valid student enrollment IDs separated by commas
+                Enter names or IDs separated by commas
               </p>
               {formErrors.coreMembers && (
                 <p className="mt-1 text-sm text-red-600">
@@ -445,6 +418,7 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
               )}
             </div>
 
+            {/* Center Location */}
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Center Location *
