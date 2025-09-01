@@ -262,7 +262,6 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
       const { uploadUrl, key } = data;
       await fetch(uploadUrl, { method: "PUT", body: file });
 
-      // Calculate duration for videos
       let duration = null;
       if (type === "video") {
         duration = await getVideoDuration(file);
@@ -272,7 +271,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         {
           type: type.toUpperCase(),
           mime_type: file.type,
-          s3_key: key, // Changed from 'key' to 's3_key'
+          s3_key: key,
           thumbnail_url: null,
           duration: duration,
         },
@@ -503,7 +502,6 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         </div>
       )}
 
-      {/* Toast */}
       {showToast && (
         <div className="fixed top-4 right-4 z-50">
           <div className="bg-slate-900 text-white text-sm px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
@@ -999,9 +997,14 @@ const Feed: React.FC<FeedProps> = ({
 };
 
 const ProfileHeader: React.FC<any> = ({ user }) => {
-  const storedUser = localStorage.getItem("user");
-  const userDetail = storedUser ? JSON.parse(storedUser) : null;
+   const [userDetail, setUserDetail] = useState<any>(null);
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUserDetail(JSON.parse(storedUser));
+    }
+  }, []);
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5 overflow-hidden">
       <div className="flex items-center space-x-3 mb-3">

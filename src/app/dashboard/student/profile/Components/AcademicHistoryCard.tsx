@@ -24,7 +24,6 @@ const mapDegreeLabel = (degree: string) => {
   }
 };
 
-
 interface AcademicHistory {
   id?: string;
   degree: string;
@@ -63,7 +62,6 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   );
 };
 
-// Add Academic History Modal
 interface AddAcademicHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -307,7 +305,6 @@ const AddAcademicHistoryModal: React.FC<AddAcademicHistoryModalProps> = ({
   );
 };
 
-// Edit Academic History Modal
 interface EditAcademicHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -339,7 +336,6 @@ const EditAcademicHistoryModal: React.FC<EditAcademicHistoryModalProps> = ({
     { label: "Undergraduation", value: "undergraduate" },
   ];
 
-  // Update form data when education changes
   useEffect(() => {
     if (education) {
       setFormData(education);
@@ -351,7 +347,7 @@ const EditAcademicHistoryModal: React.FC<EditAcademicHistoryModalProps> = ({
     value: string | number
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
+
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
@@ -559,7 +555,6 @@ const EditAcademicHistoryModal: React.FC<EditAcademicHistoryModalProps> = ({
   );
 };
 
-// ------------------------- Delete Confirmation Modal -------------------------
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -817,7 +812,6 @@ const AcademicHistoryCard: React.FC = () => {
         </div>
       </div>
 
-      {/* Modals */}
       <AddAcademicHistoryModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}

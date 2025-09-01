@@ -81,7 +81,6 @@ export default function AcademicsSection() {
   const [error, setError] = useState<string | null>(null);
   const [exams, setExams] = useState<any[]>([]);
   const [availableExamTypes, setAvailableExamTypes] = useState<string[]>([]);
-
   // Fetch available exam types for a subject
   const fetchExamTypes = useCallback(async (subjectId: string) => {
     try {
@@ -263,6 +262,7 @@ export default function AcademicsSection() {
         ]);
 
         // Set student profile here
+
         if (currentSemester?.semester_info) {
           _setStudentProfile({
             batch: currentSemester.semester_info.batch_name || "N/A",
@@ -273,7 +273,6 @@ export default function AcademicsSection() {
 
         const allCourses: any[] = [];
 
-        // Handle current semester subjects
         if (currentSemester?.subjects) {
           currentSemester.subjects.forEach((subject: any) => {
             allCourses.push({
@@ -287,8 +286,6 @@ export default function AcademicsSection() {
             });
           });
         }
-
-        // Handle past semesters
         if (
           pastSemesters?.past_semesters &&
           pastSemesters.past_semesters.length > 0
@@ -316,7 +313,6 @@ export default function AcademicsSection() {
           courses: allCourses,
         });
 
-        // Initialize filters with first course
         if (allCourses.length > 0) {
           const firstCourse = allCourses[0];
           const initialFilters = {
@@ -363,7 +359,6 @@ export default function AcademicsSection() {
     initializeAcademicData();
   }, [fetchCurrentSemester, fetchPastSemesters, fetchExams, fetchExamTypes]);
 
-  // Update trends and leaderboard when filters change
   useEffect(() => {
     const updateData = async () => {
       if (
@@ -403,7 +398,6 @@ export default function AcademicsSection() {
 
       const examName = activeFilters.testNumber;
 
-      // Fetch performance trends
       await fetchPerformanceTrends(
         semesterId,
         selectedCourse.id,
@@ -411,7 +405,6 @@ export default function AcademicsSection() {
         examName
       );
 
-      // Fetch both leaderboards
       await Promise.all([
         fetchLeaderboard(
           "class",
@@ -599,7 +592,6 @@ export default function AcademicsSection() {
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
-        {/* Header Section */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm border border-gray-400 shadow-sm p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -611,7 +603,6 @@ export default function AcademicsSection() {
               </p>
             </div>
 
-            {/* Quick Stats */}
             <div className="flex flex-wrap gap-4">
               <div className="bg-gradient-to-br from-white to-indigo-50 px-4 py-3 rounded-sm border border-gray-200">
                 <div className="text-sm text-slate-900 font-medium">Batch</div>
@@ -639,7 +630,6 @@ export default function AcademicsSection() {
           </div>
         </div>
 
-        {/* Filter Controls */}
         <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg p-6 border border-gray-400">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 bg-blue-100 rounded-sm flex items-center justify-center">
@@ -843,7 +833,6 @@ export default function AcademicsSection() {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <button
@@ -879,7 +868,6 @@ export default function AcademicsSection() {
           </div>
         </div>
 
-        {/* Performance Chart */}
         <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
           <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 px-6 py-4 drop-shadow-sm">
             <h3 className="text-xl font-semibold text-slate-900">
@@ -934,13 +922,7 @@ export default function AcademicsSection() {
             )}
           </div>
         </div>
-
-        {/* Rest of the component remains the same... */}
-        {/* I'll continue with the leaderboards and other sections */}
-
-        {/* Leaderboards Side by Side */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {/* Class Leaderboard */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -960,7 +942,6 @@ export default function AcademicsSection() {
             </div>
 
             <div className="p-6">
-              {/* Compact Info Tiles */}
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <div className="bg-gradient-to-br from-white to-indigo-50 p-3 rounded-sm shadow-sm border border-gray-400 text-center">
                   <div className="text-xs text-slate-900 font-medium mb-1">
@@ -985,7 +966,6 @@ export default function AcademicsSection() {
                 </div>
               </div>
 
-              {/* Top 3 Students */}
               <div className="space-y-3">
                 {getLeaderboardData("class")
                   .slice(0, 3)
@@ -1027,7 +1007,6 @@ export default function AcademicsSection() {
             </div>
           </div>
 
-          {/* Overall Leaderboard */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1047,7 +1026,6 @@ export default function AcademicsSection() {
             </div>
 
             <div className="p-6">
-              {/* Compact Info Tiles */}
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <div className="bg-gradient-to-br from-white to-indigo-50 p-3 rounded-sm shadow-sm border border-gray-400 text-center">
                   <div className="text-xs text-slate-900 font-medium mb-1">
@@ -1072,7 +1050,6 @@ export default function AcademicsSection() {
                 </div>
               </div>
 
-              {/* Top 3 Students */}
               <div className="space-y-3">
                 {getLeaderboardData("overall")
                   .slice(0, 3)
@@ -1115,9 +1092,7 @@ export default function AcademicsSection() {
           </div>
         </div>
 
-        {/* Course Tables - Collapsible Sections */}
         <div className="space-y-6">
-          {/* Ongoing Courses */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
               <div className="flex items-center gap-3">
@@ -1176,7 +1151,6 @@ export default function AcademicsSection() {
             </div>
           </div>
 
-          {/* Completed Courses - Collapsible */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
               <div className="flex items-center justify-between">
@@ -1296,7 +1270,6 @@ export default function AcademicsSection() {
           </div>
         </div>
 
-        {/* Leaderboard Modal */}
         {isLeaderboardModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">

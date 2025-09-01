@@ -201,10 +201,12 @@ const OngoingCoursesTable: React.FC = () => {
                 {ongoingCourses?.map((course, index) => (
                   <tr key={index} className="border-b border-gray-50">
                     <td className="py-4 font-medium text-gray-900">
-                      {course?.batchName+course?.divisionCode}
+                      {course?.batchName + course?.divisionCode}
                     </td>
                     <td className="py-4 text-gray-600">{course?.semester}</td>
-                    <td className="py-4 text-gray-600">{course?.subjectName}</td>
+                    <td className="py-4 text-gray-600">
+                      {course?.subjectName}
+                    </td>
                     <td className="py-4 text-gray-600">
                       {course?.totalStudents}
                     </td>
@@ -516,7 +518,6 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 mb-4 text-sm">
-        {/* School */}
         <div>
           <label className="block font-medium text-gray-700 mb-2">School</label>
           <div className="relative">
@@ -550,7 +551,6 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           </div>
         </div>
 
-        {/* Batch */}
         <div>
           <label className="block font-medium text-gray-700 mb-2">Batch</label>
           <div className="relative">
@@ -586,7 +586,6 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           </div>
         </div>
 
-        {/* Division */}
         <div>
           <label className="block font-medium text-gray-700 mb-2">
             Division
@@ -625,7 +624,6 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           </div>
         </div>
 
-        {/* Semester */}
         <div>
           <label className="block font-medium text-gray-700 mb-2">
             Semester
@@ -665,7 +663,6 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           </div>
         </div>
 
-        {/* Subject */}
         <div>
           <label className="block font-medium text-gray-700 mb-2">
             Subject
@@ -705,7 +702,6 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           </div>
         </div>
 
-        {/* Test Type */}
         <div>
           <label className="block font-medium text-gray-700 mb-2">
             Test Type
@@ -743,7 +739,6 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
           </div>
         </div>
 
-        {/* Test Number */}
         <div>
           <label className="block font-medium text-gray-700 mb-2">
             Test Number
@@ -782,7 +777,6 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
         </div>
       </div>
 
-      {/* Submit Button */}
       <div className="mb-6">
         <button
           onClick={handleShowAnalysis}
