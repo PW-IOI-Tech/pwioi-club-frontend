@@ -5,7 +5,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Users, ChevronDown } from "lucide-react";
 import Table from "../../Table";
-import UploadSection from "../UploadSection";
+import UploadSection from "./UploadSection";
 import teacherSchemaInfo from "./TeacherSchemaInfo";
 import axios from "axios";
 

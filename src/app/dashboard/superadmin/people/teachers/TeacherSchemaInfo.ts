@@ -1,59 +1,53 @@
-const teacherSchemaInfo = {
+export interface ColumnDescription {
+  key: string;
+  description: string;
+}
+
+export interface SchemaInfo {
+  title: string;
+  columns: string[];
+  sampleRow: string[];
+  columnDescriptions: ColumnDescription[];
+  guidelines: string[];
+  commonIssues: string[];
+  downloadLink: string;
+}
+
+export const teacherSchemaInfo: SchemaInfo = {
   title: "Teacher Upload",
-  columns: [
-    "name",
-    "email",
-    "password",
-    "gender",
-    "phoneNumber",
-    "experience",
-    "centerName",
-    "departmentName",
-    "batchName",
-    "courseName",
-  ],
+  columns: ["name", "email", "phone", "gender", "role"],
   sampleRow: [
     "Jane Smith",
-    "jane@example.com",
-    "securePassword",
+    "jane.smith@pwioi.com",
+    "9876543210",
     "Female",
-    "0987654321",
-    "5",
-    "Patna",
-    "SOT",
-    "SOT24B1",
-    "Mathematics",
+    "TEACHER",
   ],
   columnDescriptions: [
     { key: "name", description: "Full name of the teacher" },
-    { key: "email", description: "Email address of the teacher" },
-    { key: "password", description: "Password for teacher account" },
-    { key: "gender", description: "Gender (Male, Female, Other)" },
-    { key: "phoneNumber", description: "Phone number (10 digits)" },
-    { key: "experience", description: "Years of teaching experience" },
-    { key: "centerName", description: "Center name (e.g., Patna)" },
-    { key: "departmentName", description: "Department (SOT, SOM, SOH)" },
-    { key: "batchName", description: "Batch name (e.g., SOT24B1)" },
-    { key: "courseName", description: "Course name (e.g., Mathematics)" },
+    { key: "email", description: "Valid email address of the teacher" },
+    { key: "phone", description: "10-digit phone number without country code" },
+    { key: "gender", description: "Gender: MALE or FEMALE" },
+    { key: "role", description: "Role: TEACHER or ASSISTANT_TEACHER" },
   ],
   guidelines: [
-    "Column headers must match exactly",
-    "All fields are required",
-    "Department should be one of: SOT, SOM, SOH",
-    "Center name must match existing centers",
-    "Batch names must match existing batches",
-    "Course names must match existing courses in the specified batch",
+    "Column headers must match exactly (case-sensitive).",
+    "All fields are required; no empty cells allowed.",
+    "Email must be valid and unique.",
+    "Phone number must be exactly 10 digits.",
+    "Gender must be either 'MALE' or 'FEMALE' (uppercase).",
+    "Role must be one of: 'TEACHER' or 'ASSISTANT_TEACHER' (uppercase).",
   ],
   commonIssues: [
-    "Wrong column names",
-    "Missing required fields",
-    "Incorrect department, center, or course names",
-    "Duplicate email addresses",
-    "Invalid experience values (should be a number)",
-    "Course not found in the specified batch",
+    "Using lowercase values like 'male' instead of 'MALE'.",
+    "Misspelled role names (e.g., 'Teacher', 'Assitant_Teacher').",
+    "Invalid phone numbers (e.g., +91 or 11 digits).",
+    "Duplicate email addresses.",
+    "Missing required columns like 'role' or 'phone'.",
+    "Extra spaces or hidden characters in data cells.",
   ],
   downloadLink:
-    "https://docs.google.com/spreadsheets/d/1e4wsdkADkYARc8Bj2tjwLPZ-3gyP_ggYOBFleMx5Fv8/export?format=xlsx",
+    "https://docs.google.com/spreadsheets/d/1OpEbFlZUP6QouihirTssXupvO6SrC0T8wWj4-tyFa1c/export?format=xlsx",
 };
 
 export default teacherSchemaInfo;
