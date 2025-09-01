@@ -20,6 +20,16 @@ interface TableExam {
   semester: number;
 }
 
+const formatDate = (date: string) => {
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString("en-IN", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+
 export default function ExamManagement() {
   const [centers, setCenters] = useState<any[]>([]);
   const [schools, setSchools] = useState<any[]>([]);
@@ -44,7 +54,8 @@ export default function ExamManagement() {
     selectedSchool &&
     selectedBatch &&
     selectedDivision &&
-    selectedSemester;
+    selectedSemester &&
+    selectedSubject;
 
   // ----------------- FETCH FILTER DATA -----------------
   useEffect(() => {
@@ -122,36 +133,40 @@ export default function ExamManagement() {
 
     const fetchExams = async () => {
       try {
-        const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${selectedSchool}`,
-          {
-            batch: selectedBatch,
-            division: selectedDivision,
-            semester: selectedSemester,
-          },
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/subject/${selectedSubject}`,
           { withCredentials: true }
         );
-        setExams(res.data.data || []);
-        setFilteredExams(res.data.data || []);
+
+        const examsData = res.data.data?.exams || [];
+        setExams(examsData);
+        setFilteredExams(examsData);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to fetch exams");
       }
     };
     fetchExams();
-  }, [selectedSchool, selectedBatch, selectedDivision, selectedSemester]);
+  }, [
+    selectedSubject,
+    selectedSchool,
+    selectedBatch,
+    selectedDivision,
+    selectedSemester,
+  ]);
 
-  // ----------------- STATISTICS -----------------
   const statistics = useMemo(
     () => ({
-      totalExams: filteredExams.length,
-      totalWeightage: filteredExams.reduce(
-        (sum, exam) => sum + exam.weightage,
-        0
-      ),
-      avgMaxMarks: Math.round(
-        filteredExams.reduce((sum, exam) => sum + exam.maxMarks, 0) /
-          Math.max(filteredExams.length, 1)
-      ),
+      totalExams: Array.isArray(filteredExams) ? filteredExams.length : 0,
+      totalWeightage: Array.isArray(filteredExams)
+        ? filteredExams.reduce((sum, exam) => sum + exam.weightage, 0)
+        : 0,
+      avgMaxMarks:
+        Array.isArray(filteredExams) && filteredExams.length
+          ? Math.round(
+              filteredExams.reduce((sum, exam) => sum + exam.maxMarks, 0) /
+                filteredExams.length
+            )
+          : 0,
     }),
     [filteredExams]
   );
@@ -208,7 +223,13 @@ export default function ExamManagement() {
         setError(err.response?.data?.message || "Failed to add exam");
       }
     },
-    [selectedSchool, selectedBatch, selectedDivision, selectedSemester, selectedSubject]
+    [
+      selectedSchool,
+      selectedBatch,
+      selectedDivision,
+      selectedSemester,
+      selectedSubject,
+    ]
   );
 
   const handleUpdateExam = useCallback((item: any) => {
@@ -260,7 +281,18 @@ export default function ExamManagement() {
     []
   );
 
-  // ----------------- RENDER -----------------
+  const formattedExams = useMemo(() => {
+  return filteredExams.map((exam) => ({
+    ...exam,
+    date: formatDate(exam.date),
+    examType: exam.examType,
+    weightage: `${exam.weightage}%`,
+    maxMarks: exam.maxMarks?.toLocaleString(),
+    passingMarks: exam.passingMarks?.toLocaleString(),
+  }));
+}, [filteredExams]);
+
+
   if (error)
     return (
       <div className="bg-red-50 text-red-600 p-4 rounded-lg max-w-2xl mx-auto mt-8">
@@ -407,10 +439,9 @@ export default function ExamManagement() {
             </div>
 
             <Table
-              data={filteredExams}
+              data={formattedExams}
               title="Exams Overview"
               filterField="examName"
-              badgeFields={["examType", "weightage"]}
               selectFields={{
                 examType: [
                   "Midterm",
@@ -420,6 +451,7 @@ export default function ExamManagement() {
                   "Practical",
                 ],
               }}
+              
               nonEditableFields={[
                 "id",
                 "school",
@@ -429,7 +461,7 @@ export default function ExamManagement() {
               ]}
               onDelete={handleDeleteExam}
               onEdit={handleUpdateExam}
-              hiddenColumns={["id", "school", "batch", "division", "semester"]}
+              hiddenColumns={["id", "school", "batch", "division", "semester","createdAt","updatedAt","subject_id"]}
             />
 
             <AddExamModal

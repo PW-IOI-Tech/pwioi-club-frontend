@@ -32,23 +32,25 @@ interface FilterState {
   school: string;
   batch: string;
   division: string;
-  semester: string;
+  semesterId: string; 
   subject: string;
   examType: string;
   examNumber: string;
 }
 
+
 const MarksDashboard: React.FC = () => {
-  const [filters, setFilters] = useState<FilterState>({
-    center: "",
-    school: "",
-    batch: "",
-    division: "",
-    semester: "",
-    subject: "",
-    examType: "",
-    examNumber: "",
-  });
+const [filters, setFilters] = useState<FilterState>({
+  center: "",
+  school: "",
+  batch: "",
+  division: "",
+  semesterId: "", 
+  subject: "",
+  examType: "",
+  examNumber: "",
+});
+
 
   const [centers, setCenters] = useState<any[]>([]);
   const [schools, setSchools] = useState<any[]>([]);
@@ -124,21 +126,21 @@ const MarksDashboard: React.FC = () => {
   }, [filters.division]);
 
   useEffect(() => {
-    if (filters.semester) {
+    if (filters.semesterId) {
       axios
         .get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/semesters/${filters.semester}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/semesters/${filters.semesterId}`,
           { withCredentials: true }
         )
         .then((res) => setSubjects(res.data?.data || []));
     }
-  }, [filters.semester]);
+  }, [filters.semesterId]);
 
     useEffect(() => {
     if (filters.subject) {
       axios
         .get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${filters.subject}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/student-academics/exams/subject/${filters.subject}/past-exam-types`,
           { withCredentials: true }
         )
         .then((res) => setTestType(res.data?.data || []));
@@ -203,7 +205,7 @@ const MarksDashboard: React.FC = () => {
               { label: "School", key: "school", options: schools },
               { label: "Batch", key: "batch", options: batches },
               { label: "Division", key: "division", options: divisions },
-              { label: "Semester", key: "semester", options: semesters },
+{ label: "Semester", key: "semesterId", options: semesters },
               { label: "Subject", key: "subject", options: subjects },
               { label: "Exam Type", key: "examType", options: testType },
               { label: "Exam Number", key: "examNumber", options: testNumbers },
