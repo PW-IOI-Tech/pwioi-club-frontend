@@ -14,8 +14,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
-// --- INTERFACES ---
-
 interface User {
   batch: string;
   studentId: string;
@@ -84,6 +82,7 @@ interface FeedProps {
   onLike: (postId: string) => void;
   onFlag: (postId: string) => void;
   getRoleBadgeColor: (role: string) => string;
+  loading:boolean;
 }
 
 interface ProfileHeaderProps {
@@ -607,7 +606,7 @@ const PostActions: React.FC<PostActionsProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="bg-gray-50 border border-gray-200 rounded-sm px-3 py-2">
                     <div className="font-medium text-sm text-gray-900">
-                      {comment?.userInfo?.name}
+                        {comment?.userInfo?.username}
                     </div>
                     <div className="text-sm text-gray-700">
                       {comment.content}
@@ -851,7 +850,13 @@ const Feed: React.FC<FeedProps> = ({
   onLike,
   onFlag,
   getRoleBadgeColor,
+  loading
+
 }) => {
+  if (loading) {
+    return <p className="text-center py-4">Loading Feed...</p>;
+  }
+  
   const uniquePosts = posts.filter(
     (post, index, self) => index === self.findIndex((p) => p.id === post.id)
   );
@@ -1076,18 +1081,31 @@ const StudentHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
   const handleFlag = (postId: string): void => {
     setReportModal({ isOpen: true, postId });
   };
+  
+  const handleReportSubmit = async (): Promise<void> => {
+    if (!reportModal.postId || !reportReason.trim()) {
+      alert("Please provide a reason for reporting.");
+      return;
+    }
 
-  const handleReportSubmit = (): void => {
-    console.log(
-      "Reporting post:",
-      reportModal.postId,
-      "Reason:",
-      reportReason,
-      "Details:",
-      reportDetails
-    );
-    // Add actual API call to submit report here
-    handleReportClose();
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags`,
+        {
+          postId: reportModal.postId,
+          reason: reportReason,
+        },
+        { withCredentials: true }
+      );
+
+      console.log("Report submitted:", res.data);
+      alert("Report submitted successfully!");
+    } catch (err: any) {
+      console.error("Error reporting:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to submit report");
+    } finally {
+      handleReportClose();
+    }
   };
 
   const handleReportClose = (): void => {
@@ -1124,8 +1142,8 @@ const StudentHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
               onLike={handleLike}
               onFlag={handleFlag}
               getRoleBadgeColor={getRoleBadgeColor}
+              loading={loading}
             />
-            {/* Add logic for infinite scroll trigger here if needed */}
           </div>
 
           <div className="lg:col-span-3 space-y-4 hidden sm:block">

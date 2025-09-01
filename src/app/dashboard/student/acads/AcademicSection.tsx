@@ -80,6 +80,29 @@ export default function AcademicsSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exams, setExams] = useState<any[]>([]);
+  const [availableExamTypes, setAvailableExamTypes] = useState<string[]>([]);
+  // Fetch available exam types for a subject
+  const fetchExamTypes = useCallback(async (subjectId: string) => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/student-academics/exams/subject/${subjectId}/past-exam-types`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (response.data && Array.isArray(response.data)) {
+        setAvailableExamTypes(response.data);
+        return response.data;
+      }
+      setAvailableExamTypes([]);
+      return [];
+    } catch (err) {
+      console.error("Error fetching exam types:", err);
+      setAvailableExamTypes([]);
+      return [];
+    }
+  }, []);
 
   const fetchExams = useCallback(
     async (subjectId: string, examType: string) => {
@@ -93,12 +116,14 @@ export default function AcademicsSection() {
         );
 
         if (response.data.success) {
-          setExams(response.data.data.exams || []);
-          return response.data.data.exams;
+          const exams = response.data.data.exams || [];
+          setExams(exams);
+          return exams;
         }
       } catch (err) {
         console.error("Error fetching exams:", err);
         setExams([]);
+        return [];
       }
     },
     []
@@ -236,6 +261,8 @@ export default function AcademicsSection() {
           fetchPastSemesters(),
         ]);
 
+        // Set student profile here
+
         if (currentSemester?.semester_info) {
           _setStudentProfile({
             batch: currentSemester.semester_info.batch_name || "N/A",
@@ -259,7 +286,6 @@ export default function AcademicsSection() {
             });
           });
         }
-
         if (
           pastSemesters?.past_semesters &&
           pastSemesters.past_semesters.length > 0
@@ -292,10 +318,35 @@ export default function AcademicsSection() {
           const initialFilters = {
             semester: firstCourse.semester,
             course: firstCourse.code,
-            testType: "FORTNIGHTLY",
-            testNumber: "1",
+            testType: "",
+            testNumber: "",
           };
-          setPendingFilters(initialFilters);
+          
+          // Fetch exam types for the first course
+          const examTypes = await fetchExamTypes(firstCourse.id);
+          if (examTypes && examTypes.length > 0) {
+            const updatedFilters = {
+              ...initialFilters,
+              testType: examTypes[0],
+            };
+            
+            // Fetch exams for the first exam type
+            const initialExams = await fetchExams(firstCourse.id, examTypes[0]);
+            if (initialExams && initialExams.length > 0) {
+              const finalFilters = {
+                ...updatedFilters,
+                testNumber: initialExams[0].name,
+              };
+              setPendingFilters(finalFilters);
+              setActiveFilters(finalFilters);
+            } else {
+              setPendingFilters(updatedFilters);
+              setActiveFilters(updatedFilters);
+            }
+          } else {
+            setPendingFilters(initialFilters);
+            setActiveFilters(initialFilters);
+          }
         }
       } catch (err) {
         console.error("Error initializing academic data:", err);
@@ -306,7 +357,7 @@ export default function AcademicsSection() {
     };
 
     initializeAcademicData();
-  }, [fetchCurrentSemester, fetchPastSemesters]);
+  }, [fetchCurrentSemester, fetchPastSemesters, fetchExams, fetchExamTypes]);
 
   useEffect(() => {
     const updateData = async () => {
@@ -328,6 +379,7 @@ export default function AcademicsSection() {
 
       let semesterId = "";
 
+      // Find semester ID based on the selected semester
       if (
         academicData.current_semester?.semester_info.semester_number ===
         activeFilters.semester
@@ -344,9 +396,7 @@ export default function AcademicsSection() {
 
       if (!semesterId) return;
 
-      const examName = `${getTestTypeLabel(activeFilters.testType)} ${
-        activeFilters.testNumber
-      }`;
+      const examName = activeFilters.testNumber;
 
       await fetchPerformanceTrends(
         semesterId,
@@ -390,15 +440,28 @@ export default function AcademicsSection() {
     if (pendingFilters) setActiveFilters(pendingFilters);
   };
 
-  const handleResetFilters = () => {
+  const handleResetFilters = async () => {
     if (academicData?.courses && academicData.courses.length > 0) {
       const firstCourse = academicData.courses[0];
       const resetFilters = {
         semester: firstCourse.semester,
         course: firstCourse.code,
-        testType: "FORTNIGHTLY",
-        testNumber: "1",
+        testType: "",
+        testNumber: "",
       };
+
+      // Fetch exam types for the first course
+      const examTypes = await fetchExamTypes(firstCourse.id);
+      if (examTypes && examTypes.length > 0) {
+        resetFilters.testType = examTypes[0];
+        
+        // Fetch exams for the first exam type
+        const initialExams = await fetchExams(firstCourse.id, examTypes[0]);
+        if (initialExams && initialExams.length > 0) {
+          resetFilters.testNumber = initialExams[0].name;
+        }
+      }
+
       setPendingFilters(resetFilters);
       setActiveFilters(resetFilters);
     }
@@ -420,31 +483,9 @@ export default function AcademicsSection() {
     );
   };
 
-  const getTestTypes = () => {
-    return [
-      { value: "FORTNIGHTLY", label: "Fortnightly Test" },
-      { value: "INTERNAL_ASSESSMENT", label: "Assignment" },
-      { value: "MID_SEM", label: "Mid Semester" },
-      { value: "END_SEM", label: "End Semester" },
-      { value: "INTERVIEW", label: "Interview" },
-      { value: "PROJECT", label: "Projects" },
-    ];
-  };
-
-  const getTestNumbers = () => {
-    return ["1", "2", "3", "4", "5"];
-  };
-
+  // Updated function to use enum names directly without custom mapping
   const getTestTypeLabel = (type: string) => {
-    const typeMap: { [key: string]: string } = {
-      FORTNIGHTLY: "Fortnightly Test",
-      INTERNAL_ASSESSMENT: "Assignment",
-      MID_SEM: "Mid Semester Exam",
-      END_SEM: "End Semester Exam",
-      INTERVIEW: "Interview",
-      PROJECT: "Project",
-    };
-    return typeMap[type] || type;
+    return type; // Return the enum value as-is
   };
 
   const getRankIcon = (rank: number) => {
@@ -615,6 +656,8 @@ export default function AcademicsSection() {
                         ...prev,
                         semester: parseInt(e.target.value),
                         course: "",
+                        testType: "",
+                        testNumber: "",
                       };
                     })
                   }
@@ -637,7 +680,7 @@ export default function AcademicsSection() {
                 <select
                   className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
                   value={pendingFilters.course}
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const selectedCourse = e.target.value;
 
                     setPendingFilters((prev) => {
@@ -645,18 +688,46 @@ export default function AcademicsSection() {
                       return {
                         ...prev,
                         course: selectedCourse,
+                        testType: "",
+                        testNumber: "",
                       };
                     });
 
-                    if (selectedCourse && pendingFilters?.testType) {
+                    // Fetch exam types for the selected course
+                    if (selectedCourse) {
                       const selectedCourseObj = availableCourses.find(
                         (c: any) => c.code === selectedCourse
                       );
                       if (selectedCourseObj) {
-                        fetchExams(
-                          selectedCourseObj.id,
-                          pendingFilters.testType
-                        );
+                        const examTypes = await fetchExamTypes(selectedCourseObj.id);
+                        
+                        // Auto-select first exam type if available
+                        if (examTypes && examTypes.length > 0) {
+                          setPendingFilters((prev) => {
+                            if (!prev) return null;
+                            return {
+                              ...prev,
+                              testType: examTypes[0],
+                            };
+                          });
+
+                          // Fetch exams for the first exam type
+                          const fetchedExams = await fetchExams(
+                            selectedCourseObj.id,
+                            examTypes[0]
+                          );
+
+                          // Auto-select first exam if available
+                          if (fetchedExams && fetchedExams.length > 0) {
+                            setPendingFilters((prev) => {
+                              if (!prev) return null;
+                              return {
+                                ...prev,
+                                testNumber: fetchedExams[0].name,
+                              };
+                            });
+                          }
+                        }
                       }
                     }
                   }}
@@ -664,7 +735,7 @@ export default function AcademicsSection() {
                   <option value="">Select Course</option>
                   {availableCourses.map((course: any, idx: number) => (
                     <option key={course.id || idx} value={course.code}>
-                      {course.code?.toUpperCase?.() || ""}
+                      {course.code?.toUpperCase?.()} - {course.name}
                     </option>
                   ))}
                 </select>
@@ -679,19 +750,48 @@ export default function AcademicsSection() {
               <div className="relative">
                 <select
                   className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
-                  onChange={(e) =>
+                  value={pendingFilters.testType}
+                  onChange={async (e) => {
+                    const selectedTestType = e.target.value;
+
                     setPendingFilters((prev) => {
                       if (!prev) return null;
                       return {
                         ...prev,
-                        testType: e.target.value,
+                        testType: selectedTestType,
+                        testNumber: "",
                       };
-                    })
-                  }
+                    });
+
+                    // Fetch exams for current course and new test type
+                    if (pendingFilters?.course && selectedTestType) {
+                      const selectedCourseObj = availableCourses.find(
+                        (c: any) => c.code === pendingFilters.course
+                      );
+                      if (selectedCourseObj) {
+                        const fetchedExams = await fetchExams(
+                          selectedCourseObj.id,
+                          selectedTestType
+                        );
+
+                        // Auto-select first exam if available
+                        if (fetchedExams && fetchedExams.length > 0) {
+                          setPendingFilters((prev) => {
+                            if (!prev) return null;
+                            return {
+                              ...prev,
+                              testNumber: fetchedExams[0].name,
+                            };
+                          });
+                        }
+                      }
+                    }
+                  }}
                 >
-                  {getTestTypes().map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
+                  <option value="">Select Test Type</option>
+                  {availableExamTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
                     </option>
                   ))}
                 </select>
@@ -707,21 +807,26 @@ export default function AcademicsSection() {
                 <select
                   className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
                   value={pendingFilters.testNumber}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setPendingFilters((prev) => {
                       if (!prev) return null;
                       return {
                         ...prev,
                         testNumber: e.target.value,
                       };
-                    })
-                  }
+                    });
+                  }}
                 >
-                  {exams.map((test) => (
-                    <option key={test} value={test}>
-                      {test?.name}
-                    </option>
-                  ))}
+                  <option value="">Select Test</option>
+                  {exams.length > 0 ? (
+                    exams.map((exam, index) => (
+                      <option key={exam.id || index} value={exam.name}>
+                        {exam.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>No exams available</option>
+                  )}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
@@ -732,9 +837,9 @@ export default function AcademicsSection() {
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={handleUpdateFilters}
-                disabled={!hasFiltersChanged() || !pendingFilters.course}
+                disabled={!hasFiltersChanged() || !pendingFilters.course || !pendingFilters.testType || !pendingFilters.testNumber}
                 className={`inline-flex items-center gap-2 px-6 py-3 rounded-sm text-sm font-medium transition-all duration-200 ${
-                  hasFiltersChanged() && pendingFilters.course
+                  hasFiltersChanged() && pendingFilters.course && pendingFilters.testType && pendingFilters.testNumber
                     ? "bg-slate-900 hover:bg-slate-700 text-white shadow-md hover:shadow-lg transform cursor-pointer duration-200"
                     : "bg-gray-200 text-gray-500 cursor-not-allowed"
                 }`}
@@ -767,8 +872,7 @@ export default function AcademicsSection() {
           <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 px-6 py-4 drop-shadow-sm">
             <h3 className="text-xl font-semibold text-slate-900">
               {activeFilters?.course.toUpperCase()} -{" "}
-              {getTestTypeLabel(activeFilters?.testType ?? "Exam")} Performance
-              Trend
+              {getTestTypeLabel(activeFilters?.testType ?? "Exam")} Performance Trend
             </h3>
           </div>
           <div className="p-6">
@@ -818,7 +922,6 @@ export default function AcademicsSection() {
             )}
           </div>
         </div>
-
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4 flex items-center justify-between">
@@ -827,7 +930,7 @@ export default function AcademicsSection() {
                   <Users className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Class Leaderboard - Test {activeFilters?.testNumber}
+                  Class Leaderboard - {activeFilters?.testNumber || "Test"}
                 </h3>
               </div>
               <button
@@ -911,7 +1014,7 @@ export default function AcademicsSection() {
                   <Trophy className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Overall Leaderboard - Test {activeFilters?.testNumber}
+                  Overall Leaderboard - {activeFilters?.testNumber || "Test"}
                 </h3>
               </div>
               <button
@@ -1182,7 +1285,7 @@ export default function AcademicsSection() {
                     </div>
                     <h2 className="text-xl font-semibold text-white">
                       {leaderboardType === "class" ? "Class" : "Overall"}{" "}
-                      Leaderboard - Test {activeFilters?.testNumber}
+                      Leaderboard - {activeFilters?.testNumber || "Test"}
                     </h2>
                   </div>
                   <button

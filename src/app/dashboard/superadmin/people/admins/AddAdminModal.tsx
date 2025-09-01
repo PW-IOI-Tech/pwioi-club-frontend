@@ -10,7 +10,7 @@ interface AddAdminModalProps {
     phoneNumber: string;
     linkedinLink: string;
     designation: string;
-    role: "admin" | "ops" | "teacher" | "manager" | "developer";
+    role: "ADMIN" | "OPS" | "BATCHOPS" | "SUPER_ADMIN";
   }) => void;
 }
 
@@ -24,11 +24,10 @@ interface FormData {
 }
 
 const roles = [
-  { value: "admin", label: "Admin" },
-  { value: "ops", label: "Operations" },
-  { value: "teacher", label: "Teacher" },
-  { value: "manager", label: "Manager" },
-  { value: "developer", label: "Developer" },
+  { value: "ADMIN", label: "Admin" },
+  { value: "OPS", label: "Operations" },
+  { value: "BATCHOPS", label: "Batch Operations" },
+  { value: "SUPER_ADMIN", label: "Super Admin" },
 ];
 
 const AddAdminModal: React.FC<AddAdminModalProps> = ({
@@ -132,11 +131,10 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
     onAdminCreated({
       ...formData,
       role: formData.role as
-        | "admin"
-        | "ops"
-        | "teacher"
-        | "manager"
-        | "developer",
+        | "ADMIN"
+        | "OPS"
+        | "BATCHOPS"
+        | "SUPER_ADMIN"
     });
 
     setFormData({

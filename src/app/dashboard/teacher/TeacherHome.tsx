@@ -91,6 +91,7 @@ interface FeedProps {
   onLike: (postId: string) => void;
   onFlag: (postId: string) => void;
   getRoleBadgeColor: (role: string) => string;
+  loading:boolean;
 }
 
 interface ProfileHeaderProps {
@@ -970,7 +971,11 @@ const Feed: React.FC<FeedProps> = ({
   onLike,
   onFlag,
   getRoleBadgeColor,
+  loading
 }) => {
+  if (loading) {
+    return <p className="text-center py-4">Loading Feed...</p>;
+  }
   const uniquePosts = posts.filter(
     (post, index, self) => index === self.findIndex((p) => p.id === post.id)
   );
@@ -1166,18 +1171,30 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
     setReportModal({ isOpen: true, postId });
   };
 
-  const handleReportSubmit = (): void => {
-    console.log(
-      "Reporting post:",
-      reportModal.postId,
-      "Reason:",
-      reportReason,
-      "Details:",
-      reportDetails
-    );
-    setReportModal({ isOpen: false, postId: null });
-    setReportReason("");
-    setReportDetails("");
+  const handleReportSubmit = async (): Promise<void> => {
+    if (!reportModal.postId || !reportReason.trim()) {
+      alert("Please provide a reason for reporting.");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags`,
+        {
+          postId: reportModal.postId,
+          reason: reportReason,
+        },
+        { withCredentials: true }
+      );
+
+      console.log("Report submitted:", res.data);
+      alert("Report submitted successfully!");
+    } catch (err: any) {
+      console.error("Error reporting:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to submit report");
+    } finally {
+      handleReportClose();
+    }
   };
 
   const handleReportClose = (): void => {
@@ -1259,6 +1276,7 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
               onLike={handleLike}
               onFlag={handleFlag}
               getRoleBadgeColor={getRoleBadgeColor}
+              loading={loading}
             />
           </div>
 

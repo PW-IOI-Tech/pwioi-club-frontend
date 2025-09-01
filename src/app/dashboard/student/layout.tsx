@@ -326,53 +326,19 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
               </div>
             </div>
           </div>
-
-          <div className="flex-1 overflow-y-auto bg-white">
-            <div className="p-4 py-6 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200">
-              <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
-                Quick Actions
-              </h3>
-              <nav className="space-y-2">
-                <a
-                  href="/dashboard/student/profile"
-                  className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-blue-200 shadow-sm hover:shadow-md text-sm cursor-pointer group"
-                >
-                  <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
-                  <span className="font-medium">My Profile</span>
-                </a>
-
-                <button
-                  onClick={handleCodingPlatformRedirect}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-indigo-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md text-sm cursor-pointer group"
-                >
-                  <Code className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
-                  <span className="font-medium">Coding Platform</span>
-                  <ExternalLink className="w-3.5 h-3.5 ml-auto group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
-                </button>
-              </nav>
-            </div>
-
-            <div className="p-4 py-6 bg-gradient-to-br from-slate-50 to-slate-100 border-t border-slate-200">
-              <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
-                Contact Information
-              </h3>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2.5 p-2 rounded-lg hover:bg-white/70 transition-all duration-200 cursor-pointer">
-                  <Mail className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="text-sm text-slate-700 font-medium">
-                    {userData.email}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2.5 p-2 rounded-lg hover:bg-white/70 transition-all duration-200 cursor-pointer">
-                  <Phone className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="text-sm text-slate-700 font-medium">
-                    {userData.phone}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
+        </div>
+        <div className="p-4 py-6 bg-gradient-to-b from-white to-slate-50">
+          <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
+            Quick Actions
+          </h3>
+          <nav className="space-y-2">
+            <a
+              href="/dashboard/student/profile"
+              className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-blue-200 shadow-sm hover:shadow-md text-sm cursor-pointer group"
+            >
+              <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+              <span className="font-medium">My Profile</span>
+            </a>
           <div className="p-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-red-50 shadow-t-lg">
             <button
               onClick={handleLogout}

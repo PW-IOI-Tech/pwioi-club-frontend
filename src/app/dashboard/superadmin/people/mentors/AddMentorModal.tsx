@@ -5,42 +5,24 @@ import axios from "axios";
 interface AddMentorModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onMentorAdded: (mentor: any) => void;
 }
 
 interface FormData {
   name: string;
   email: string;
   phone: string;
-  linkedin : string;
+  linkedin: string;
   designation: string;
   company: string;
 }
-const companies = [
-  { value: "TechCorp", label: "TechCorp" },
-  { value: "Innovate Solutions", label: "Innovate Solutions" },
-  { value: "DataTech Analytics", label: "DataTech Analytics" },
-  { value: "Microsoft", label: "Microsoft" },
-  { value: "Google", label: "Google" },
-  { value: "Amazon", label: "Amazon" },
-  { value: "Meta", label: "Meta" },
-  { value: "Apple", label: "Apple" },
-];
-
-const designations = [
-  { value: "Software Engineer", label: "Software Engineer" },
-  { value: "Senior Software Engineer", label: "Senior Software Engineer" },
-  { value: "Product Manager", label: "Product Manager" },
-  { value: "Data Scientist", label: "Data Scientist" },
-  { value: "Engineering Manager", label: "Engineering Manager" },
-  { value: "Tech Lead", label: "Tech Lead" },
-  { value: "Architect", label: "Architect" },
-];
-
 
 const AddMentorModal: React.FC<AddMentorModalProps> = ({
   isOpen,
   onClose,
+  onMentorAdded, 
 }) => {
+
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
@@ -85,9 +67,7 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
     if (!formData.phone.trim()) {
       errors.phone = "Phone number is required";
     } else if (
-      !/^[\+]?[1-9][\d]{0,15}$/.test(
-        formData.phone.replace(/[\s\-\(\)]/g, "")
-      )
+      !/^[\+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/[\s\-\(\)]/g, ""))
     ) {
       errors.phone = "Please enter a valid phone number";
     }
@@ -100,17 +80,13 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
       errors.company = "Company is required";
     }
 
-    if (
-      formData.linkedin &&
-      !formData.linkedin.includes("linkedin.com")
-    ) {
+    if (formData.linkedin && !formData.linkedin.includes("linkedin.com")) {
       errors.linkedin = "Please enter a valid LinkedIn URL";
     }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +95,7 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
     setIsSubmitting(true);
     try {
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mentor/create`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mentor`,
         {
           name: formData.name,
           email: formData.email,
@@ -134,6 +110,7 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
       );
 
       if (res.data.success) {
+        onMentorAdded(res.data.data);
         handleClose();
       }
     } catch (error: any) {
@@ -233,9 +210,7 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
                 disabled={isSubmitting}
               />
               {formErrors.phone && (
-                <p className="mt-1 text-sm text-red-600">
-                  {formErrors.phone}
-                </p>
+                <p className="mt-1 text-sm text-red-600">{formErrors.phone}</p>
               )}
             </div>
 
@@ -269,28 +244,17 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
                 Designation *
               </label>
               <div className="relative">
-                <select
-                  name="designation"
-                  value={formData.designation}
-                  onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
-                    formErrors.designation
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting}
-                >
-                  <option value="">Select Designation</option>
-                  {designations.map((designation) => (
-                    <option key={designation.value} value={designation.value}>
-                      {designation.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                  size={18}
-                />
+                <input
+                type="text"
+                name="designation"
+                value={formData.designation}
+                onChange={handleInputChange}
+                placeholder="e.g., Software Engineer"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                  formErrors.designation ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isSubmitting}
+              />
               </div>
               {formErrors.designation && (
                 <p className="mt-1 text-sm text-red-600">
@@ -304,26 +268,17 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
                 Company *
               </label>
               <div className="relative">
-                <select
-                  name="company"
-                  value={formData.company}
-                  onChange={handleInputChange}
-                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
-                    formErrors.company ? "border-red-500" : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting}
-                >
-                  <option value="">Select Company</option>
-                  {companies.map((company) => (
-                    <option key={company.value} value={company.value}>
-                      {company.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                  size={18}
-                />
+                <input
+                type="text"
+                name="company"
+                value={formData.company}
+                onChange={handleInputChange}
+                placeholder="e.g.,Google"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                  formErrors.company ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isSubmitting}
+              />
               </div>
               {formErrors.company && (
                 <p className="mt-1 text-sm text-red-600">

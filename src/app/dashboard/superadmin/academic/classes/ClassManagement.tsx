@@ -84,7 +84,7 @@ export default function ClassManagement() {
   });
 
   const [savedClasses, setSavedClasses] = useState<SavedClass[]>([]);
-
+  const [editingClass, setEditingClass] = useState<SavedClass | null>(null);
   const weeks = useMemo(() => getUpcomingWeeks(), []);
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
@@ -106,8 +106,7 @@ export default function ClassManagement() {
 
   const minTime = getCurrentTimeString();
 
-
-    useEffect(() => {
+  useEffect(() => {
     const fetchCenters = async () => {
       try {
         const res = await axios.get(
@@ -211,69 +210,132 @@ export default function ClassManagement() {
     fetchRooms();
   }, [selectedCenter]);
 
-
   useEffect(() => {
     if (!allFiltersSelected || !selectedWeek) return;
+
     const fetchClasses = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class`, {
-          params: {
-            centerId: selectedCenter,
-            schoolId: selectedSchool,
-            batchId: selectedBatch,
-            divisionId: selectedDivision,
-            semesterId: selectedSemester,
-            week: selectedWeek
-          },
-          withCredentials: true,
-        });
-        if (res.data.success) setSavedClasses(res.data.data);
+        const weekObj = weeks.find((w) => w.id === selectedWeek);
+        if (!weekObj) return;
+
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class`,
+          {
+            params: {
+              centerId: selectedCenter,
+              schoolId: selectedSchool,
+              batchId: selectedBatch,
+              divisionId: selectedDivision,
+              semesterId: selectedSemester,
+            },
+            withCredentials: true,
+          }
+        );
+
+        if (res.data.success) {
+          const mapped = res.data.data
+            .map((cls: any) => {
+              const start = new Date(cls.start_date);
+              const end = new Date(cls.end_date);
+
+              const days = [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+              ];
+
+              return {
+                id: cls.id,
+                subjectId: cls.subject_id,
+                roomId: cls.room_id,
+                day: days[start.getDay()],
+                startTime: start.toTimeString().slice(0, 5),
+                endTime: end.toTimeString().slice(0, 5),
+                lectureNumber: cls.lecture_number,
+                subjectName: cls.subject?.name || "",
+                roomName: cls.room?.name || "",
+                startDate: start,
+                endDate: end,
+              } as SavedClass & { startDate: Date; endDate: Date };
+            })
+            // 👉 only keep classes inside this week range
+            .filter(
+              (cls: any) =>
+                cls.startDate >= weekObj.start && cls.startDate <= weekObj.end
+            );
+
+          setSavedClasses(mapped);
+        }
       } catch (err) {
         console.error("Failed to fetch classes", err);
       }
     };
+
     fetchClasses();
   }, [allFiltersSelected, selectedWeek]);
 
   const handleSubmit = async () => {
-    if (!selectedSubjectObj || !selectedRoomObj) return;
-
     try {
+      const weekObj = weeks.find((w) => w.id === selectedWeek);
+      if (!weekObj) return;
+
       const payload = {
-        subjectId: selectedSubjectObj.id,
-        roomId: selectedRoomObj.id,
-        day: currentDay,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-        lectureNumber: formData.lectureNumber,
-        week: selectedWeek
+        subject_id: selectedSubjectObj.id,
+        room_id: selectedRoomObj.id,
+        start_date: weekObj.start.toISOString(),
+        end_date: weekObj.end.toISOString(),
+        schedule_items: [
+          {
+            day_of_week: currentDay,
+            start_time: formData.startTime,
+            end_time: formData.endTime,
+            lecture_number: Number(formData.lectureNumber),
+          },
+        ],
       };
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/schedule`, payload, { withCredentials: true });
-      if (res.data.success) {
-        setSavedClasses(prev => [...prev, res.data.data]);
-        setIsModalOpen(false);
-      }
+
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/schedule`,
+        payload,
+        { withCredentials: true }
+      );
     } catch (err) {
-      console.error("Failed to schedule class", err);
+      console.error("❌ API Error:", err);
     }
   };
 
   const handleDelete = async (classId: string) => {
     try {
-      const res = await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/${classId}`, { withCredentials: true });
+      const res = await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/${classId}`,
+        { withCredentials: true }
+      );
       if (res.data.success) {
-        setSavedClasses(prev => prev.filter(c => c.id !== classId));
+        setSavedClasses((prev) => prev.filter((c) => c.id !== classId));
       }
     } catch (err) {
       console.error("Failed to delete class", err);
     }
   };
 
-  const handleUpdate = async (classId: string, updatedData: Partial<SavedClass>) => {
+  const handleUpdate = async (
+    classId: string,
+    updatedData: Partial<SavedClass>
+  ) => {
     try {
-      const res = await axios.patch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/${classId}`, updatedData, { withCredentials: true });
+      const res = await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/${classId}`,
+        updatedData,
+        { withCredentials: true }
+      );
       if (res.data.success) {
-        setSavedClasses(prev => prev.map(c => (c.id === classId ? res.data.data : c)));
+        setSavedClasses((prev) =>
+          prev.map((c) => (c.id === classId ? res.data.data : c))
+        );
       }
     } catch (err) {
       console.error("Failed to update class", err);
@@ -329,11 +391,8 @@ export default function ClassManagement() {
             {
               label: "Subject",
               value: selectedSubject,
-              options: subjects.map((s) => s.name),
-              setter: (val: string) => {
-                const subj = subjects.find((s) => s.name === val);
-                setSelectedSubject(subj?.id || "");
-              },
+              options: subjects,
+              setter: setSelectedSubject,
               disabled: !selectedSemester,
             },
             {
@@ -460,7 +519,7 @@ export default function ClassManagement() {
                       classesForDay.map((cls) => (
                         <div
                           key={cls.id}
-                          className="flex-shrink-0 bg-blue-500 text-white px-3 py-2 rounded-sm text-xs min-w-max shadow-sm"
+                          className="flex-shrink-0 bg-blue-500 text-white px-3 py-2 rounded-sm text-xs min-w-max shadow-sm relative"
                         >
                           <div className="font-medium">{cls.subjectName}</div>
                           <div className="text-indigo-100">
@@ -468,6 +527,30 @@ export default function ClassManagement() {
                           </div>
                           <div className="text-indigo-200 text-xs">
                             {cls.roomName}
+                          </div>
+
+                          <div className="absolute top-1 right-1 flex space-x-1">
+                            <button
+                              onClick={() => {
+                                setCurrentDay(cls.day);
+                                setFormData({
+                                  startTime: cls.startTime,
+                                  endTime: cls.endTime,
+                                  lectureNumber: cls.lectureNumber,
+                                });
+                                setIsModalOpen(true);
+                                setEditingClass(cls);
+                              }}
+                              className="bg-white/20 hover:bg-white/30 text-xs px-2 py-0.5 rounded"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(cls.id)}
+                              className="bg-red-500 hover:bg-red-600 text-xs px-2 py-0.5 rounded"
+                            >
+                              Delete
+                            </button>
                           </div>
                         </div>
                       ))
@@ -485,7 +568,7 @@ export default function ClassManagement() {
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">
-                Add Class - {currentDay}
+                {editingClass ? "Edit Class" : `Add Class - ${currentDay}`}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -560,10 +643,22 @@ export default function ClassManagement() {
                 Cancel
               </button>
               <button
-                onClick={handleSubmit}
+                onClick={() => {
+                  if (editingClass) {
+                    handleUpdate(editingClass.id, {
+                      startTime: formData.startTime,
+                      endTime: formData.endTime,
+                      lectureNumber: formData.lectureNumber,
+                    });
+                    setEditingClass(null);
+                  } else {
+                    handleSubmit();
+                  }
+                  setIsModalOpen(false);
+                }}
                 className="flex-1 px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-700 cursor-pointer font-medium"
               >
-                Save
+                {editingClass ? "Update" : "Save"}
               </button>
             </div>
           </div>

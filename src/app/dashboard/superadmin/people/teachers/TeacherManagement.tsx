@@ -1,3 +1,5 @@
+// TeacherManagement.tsx
+
 "use client";
 
 import React, { useState, useCallback, useMemo, useEffect } from "react";
@@ -14,56 +16,18 @@ interface Teacher {
   name: string;
   email: string;
   department: string;
-  center: string; // currently name in mock data
+  center: string;
   phoneNumber: string;
   experience: number;
 }
 
-const initialTeachers: Teacher[] = [
-  {
-    id: "1",
-    name: "Amit Sharma",
-    email: "amit.sharma@som.edu",
-    department: "SOM",
-    center: "Bangalore",
-    phoneNumber: "9876543210",
-    experience: 8,
-  },
-  {
-    id: "2",
-    name: "Priya Singh",
-    email: "priya.singh@sot.edu",
-    department: "SOT",
-    center: "Pune",
-    phoneNumber: "9876501234",
-    experience: 5,
-  },
-  {
-    id: "3",
-    name: "Rahul Mehta",
-    email: "rahul.mehta@soh.edu",
-    department: "SOH",
-    center: "Noida",
-    phoneNumber: "9988776655",
-    experience: 12,
-  },
-  {
-    id: "4",
-    name: "Neha Patel",
-    email: "neha.patel@som.edu",
-    department: "SOM",
-    center: "Lucknow",
-    phoneNumber: "8877665544",
-    experience: 6,
-  },
-];
-
 export default function TeacherManagement() {
   const [centers, setCenters] = useState<any[]>([]);
-  const [teachers] = useState<Teacher[]>(initialTeachers);
-  const [selectedLocation, setSelectedLocation] = useState<string>(""); // store centerId
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [selectedSchool, setSelectedSchool] = useState<string>("");
   const [schools, setSchools] = useState<any[]>([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(false);
 
   const bothFiltersSelected = !!selectedLocation && !!selectedSchool;
 
@@ -77,7 +41,7 @@ export default function TeacherManagement() {
         const data = res.data.data || [];
         setCenters(data);
         if (data.length > 0) {
-          setSelectedLocation(data[0].id); // default to first centerId
+          setSelectedLocation(data[0].id);
         }
       } catch (err: any) {
         console.error("Failed to fetch centers:", err);
@@ -102,36 +66,95 @@ export default function TeacherManagement() {
     fetchSchools();
   }, [selectedLocation]);
 
-  // For filtering, get centerName from centers
+  useEffect(() => {
+    if (!selectedSchool) return;
+    const fetchTeachers = async () => {
+      setLoadingTeachers(true);
+      try {
+        const res = await axios.get(
+          `${backendUrl}/api/teachers/school/${selectedSchool}`,
+          { withCredentials: true }
+        );
+        setTeachers(res.data?.data || []);
+      } catch (err) {
+        console.error("Failed to fetch teachers:", err);
+        setTeachers([]);
+      } finally {
+        setLoadingTeachers(false);
+      }
+    };
+    fetchTeachers();
+  }, [selectedSchool]);
+
   const selectedCenterName = useMemo(() => {
     const c = centers.find((c) => c.id === selectedLocation);
     return c?.name || "";
   }, [centers, selectedLocation]);
 
-  const filteredTeachers = useMemo(() => {
-    return teachers.filter(
-      (teacher) =>
-        teacher.center === selectedCenterName &&
-        teacher.department === selectedSchool
-    );
-  }, [teachers, selectedCenterName, selectedSchool]);
-
   const statistics = useMemo(() => {
     return {
-      totalTeachers: filteredTeachers.length,
+      totalTeachers: teachers.length,
     };
-  }, [filteredTeachers]);
+  }, [teachers]);
 
-  const handleUpdateTeacher = useCallback((updatedItem: any) => {
-    console.log("Updating teacher:", updatedItem);
-  }, []);
+const handleUpdateTeacher = useCallback(
+  async (updatedItem: any) => {
+    try {
+      const allowedFields = (({ name, email,pwId, phoneNumber, gender,role }) => ({
+        name,
+        email,
+        pwId,
+        phoneNumber,
+        gender,
+        role,
+      }))(updatedItem);
 
-  const handleDeleteTeacher = useCallback((id: string | number) => {
-    console.log("Deleting teacher with id:", id);
-  }, []);
+      const res = await axios.patch(
+        `${backendUrl}/api/teachers/${updatedItem.id}`,
+        allowedFields,
+        { withCredentials: true }
+      );
+
+      setTeachers((prev) =>
+        prev.map((t) => (t.id === updatedItem.id ? res.data?.data || { ...t, ...allowedFields } : t))
+      );
+
+      console.log("Teacher updated:", res.data);
+    } catch (err: any) {
+      console.error("Failed to update teacher:", err.response?.data || err);
+    }
+  },
+  [backendUrl]
+);
+
+const handleDeleteTeacher = useCallback(
+  async (id: string | number) => {
+    if (!confirm("Are you sure you want to delete this teacher?")) return;
+
+    try {
+      await axios.delete(`${backendUrl}/api/teachers/${id}`, {
+        withCredentials: true,
+      });
+
+      // Remove from state
+      setTeachers((prev) => prev.filter((t) => t.id !== id));
+
+      console.log("Teacher deleted:", id);
+    } catch (err: any) {
+      console.error("Failed to delete teacher:", err);
+    }
+  },
+  [backendUrl]
+);
 
   const handleUploadComplete = () => {
-    console.log("Upload completed");
+    if (selectedSchool) {
+      axios
+        .get(`${backendUrl}/api/teachers/school/${selectedSchool}`, {
+          withCredentials: true,
+        })
+        .then((res) => setTeachers(res.data?.data || []));
+    }
   };
 
   return (
@@ -210,13 +233,15 @@ export default function TeacherManagement() {
         {/* Content */}
         {!bothFiltersSelected ? (
           <ShimmerSkeleton />
+        ) : loadingTeachers ? (
+          <p className="text-gray-600 text-center mt-6">Loading teachers...</p>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 text-center">
                 <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
                 <h4 className="text-lg text-slate-900 mb-1">
-                  Teachers in {selectedSchool} ({selectedCenterName})
+                  Teachers in selected center and school
                 </h4>
                 <p className="text-5xl font-bold text-[#1B3A6A]">
                   {statistics.totalTeachers}
@@ -225,21 +250,22 @@ export default function TeacherManagement() {
 
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 flex items-center justify-center">
                 <UploadSection
-  onSuccess={handleUploadComplete}
-  uploadUrl={`${backendUrl}/api/teachers/upload`}
-  schemaInfo={teacherSchemaInfo}
-  extraData={{
-    centerId: selectedLocation,
-    schoolIds: [selectedSchool],
-  }}
-/>
-
+                  onSuccess={handleUploadComplete}
+                  uploadUrl={`${backendUrl}/api/teachers/upload`}
+                  schemaInfo={teacherSchemaInfo}
+                  extraData={{
+                    centerId: selectedLocation,
+                    schoolIds: [selectedSchool],
+                  }}
+                />
               </div>
             </div>
 
             <Table
-              data={filteredTeachers}
-              title={`Teachers - ${selectedSchool} at ${selectedCenterName}`}
+              data={teachers}
+              title={`Teachers of ${
+                schools.find((s) => s.id === selectedSchool)?.name || ""
+              } at ${selectedCenterName}`}
               filterField="department"
               badgeFields={["department"]}
               selectFields={{
@@ -248,7 +274,14 @@ export default function TeacherManagement() {
               nonEditableFields={["id", "center"]}
               onDelete={handleDeleteTeacher}
               onEdit={handleUpdateTeacher}
-              hiddenColumns={["id"]}
+              hiddenColumns={[
+                "id",
+                "designation",
+                "linkedin",
+                "github_link",
+                "personal_mail",
+                "createdAt",
+              ]}
             />
           </>
         )}
