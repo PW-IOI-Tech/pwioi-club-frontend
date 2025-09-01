@@ -39,6 +39,27 @@ const StudentProfileDashboard = () => {
     fetchContactInfo();
   }, []);
 
+  const handleUpdateContact = async (field: string, value: string) => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      const student = storedUser ? JSON.parse(storedUser) : null;
+      if (!student) return;
+
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${student.id}/${field}`,
+        { [field]: value },
+        { withCredentials: true }
+      );
+
+      setContactData((prev: any) => ({
+        ...prev,
+        [field]: value,
+      }));
+    } catch (err) {
+      console.error(`Failed to update ${field}`, err);
+    } 
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -57,7 +78,10 @@ const StudentProfileDashboard = () => {
             <SocialLinksCard />
             <DegreePartnerCard />
             <ContactCard contactData={contactData} />
-            <OtherDetailsCard contactData={contactData} />
+            <OtherDetailsCard
+              contactData={contactData}
+              onUpdateContact={handleUpdateContact}
+            />
             <PersonalDetailsCard />
           </div>
         </div>

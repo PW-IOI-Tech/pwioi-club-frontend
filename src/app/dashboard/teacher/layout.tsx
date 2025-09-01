@@ -23,6 +23,7 @@ import {
   CircleCheckBig,
 } from "lucide-react";
 import Image from "next/image";
+import axios from "axios";
 
 interface UserData {
   id: string;
@@ -42,6 +43,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
   const [userDetails, setUserDetails] = useState<UserData | null>(null);
+  const [counts,setCounts]=useState<any>();
 
   const pathname = usePathname();
   const router = useRouter();
@@ -57,17 +59,35 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-    const userData = {
+    useEffect(() => {
+  const fetchTeacherCounts = async () => {
+
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/counts`,
+        {
+          withCredentials: true,
+        }
+      );
+      setCounts(response?.data?.data)
+    } catch (err) {
+      console.error("Failed to fetch teacher counts", err);
+    }
+  };
+
+  fetchTeacherCounts();
+}, [userDetails]);
+
+  const userData = {
     name: userDetails?.name,
     email: userDetails?.email,
     profilePicture: "/api/placeholder/120/120",
-    teacherId: "TCHR2024001",
+    role: "Teacher",
     course: userDetails?.designation,
     phone: userDetails?.phone,
-    ttlStudents: "120",
-    ttlBatches: "4",
+    ttlStudents: counts?.totalStudents,
+    ttlBatches: counts?.totalDivisions,
   };
-
 
   const menuItems = [
     { id: "home", label: "Home", icon: House, href: "/dashboard/teacher" },
@@ -165,7 +185,11 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   };
 
   if (!userData) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -298,7 +322,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
                     {userData.name}
                   </p>
                   <p className="text-xs text-slate-400 truncate font-medium">
-                    {userData.teacherId}
+                    {userData.role}
                   </p>
                 </div>
               )}
@@ -347,7 +371,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
                     {userData.course}
                   </p>
                   <p className="text-slate-300 text-[11px] font-medium mt-1">
-                    {userData.teacherId}
+                    {userData.role}
                   </p>
                 </div>
               </div>
@@ -526,4 +550,3 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default TeacherLayout;
-
