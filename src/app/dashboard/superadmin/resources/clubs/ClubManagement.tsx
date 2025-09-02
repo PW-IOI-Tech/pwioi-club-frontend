@@ -303,7 +303,6 @@ export default function ClubManagement() {
           onClubCreated={handleAddClub}
           prefillLocation={selectedLocation?.location}
           faculties={mockFaculties[selectedLocation?.name] || []}
-          students={mockStudents[selectedLocation?.name] || []}
         />
       </div>
     </div>

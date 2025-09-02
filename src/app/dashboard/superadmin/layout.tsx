@@ -82,7 +82,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
         {
           id: "semester",
           label: "Semester Management",
-          href: "/dashboard/superadmin/academic/semester",
+          href: "/dashboard/superadmin/academic/divisions",
         },
         {
           id: "subjects",
