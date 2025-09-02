@@ -32,25 +32,23 @@ interface FilterState {
   school: string;
   batch: string;
   division: string;
-  semesterId: string; 
+  semesterId: string;
   subject: string;
   examType: string;
   examNumber: string;
 }
 
-
 const MarksDashboard: React.FC = () => {
-const [filters, setFilters] = useState<FilterState>({
-  center: "",
-  school: "",
-  batch: "",
-  division: "",
-  semesterId: "", 
-  subject: "",
-  examType: "",
-  examNumber: "",
-});
-
+  const [filters, setFilters] = useState<FilterState>({
+    center: "",
+    school: "",
+    batch: "",
+    division: "",
+    semesterId: "",
+    subject: "",
+    examType: "",
+    examNumber: "",
+  });
 
   const [centers, setCenters] = useState<any[]>([]);
   const [schools, setSchools] = useState<any[]>([]);
@@ -60,7 +58,6 @@ const [filters, setFilters] = useState<FilterState>({
   const [subjects, setSubjects] = useState<any[]>([]);
   const [testType, setTestType] = useState<any[]>([]);
   const [testNumbers, setTestNumbers] = useState<any[]>([]);
-
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,7 +133,7 @@ const [filters, setFilters] = useState<FilterState>({
     }
   }, [filters.semesterId]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (filters.subject) {
       axios
         .get(
@@ -191,7 +188,7 @@ const [filters, setFilters] = useState<FilterState>({
         {/* Header */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-900 rounded-lg shadow-sm border border-slate-700 p-6 py-8 mb-6">
           <h1 className="text-2xl md:text-3xl text-white font-semibold mb-2">
-            📊 Marks Dashboard
+            Marks Dashboard
           </h1>
           <p className="text-slate-200 text-sm">
             Track, analyze, and manage student performance.
@@ -205,7 +202,7 @@ const [filters, setFilters] = useState<FilterState>({
               { label: "School", key: "school", options: schools },
               { label: "Batch", key: "batch", options: batches },
               { label: "Division", key: "division", options: divisions },
-{ label: "Semester", key: "semesterId", options: semesters },
+              { label: "Semester", key: "semesterId", options: semesters },
               { label: "Subject", key: "subject", options: subjects },
               { label: "Exam Type", key: "examType", options: testType },
               { label: "Exam Number", key: "examNumber", options: testNumbers },

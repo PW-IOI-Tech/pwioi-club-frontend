@@ -19,20 +19,12 @@ interface TableEvent {
   thumbnailUrl: string;
 }
 
-const typeMapping: Record<string, string> = {
-  workshop: "WORKSHOP",
-  seminar: "SEMINAR",
-  activity: "ACTIVITY",
-  hackathon: "HACKATHON",
-  club_event: "CLUB_EVENT",
-};
-
 export default function EventManagement() {
   const [events, setEvents] = useState<TableEvent[]>([]);
   const [error, setError] = useState("");
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
 
-  const typeMapping: Record<string, string> = {
+  const typeMappingLocal: Record<string, string> = {
     workshop: "WORKSHOP",
     seminar: "SEMINAR",
     conference: "ACTIVITY",
@@ -56,16 +48,16 @@ export default function EventManagement() {
           organizer: rest.organiser,
           venue: rest.venue,
           type: rest.type.toLowerCase(),
-startDate: new Date(rest.start_date).toLocaleDateString("en-GB", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-}),
-endDate: new Date(rest.end_date).toLocaleDateString("en-GB", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-}),
+          startDate: new Date(rest.start_date).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+          endDate: new Date(rest.end_date).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
           description: rest.description,
           isVisible: is_visible ? "true" : "false",
           thumbnailUrl: thumbnail || "",
@@ -102,7 +94,7 @@ endDate: new Date(rest.end_date).toLocaleDateString("en-GB", {
         name: eventItem.eventName,
         organiser: eventItem.organizer,
         venue: eventItem.venue,
-        type: typeMapping[eventItem.type], // always uppercase
+        type: typeMappingLocal[eventItem.type],
         start_date: new Date(eventItem.startDate).toISOString(),
         end_date: new Date(eventItem.endDate).toISOString(),
         description: eventItem.description,
@@ -145,7 +137,7 @@ endDate: new Date(rest.end_date).toLocaleDateString("en-GB", {
         name: eventItem.eventName,
         organiser: eventItem.organizer,
         venue: eventItem.venue,
-        type: typeMapping[eventItem.type], // always uppercase
+        type: typeMappingLocal[eventItem.type],
         start_date: new Date(eventItem.startDate).toISOString(),
         end_date: new Date(eventItem.endDate).toISOString(),
         description: eventItem.description,
@@ -158,7 +150,32 @@ endDate: new Date(rest.end_date).toLocaleDateString("en-GB", {
       });
 
       const createdEvent = res.data.data;
-      setEvents((prev) => [...prev, createdEvent]);
+
+      const formattedEvent: TableEvent = {
+        id: createdEvent.id,
+        eventName: createdEvent.name,
+        organizer: createdEvent.organiser,
+        venue: createdEvent.venue,
+        type: createdEvent.type.toLowerCase(),
+        startDate: new Date(createdEvent.start_date).toLocaleDateString(
+          "en-GB",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }
+        ),
+        endDate: new Date(createdEvent.end_date).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }),
+        description: createdEvent.description,
+        isVisible: createdEvent.is_visible ? "true" : "false",
+        thumbnailUrl: createdEvent.thumbnail || "",
+      };
+
+      setEvents((prev) => [...prev, formattedEvent]);
       setIsAddEventModalOpen(false);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to create event");
@@ -186,6 +203,10 @@ endDate: new Date(rest.end_date).toLocaleDateString("en-GB", {
         </button>
       </div>
     );
+  }
+
+  if (events.length === 0 && !error) {
+    return <ManagementShimmer />;
   }
 
   return (
@@ -274,3 +295,63 @@ endDate: new Date(rest.end_date).toLocaleDateString("en-GB", {
     </div>
   );
 }
+
+export const ManagementShimmer = () => {
+  return (
+    <div className="min-h-screen bg-gray-50 p-2">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Page Title Shimmer */}
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-300 rounded w-64 mb-2"></div>
+          <div className="h-4 bg-gray-300 rounded w-80 opacity-70"></div>
+        </div>
+
+        {/* Four Stat Cards Shimmer */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-white border border-gray-300 rounded-sm overflow-hidden animate-pulse"
+            >
+              <div className="p-6 text-center space-y-3">
+                <div className="w-8 h-8 bg-gray-300 rounded-full mx-auto"></div>
+                <div className="h-4 bg-gray-300 rounded w-32 mx-auto"></div>
+                <div className="h-10 bg-gray-300 rounded w-20 mx-auto"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Table Shimmer */}
+        <div className="bg-white rounded-sm border border-gray-400 overflow-hidden animate-pulse">
+          <div className="p-6 border-b border-gray-200">
+            <div className="h-6 bg-gray-300 rounded w-48"></div>
+          </div>
+          <div className="p-4">
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="grid grid-cols-12 gap-4 items-center">
+                  <div className="col-span-3 h-4 bg-gray-300 rounded"></div>
+                  <div className="col-span-3 h-4 bg-gray-300 rounded"></div>
+                  <div className="col-span-2 h-4 bg-gray-300 rounded"></div>
+                  <div className="col-span-2 h-8 bg-gray-300 rounded-full"></div>
+                  <div className="col-span-2 flex justify-end space-x-2">
+                    <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                    <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+            <div className="h-4 bg-gray-300 rounded w-24"></div>
+            <div className="flex space-x-2">
+              <div className="w-8 h-8 bg-gray-300 rounded"></div>
+              <div className="w-8 h-8 bg-gray-300 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
