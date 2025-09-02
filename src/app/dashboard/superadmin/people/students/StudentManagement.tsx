@@ -33,7 +33,10 @@ export default function StudentManagement() {
   const [students, setStudents] = useState<Student[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  // fetch centers
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [loadingBatches, setLoadingBatches] = useState(false);
+  const [loadingDivisions, setLoadingDivisions] = useState(false);
+
   useEffect(() => {
     const fetchCenters = async () => {
       try {
@@ -57,60 +60,100 @@ export default function StudentManagement() {
     fetchCenters();
   }, []);
 
-  // fetch schools
   useEffect(() => {
-    if (!selectedCenter) return;
+    if (!selectedCenter) {
+      setSchools([]);
+      setSelectedSchool("");
+      setBatches([]);
+      setSelectedBatch("");
+      setDivisions([]);
+      setSelectedDivision("");
+      return;
+    }
+
     const fetchSchools = async () => {
+      setLoadingSchools(true);
+      setSchools([]);
       try {
         const res = await axios.get(
           `${backendUrl}/api/schools/${selectedCenter}`,
-          { withCredentials: true }
+          {
+            withCredentials: true,
+          }
         );
         setSchools(res.data?.data || []);
-      } catch {
-        console.error("Failed to fetch schools");
+      } catch (err) {
+        console.error("Failed to fetch schools", err);
+        setSchools([]);
+      } finally {
+        setLoadingSchools(false);
       }
     };
     fetchSchools();
   }, [selectedCenter]);
 
-  // fetch batches
   useEffect(() => {
-    if (!selectedSchool) return;
+    if (!selectedSchool) {
+      setBatches([]);
+      setSelectedBatch("");
+      setDivisions([]);
+      setSelectedDivision("");
+      return;
+    }
+
     const fetchBatches = async () => {
+      setLoadingBatches(true);
+      setBatches([]);
       try {
         const res = await axios.get(
           `${backendUrl}/api/batches/${selectedSchool}`,
-          { withCredentials: true }
+          {
+            withCredentials: true,
+          }
         );
         setBatches(res.data?.data || []);
-      } catch {
-        console.error("Failed to fetch batches");
+      } catch (err) {
+        console.error("Failed to fetch batches", err);
+        setBatches([]);
+      } finally {
+        setLoadingBatches(false);
       }
     };
     fetchBatches();
   }, [selectedSchool]);
 
-  // fetch divisions
   useEffect(() => {
-    if (!selectedBatch) return;
+    if (!selectedBatch) {
+      setDivisions([]);
+      setSelectedDivision("");
+      return;
+    }
+
     const fetchDivisions = async () => {
+      setLoadingDivisions(true);
+      setDivisions([]);
       try {
         const res = await axios.get(
           `${backendUrl}/api/division/by-batch/${selectedBatch}`,
           { withCredentials: true }
         );
         setDivisions(res.data?.data || []);
-      } catch {
-        console.error("Failed to fetch divisions");
+      } catch (err) {
+        console.error("Failed to fetch divisions", err);
+        setDivisions([]);
+      } finally {
+        setLoadingDivisions(false);
       }
     };
     fetchDivisions();
   }, [selectedBatch]);
 
-  // fetch students by division
   useEffect(() => {
-    if (!selectedDivision) return;
+    if (!selectedDivision) {
+      setStudents([]);
+      return;
+    }
+
     const fetchStudents = async () => {
       try {
         const res = await axios.get(
@@ -143,8 +186,6 @@ export default function StudentManagement() {
       totalStudents: students.length,
     };
   }, [students]);
-
-  // inside StudentManagement
 
   const handleUpdateStudent = useCallback(
     async (updatedItem: any) => {
@@ -212,6 +253,7 @@ export default function StudentManagement() {
             Filter Students
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Center Dropdown */}
             <div className="relative">
               <label
                 htmlFor="center"
@@ -226,8 +268,8 @@ export default function StudentManagement() {
                   onChange={(e) => {
                     setSelectedCenter(e.target.value);
                     setSelectedSchool("");
-                    setSelectedDivision("");
                     setSelectedBatch("");
+                    setSelectedDivision("");
                   }}
                   className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm"
                 >
@@ -238,11 +280,11 @@ export default function StudentManagement() {
                     </option>
                   ))}
                 </select>
-
                 <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>
 
+            {/* School Dropdown */}
             <div className="relative">
               <label
                 htmlFor="school"
@@ -256,24 +298,27 @@ export default function StudentManagement() {
                   value={selectedSchool}
                   onChange={(e) => {
                     setSelectedSchool(e.target.value);
-                    setSelectedDivision("");
                     setSelectedBatch("");
+                    setSelectedDivision("");
                   }}
-                  disabled={!selectedCenter}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  disabled={!selectedCenter || loadingSchools}
+                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select School</option>
-                  {schools.map((sch) => (
-                    <option key={sch.id} value={sch.id}>
-                      {sch.name}
-                    </option>
-                  ))}
+                  <option value="">
+                    {loadingSchools ? "Loading..." : "Select School"}
+                  </option>
+                  {!loadingSchools &&
+                    schools.map((sch) => (
+                      <option key={sch.id} value={sch.id}>
+                        {sch.name}
+                      </option>
+                    ))}
                 </select>
-
                 <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>
 
+            {/* Batch Dropdown */}
             <div className="relative">
               <label
                 htmlFor="batch"
@@ -289,21 +334,24 @@ export default function StudentManagement() {
                     setSelectedBatch(e.target.value);
                     setSelectedDivision("");
                   }}
-                  disabled={!selectedSchool || batches.length === 0}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  disabled={!selectedSchool || loadingBatches}
+                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select Batch</option>
-                  {batches.map((batch) => (
-                    <option key={batch.id} value={batch.id}>
-                      {batch.name}
-                    </option>
-                  ))}
+                  <option value="">
+                    {loadingBatches ? "Loading..." : "Select Batch"}
+                  </option>
+                  {!loadingBatches &&
+                    batches.map((batch) => (
+                      <option key={batch.id} value={batch.id}>
+                        {batch.name}
+                      </option>
+                    ))}
                 </select>
-
                 <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>
 
+            {/* Division Dropdown */}
             <div className="relative">
               <label
                 htmlFor="division"
@@ -318,17 +366,19 @@ export default function StudentManagement() {
                   onChange={(e) => {
                     setSelectedDivision(e.target.value);
                   }}
-                  disabled={!selectedBatch}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  disabled={!selectedBatch || loadingDivisions}
+                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select Division</option>
-                  {divisions.map((div) => (
-                    <option key={div.id} value={div.id}>
-                      {div.code}
-                    </option>
-                  ))}
+                  <option value="">
+                    {loadingDivisions ? "Loading..." : "Select Division"}
+                  </option>
+                  {!loadingDivisions &&
+                    divisions.map((div) => (
+                      <option key={div.id} value={div.id}>
+                        {div.code}
+                      </option>
+                    ))}
                 </select>
-
                 <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>

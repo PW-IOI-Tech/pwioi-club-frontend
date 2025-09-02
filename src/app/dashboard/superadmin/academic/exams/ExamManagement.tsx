@@ -29,7 +29,6 @@ const formatDate = (date: string) => {
   });
 };
 
-
 export default function ExamManagement() {
   const [centers, setCenters] = useState<any[]>([]);
   const [schools, setSchools] = useState<any[]>([]);
@@ -49,6 +48,13 @@ export default function ExamManagement() {
   const [selectedSemester, setSelectedSemester] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
 
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [loadingBatches, setLoadingBatches] = useState(false);
+  const [loadingDivisions, setLoadingDivisions] = useState(false);
+  const [loadingSemesters, setLoadingSemesters] = useState(false);
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [loadingExams, setLoadingExams] = useState(false);
+
   const allFiltersSelected =
     selectedCenter &&
     selectedSchool &&
@@ -57,7 +63,6 @@ export default function ExamManagement() {
     selectedSemester &&
     selectedSubject;
 
-  // ----------------- FETCH FILTER DATA -----------------
   useEffect(() => {
     const fetchCenters = async () => {
       try {
@@ -74,62 +79,109 @@ export default function ExamManagement() {
   }, []);
 
   useEffect(() => {
-    if (!selectedCenter) return;
+    if (!selectedCenter) {
+      setSchools([]);
+      setSelectedSchool("");
+      return;
+    }
+    setLoadingSchools(true);
+    setSchools([]);
     axios
       .get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${selectedCenter}`,
-        { withCredentials: true }
+        {
+          withCredentials: true,
+        }
       )
       .then((res) => setSchools(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch schools"));
+      .catch(() => console.error("Failed to fetch schools"))
+      .finally(() => setLoadingSchools(false));
   }, [selectedCenter]);
 
   useEffect(() => {
-    if (!selectedSchool) return;
+    if (!selectedSchool) {
+      setBatches([]);
+      setSelectedBatch("");
+      return;
+    }
+    setLoadingBatches(true);
+    setBatches([]);
     axios
       .get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
-        { withCredentials: true }
+        {
+          withCredentials: true,
+        }
       )
       .then((res) => setBatches(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch batches"));
+      .catch(() => console.error("Failed to fetch batches"))
+      .finally(() => setLoadingBatches(false));
   }, [selectedSchool]);
 
   useEffect(() => {
-    if (!selectedBatch) return;
+    if (!selectedBatch) {
+      setDivisions([]);
+      setSelectedDivision("");
+      return;
+    }
+    setLoadingDivisions(true);
+    setDivisions([]);
     axios
       .get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/by-batch/${selectedBatch}`,
         { withCredentials: true }
       )
       .then((res) => setDivisions(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch divisions"));
+      .catch(() => console.error("Failed to fetch divisions"))
+      .finally(() => setLoadingDivisions(false));
   }, [selectedBatch]);
 
   useEffect(() => {
-    if (!selectedDivision) return;
+    if (!selectedDivision) {
+      setSemesters([]);
+      setSelectedSemester("");
+      return;
+    }
+    setLoadingSemesters(true);
+    setSemesters([]);
     axios
       .get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${selectedDivision}`,
         { withCredentials: true }
       )
       .then((res) => setSemesters(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch semesters"));
+      .catch(() => console.error("Failed to fetch semesters"))
+      .finally(() => setLoadingSemesters(false));
   }, [selectedDivision]);
 
   useEffect(() => {
-    if (!selectedSemester) return;
+    if (!selectedSemester) {
+      setSubjects([]);
+      setSelectedSubject("");
+      return;
+    }
+    setLoadingSubjects(true);
+    setSubjects([]);
     axios
       .get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/semesters/${selectedSemester}`,
         { withCredentials: true }
       )
       .then((res) => setSubjects(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch subjects"));
+      .catch(() => console.error("Failed to fetch subjects"))
+      .finally(() => setLoadingSubjects(false));
   }, [selectedSemester]);
 
   useEffect(() => {
-    if (!allFiltersSelected) return;
+    if (!allFiltersSelected) {
+      setExams([]);
+      setFilteredExams([]);
+      return;
+    }
+
+    setLoadingExams(true);
+    setExams([]);
+    setFilteredExams([]);
 
     const fetchExams = async () => {
       try {
@@ -143,16 +195,13 @@ export default function ExamManagement() {
         setFilteredExams(examsData);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to fetch exams");
+      } finally {
+        setLoadingExams(false);
       }
     };
+
     fetchExams();
-  }, [
-    selectedSubject,
-    selectedSchool,
-    selectedBatch,
-    selectedDivision,
-    selectedSemester,
-  ]);
+  }, [allFiltersSelected, selectedSubject]);
 
   const statistics = useMemo(
     () => ({
@@ -282,16 +331,15 @@ export default function ExamManagement() {
   );
 
   const formattedExams = useMemo(() => {
-  return filteredExams.map((exam) => ({
-    ...exam,
-    date: formatDate(exam.date),
-    examType: exam.examType,
-    weightage: `${exam.weightage}%`,
-    maxMarks: exam.maxMarks?.toLocaleString(),
-    passingMarks: exam.passingMarks?.toLocaleString(),
-  }));
-}, [filteredExams]);
-
+    return filteredExams.map((exam) => ({
+      ...exam,
+      date: formatDate(exam.date),
+      examType: exam.examType,
+      weightage: `${exam.weightage}%`,
+      maxMarks: exam.maxMarks?.toLocaleString(),
+      passingMarks: exam.passingMarks?.toLocaleString(),
+    }));
+  }, [filteredExams]);
 
   if (error)
     return (
@@ -306,6 +354,9 @@ export default function ExamManagement() {
         </button>
       </div>
     );
+
+  const showShimmer = !allFiltersSelected || loadingExams;
+
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
@@ -314,7 +365,7 @@ export default function ExamManagement() {
         </h2>
 
         <div className="bg-gradient-to-br from-white to-indigo-50 p-6 rounded-sm border border-gray-400">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
             Select Filters
           </h3>
 
@@ -326,6 +377,7 @@ export default function ExamManagement() {
                 options: centers,
                 setter: setSelectedCenter,
                 disabled: false,
+                loading: false,
               },
               {
                 label: "School",
@@ -333,14 +385,15 @@ export default function ExamManagement() {
                 options: schools,
                 setter: setSelectedSchool,
                 disabled: !selectedCenter,
+                loading: loadingSchools,
               },
-
               {
                 label: "Batch",
                 value: selectedBatch,
                 options: batches,
                 setter: setSelectedBatch,
                 disabled: !selectedSchool,
+                loading: loadingBatches,
               },
               {
                 label: "Division",
@@ -348,6 +401,7 @@ export default function ExamManagement() {
                 options: divisions,
                 setter: setSelectedDivision,
                 disabled: !selectedBatch,
+                loading: loadingDivisions,
               },
               {
                 label: "Semester",
@@ -355,6 +409,7 @@ export default function ExamManagement() {
                 options: semesters,
                 setter: setSelectedSemester,
                 disabled: !selectedDivision,
+                loading: loadingSemesters,
               },
               {
                 label: "Subject",
@@ -362,38 +417,46 @@ export default function ExamManagement() {
                 options: subjects,
                 setter: setSelectedSubject,
                 disabled: !selectedSemester,
+                loading: loadingSubjects,
               },
             ].map((filter, idx) => (
               <div key={idx} className="relative min-w-36">
-                <label className="block text-xs font-medium text-gray-100 mb-1">
-                  {filter.label}
-                </label>
                 <div className="relative">
                   <select
                     value={filter.value}
                     onChange={(e) => filter.setter(e.target.value)}
-                    disabled={filter.disabled}
-                    className={`w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none bg-white cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                    disabled={filter.disabled || filter.loading}
+                    className={`
+                      w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none
+                      ${
+                        filter.disabled || filter.loading
+                          ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                          : "bg-white text-gray-900"
+                      }
+                    `}
                   >
-                    <option value="">{`Select ${filter.label}`}</option>
-                    {filter.options.map((opt: any) => {
-                      const value = opt.id || opt;
-                      const label =
-                        typeof opt === "string"
-                          ? opt
-                          : opt.name ||
-                            opt.division ||
-                            opt.number ||
-                            opt.code ||
-                            opt.id ||
-                            "Unknown";
+                    <option value="">
+                      {filter.loading ? "Loading..." : `Select ${filter.label}`}
+                    </option>
+                    {!filter.loading &&
+                      filter.options.map((opt: any) => {
+                        const value = opt.id || opt;
+                        const label =
+                          typeof opt === "string"
+                            ? opt
+                            : opt.name ||
+                              opt.division ||
+                              opt.number ||
+                              opt.code ||
+                              opt.id ||
+                              "Unknown";
 
-                      return (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      );
-                    })}
+                        return (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        );
+                      })}
                   </select>
                   <ChevronDown className="absolute right-2 top-1/2 w-4 h-4 text-gray-400 pointer-events-none -translate-y-1/2" />
                 </div>
@@ -402,7 +465,7 @@ export default function ExamManagement() {
           </div>
 
           {!allFiltersSelected && (
-            <div className="mt-4 p-3 text-slate-900 rounded-sm">
+            <div className="text-slate-900 rounded-sm">
               <p className="text-sm">
                 * Please select all filters to view and manage exams.
               </p>
@@ -410,7 +473,9 @@ export default function ExamManagement() {
           )}
         </div>
 
-        {allFiltersSelected && (
+        {showShimmer ? (
+          <ShimmerTableSkeleton />
+        ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
@@ -451,7 +516,6 @@ export default function ExamManagement() {
                   "Practical",
                 ],
               }}
-              
               nonEditableFields={[
                 "id",
                 "school",
@@ -461,7 +525,16 @@ export default function ExamManagement() {
               ]}
               onDelete={handleDeleteExam}
               onEdit={handleUpdateExam}
-              hiddenColumns={["id", "school", "batch", "division", "semester","createdAt","updatedAt","subject_id"]}
+              hiddenColumns={[
+                "id",
+                "school",
+                "batch",
+                "division",
+                "semester",
+                "createdAt",
+                "updatedAt",
+                "subject_id",
+              ]}
             />
 
             <AddExamModal
@@ -476,6 +549,21 @@ export default function ExamManagement() {
             />
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ShimmerTableSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-300">
+        <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-14 bg-gray-100 rounded"></div>
+          ))}
+        </div>
       </div>
     </div>
   );
