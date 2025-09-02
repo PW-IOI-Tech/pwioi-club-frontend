@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
+import { Loader } from "../../student/callback/page";
 
 export default function StudentCallbackPage() {
   const searchParams = useSearchParams();
@@ -38,5 +39,5 @@ export default function StudentCallbackPage() {
     }
   }, [code, backendUrl, router]);
 
-  return <p className="text-center mt-10">Logging you in...</p>;
+  return <Loader />;
 }

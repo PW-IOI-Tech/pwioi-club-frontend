@@ -26,6 +26,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import AcademicsShimmer from "./AcademicShimmer";
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -321,7 +322,7 @@ export default function AcademicsSection() {
             testType: "",
             testNumber: "",
           };
-          
+
           // Fetch exam types for the first course
           const examTypes = await fetchExamTypes(firstCourse.id);
           if (examTypes && examTypes.length > 0) {
@@ -329,7 +330,7 @@ export default function AcademicsSection() {
               ...initialFilters,
               testType: examTypes[0],
             };
-            
+
             // Fetch exams for the first exam type
             const initialExams = await fetchExams(firstCourse.id, examTypes[0]);
             if (initialExams && initialExams.length > 0) {
@@ -454,7 +455,7 @@ export default function AcademicsSection() {
       const examTypes = await fetchExamTypes(firstCourse.id);
       if (examTypes && examTypes.length > 0) {
         resetFilters.testType = examTypes[0];
-        
+
         // Fetch exams for the first exam type
         const initialExams = await fetchExams(firstCourse.id, examTypes[0]);
         if (initialExams && initialExams.length > 0) {
@@ -562,11 +563,7 @@ export default function AcademicsSection() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg text-gray-600">Loading academic data...</div>
-      </div>
-    );
+    return <AcademicsShimmer />;
   }
 
   if (error) {
@@ -604,12 +601,6 @@ export default function AcademicsSection() {
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <div className="bg-gradient-to-br from-white to-indigo-50 px-4 py-3 rounded-sm border border-gray-200">
-                <div className="text-sm text-slate-900 font-medium">Batch</div>
-                <div className="text-xl font-bold text-slate-800">
-                  {studentProfile.batch || "N/A"}
-                </div>
-              </div>
               <div className="bg-gradient-to-br from-white to-indigo-50 px-4 py-3 rounded-sm border border-gray-200">
                 <div className="text-sm text-slate-900 font-medium">
                   Semester
@@ -699,8 +690,10 @@ export default function AcademicsSection() {
                         (c: any) => c.code === selectedCourse
                       );
                       if (selectedCourseObj) {
-                        const examTypes = await fetchExamTypes(selectedCourseObj.id);
-                        
+                        const examTypes = await fetchExamTypes(
+                          selectedCourseObj.id
+                        );
+
                         // Auto-select first exam type if available
                         if (examTypes && examTypes.length > 0) {
                           setPendingFilters((prev) => {
@@ -825,7 +818,9 @@ export default function AcademicsSection() {
                       </option>
                     ))
                   ) : (
-                    <option value="" disabled>No exams available</option>
+                    <option value="" disabled>
+                      No exams available
+                    </option>
                   )}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -837,9 +832,17 @@ export default function AcademicsSection() {
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={handleUpdateFilters}
-                disabled={!hasFiltersChanged() || !pendingFilters.course || !pendingFilters.testType || !pendingFilters.testNumber}
+                disabled={
+                  !hasFiltersChanged() ||
+                  !pendingFilters.course ||
+                  !pendingFilters.testType ||
+                  !pendingFilters.testNumber
+                }
                 className={`inline-flex items-center gap-2 px-6 py-3 rounded-sm text-sm font-medium transition-all duration-200 ${
-                  hasFiltersChanged() && pendingFilters.course && pendingFilters.testType && pendingFilters.testNumber
+                  hasFiltersChanged() &&
+                  pendingFilters.course &&
+                  pendingFilters.testType &&
+                  pendingFilters.testNumber
                     ? "bg-slate-900 hover:bg-slate-700 text-white shadow-md hover:shadow-lg transform cursor-pointer duration-200"
                     : "bg-gray-200 text-gray-500 cursor-not-allowed"
                 }`}
@@ -872,7 +875,8 @@ export default function AcademicsSection() {
           <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 px-6 py-4 drop-shadow-sm">
             <h3 className="text-xl font-semibold text-slate-900">
               {activeFilters?.course.toUpperCase()} -{" "}
-              {getTestTypeLabel(activeFilters?.testType ?? "Exam")} Performance Trend
+              {getTestTypeLabel(activeFilters?.testType ?? "Exam")} Performance
+              Trend
             </h3>
           </div>
           <div className="p-6">
