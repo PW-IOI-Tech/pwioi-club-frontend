@@ -1,97 +1,62 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { ChevronDown, Save, Loader2 } from "lucide-react";
-import axios from "axios";
+import React, { useState } from "react";
+import { ChevronDown, Save, Loader2, Eye, EyeOff } from "lucide-react";
 
-interface TeachingDetailsResponse {
-  success: boolean;
-  teacher: {
-    id: string;
-    name: string;
-    email: string;
-    designation: string;
-  };
-  schools: {
-    id: string;
-    name: string;
-    batches: {
-      id: string;
-      name: string;
-      divisions: {
-        id: string;
-        code: string;
-        total_students: number;
-        semesters: {
-          id: string;
-          number: number;
-          start_date: string;
-          end_date: string;
-          is_current: boolean;
-          subjects: {
-            id: string;
-            name: string;
-            code: string;
-            credits: number;
-            exam_types: any;
-            total_exam_types: number;
-            total_exams: number;
-          }[];
-          total_subjects: number;
-        }[];
-        total_semesters: number;
-      }[];
-      total_divisions: number;
-    }[];
-    total_batches: number;
-  }[];
-  summary: {
-    total_schools: number;
-    total_batches: number;
-    total_divisions: number;
-    total_semesters: number;
-    total_subjects: number;
-    total_exams: number;
-    exam_type_breakdown: Record<string, number>;
-  };
+interface SubTopic {
+  id: string;
+  name: string;
+  order: number;
+  lecture_number: number;
+  status: "COMPLETED" | "IN_PROGRESS" | "PENDING";
+  planned_start_date: string;
+  planned_end_date: string;
+  actual_start_date: string | null;
+  actual_end_date: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-const centers = [
-  { value: "center-bangalore", label: "Bangalore" },
-  { value: "center-pune", label: "Pune" },
-  { value: "center-noida", label: "Noida" },
-  { value: "center-lucknow", label: "Lucknow" },
-];
+interface Topic {
+  id: string;
+  name: string;
+  order: number;
+  module_id: string;
+  subTopics: SubTopic[];
+}
 
-const schools = [
-  { value: "sot", label: "School of Technology" },
-  { value: "soh", label: "School of Humanities" },
-  { value: "som", label: "School of Management" },
-];
+interface Module {
+  id: string;
+  name: string;
+  order: number;
+  subject_id: string;
+  topics: Topic[];
+}
 
-const batches = [
-  { value: "23", label: "2023" },
-  { value: "24", label: "2024" },
-  { value: "25", label: "2025" },
-];
-
-const divisions = [
-  { value: "b1", label: "B1" },
-  { value: "b2", label: "B2" },
-];
-
-const semesters = Array.from({ length: 8 }, (_, i) => ({
-  value: (i + 1).toString(),
-  label: `Semester ${i + 1}`,
-}));
-
-const subjects = [
-  { value: "cs101", label: "Programming Fundamentals" },
-  { value: "cs201", label: "Data Structures" },
-  { value: "cs301", label: "Algorithms" },
-  { value: "cs401", label: "Database Systems" },
-  { value: "cs501", label: "Web Development" },
-  { value: "cs601", label: "Machine Learning" },
-];
+interface BackendResponse {
+  success: boolean;
+  data: {
+    subject: {
+      id: string;
+      name: string;
+      code: string;
+    };
+    summary: {
+      total_modules: number;
+      total_topics: number;
+      total_sub_topics: number;
+      total_lectures: number;
+      completed_sub_topics: number;
+      in_progress_sub_topics: number;
+      pending_sub_topics: number;
+      completion_percentage: number;
+      teacher_name: string;
+      expected_completion_lecture: number;
+      actual_completion_lecture: number;
+      completion_lag: number;
+    };
+    modules: Module[];
+  };
+}
 
 interface CPRRow {
   id: string;
@@ -105,135 +70,312 @@ interface CPRRow {
   completionDate: string;
   actualCompletionDate: string | null;
   lectureId: string;
+
+  moduleRowSpan: number;
+  topicRowSpan: number;
+  showModuleCell: boolean;
+  showTopicCell: boolean;
 }
 
-const dummyCPRData: CPRRow[] = [
-  {
-    id: "1",
-    module: "Module 1",
-    topic: "Introduction to Programming",
-    subTopic: "Variables and Data Types",
-    lectureCount: 2,
-    status: "Pending",
-    startDate: "2025-03-01",
-    actualStartDate: null,
-    completionDate: "2025-03-05",
-    actualCompletionDate: null,
-    lectureId: "L101",
+const mockBackendData: BackendResponse = {
+  success: true,
+  data: {
+    subject: {
+      id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      name: "Data Structures and Algorithms",
+      code: "CS201",
+    },
+    summary: {
+      total_modules: 5,
+      total_topics: 20,
+      total_sub_topics: 65,
+      total_lectures: 40,
+      completed_sub_topics: 32,
+      in_progress_sub_topics: 3,
+      pending_sub_topics: 30,
+      completion_percentage: 49,
+      teacher_name: "Dr. Evelyn Reed",
+      expected_completion_lecture: 12,
+      actual_completion_lecture: 10.5,
+      completion_lag: 1.5,
+    },
+    modules: [
+      {
+        id: "mod-001",
+        name: "Module 1: Introduction to Algorithms",
+        order: 1,
+        subject_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+        topics: [
+          {
+            id: "topic-101",
+            name: "Topic 1.1: Asymptotic Notation",
+            order: 1,
+            module_id: "mod-001",
+            subTopics: [
+              {
+                id: "subtopic-111",
+                name: "Big O Notation",
+                order: 1,
+                lecture_number: 1,
+                status: "COMPLETED",
+                planned_start_date: "2025-07-15T00:00:00.000Z",
+                planned_end_date: "2025-07-15T00:00:00.000Z",
+                actual_start_date: "2025-07-15T09:00:00.000Z",
+                actual_end_date: "2025-07-15T10:30:00.000Z",
+                createdAt: "2025-07-01T12:00:00.000Z",
+                updatedAt: "2025-07-15T10:30:00.000Z",
+              },
+              {
+                id: "subtopic-112",
+                name: "Omega and Theta Notation",
+                order: 2,
+                lecture_number: 1,
+                status: "COMPLETED",
+                planned_start_date: "2025-07-15T00:00:00.000Z",
+                planned_end_date: "2025-07-15T00:00:00.000Z",
+                actual_start_date: "2025-07-15T10:30:00.000Z",
+                actual_end_date: "2025-07-15T11:00:00.000Z",
+                createdAt: "2025-07-01T12:00:00.000Z",
+                updatedAt: "2025-07-15T11:00:00.000Z",
+              },
+            ],
+          },
+          {
+            id: "topic-102",
+            name: "Topic 1.2: Algorithm Analysis",
+            order: 2,
+            module_id: "mod-001",
+            subTopics: [
+              {
+                id: "subtopic-121",
+                name: "Time and Space Complexity",
+                order: 1,
+                lecture_number: 2,
+                status: "IN_PROGRESS",
+                planned_start_date: "2025-07-16T00:00:00.000Z",
+                planned_end_date: "2025-07-16T00:00:00.000Z",
+                actual_start_date: "2025-07-16T09:00:00.000Z",
+                actual_end_date: null,
+                createdAt: "2025-07-02T10:00:00.000Z",
+                updatedAt: "2025-07-16T10:00:00.000Z",
+              },
+              {
+                id: "subtopic-122",
+                name: "Best, Worst, Average Case Analysis",
+                order: 2,
+                lecture_number: 2,
+                status: "PENDING",
+                planned_start_date: "2025-07-16T00:00:00.000Z",
+                planned_end_date: "2025-07-16T00:00:00.000Z",
+                actual_start_date: null,
+                actual_end_date: null,
+                createdAt: "2025-07-02T10:00:00.000Z",
+                updatedAt: "2025-07-02T10:00:00.000Z",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "mod-002",
+        name: "Module 2: Basic Data Structures",
+        order: 2,
+        subject_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+        topics: [
+          {
+            id: "topic-201",
+            name: "Topic 2.1: Arrays and Linked Lists",
+            order: 1,
+            module_id: "mod-002",
+            subTopics: [
+              {
+                id: "subtopic-211",
+                name: "Static vs Dynamic Arrays",
+                order: 1,
+                lecture_number: 3,
+                status: "PENDING",
+                planned_start_date: "2025-07-17T00:00:00.000Z",
+                planned_end_date: "2025-07-17T00:00:00.000Z",
+                actual_start_date: null,
+                actual_end_date: null,
+                createdAt: "2025-07-03T08:00:00.000Z",
+                updatedAt: "2025-07-03T08:00:00.000Z",
+              },
+              {
+                id: "subtopic-212",
+                name: "Singly and Doubly Linked Lists",
+                order: 2,
+                lecture_number: 4,
+                status: "PENDING",
+                planned_start_date: "2025-07-18T00:00:00.000Z",
+                planned_end_date: "2025-07-18T00:00:00.000Z",
+                actual_start_date: null,
+                actual_end_date: null,
+                createdAt: "2025-07-03T08:00:00.000Z",
+                updatedAt: "2025-07-03T08:00:00.000Z",
+              },
+            ],
+          },
+          {
+            id: "topic-202",
+            name: "Topic 2.2: Stacks and Queues",
+            order: 2,
+            module_id: "mod-002",
+            subTopics: [
+              {
+                id: "subtopic-221",
+                name: "Stack Implementation and Applications",
+                order: 1,
+                lecture_number: 5,
+                status: "PENDING",
+                planned_start_date: "2025-07-19T00:00:00.000Z",
+                planned_end_date: "2025-07-19T00:00:00.000Z",
+                actual_start_date: null,
+                actual_end_date: null,
+                createdAt: "2025-07-03T08:00:00.000Z",
+                updatedAt: "2025-07-03T08:00:00.000Z",
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
-  {
-    id: "2",
-    module: "Module 1",
-    topic: "Control Structures",
-    subTopic: "Loops and Conditions",
-    lectureCount: 3,
-    status: "In Progress",
-    startDate: "2025-03-06",
-    actualStartDate: null,
-    completionDate: "2025-03-10",
-    actualCompletionDate: null,
-    lectureId: "L102",
-  },
-  {
-    id: "3",
-    module: "Module 2",
-    topic: "Functions",
-    subTopic: "Scope and Closures",
-    lectureCount: 4,
-    status: "Completed",
-    startDate: "2025-03-11",
-    actualStartDate: "2025-03-11T10:00:00",
-    completionDate: "2025-03-15",
-    actualCompletionDate: "2025-03-15T14:30:00",
-    lectureId: "L103",
-  },
-  {
-    id: "4",
-    module: "Module 2",
-    topic: "Arrays and Strings",
-    subTopic: "String Manipulation",
-    lectureCount: 3,
-    status: "Pending",
-    startDate: "2025-03-16",
-    actualStartDate: null,
-    completionDate: "2025-03-20",
-    actualCompletionDate: null,
-    lectureId: "L104",
-  },
+};
+
+const subjects = [
+  { value: "cs101", label: "Programming Fundamentals" },
+  { value: "cs201", label: "Data Structures and Algorithms" },
+  { value: "cs301", label: "Algorithms" },
+  { value: "cs401", label: "Database Systems" },
+  { value: "cs501", label: "Web Development" },
+  { value: "cs601", label: "Machine Learning" },
 ];
 
+function flattenDataWithRowSpans(modules: Module[]): CPRRow[] {
+  const result: CPRRow[] = [];
+
+  modules.forEach((mod) => {
+    const totalSubTopicsInModule = mod.topics.reduce(
+      (sum, topic) => sum + topic.subTopics.length,
+      0
+    );
+
+    let moduleFirstRow = true;
+
+    mod.topics.forEach((topic) => {
+      const subTopicsCount = topic.subTopics.length;
+      let topicFirstRow = true;
+
+      topic.subTopics.forEach((sub) => {
+        result.push({
+          id: sub.id,
+          module: mod.name,
+          topic: topic.name,
+          subTopic: sub.name,
+          lectureCount: sub.lecture_number,
+          status: mapStatus(sub.status),
+          startDate: formatDate(sub.planned_start_date),
+          actualStartDate: sub.actual_start_date,
+          completionDate: formatDate(sub.planned_end_date),
+          actualCompletionDate: sub.actual_end_date,
+          lectureId: sub.id,
+
+          moduleRowSpan: totalSubTopicsInModule,
+          topicRowSpan: subTopicsCount,
+          showModuleCell: moduleFirstRow,
+          showTopicCell: topicFirstRow,
+        });
+
+        moduleFirstRow = false;
+        topicFirstRow = false;
+      });
+    });
+  });
+
+  return result;
+}
+
+function mapStatus(status: string): CPRRow["status"] {
+  switch (status) {
+    case "COMPLETED":
+      return "Completed";
+    case "IN_PROGRESS":
+      return "In Progress";
+    default:
+      return "Pending";
+  }
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toISOString().split("T")[0];
+}
+
 export default function CPRManagement() {
-  const [teachingDetails, setTeachingDetails] =
-    useState<TeachingDetailsResponse | null>(null);
-  const [selectedSchool, setSelectedSchool] = useState<string>("");
-  const [selectedBatch, setSelectedBatch] = useState<string>("");
-  const [selectedDivision, setSelectedDivision] = useState<string>("");
-  const [selectedSemester, setSelectedSemester] = useState<string>("");
   const [selectedSubject, setSelectedSubject] = useState<string>("");
-
-  const [center, setCenter] = useState("");
-  const [school, setSchool] = useState("");
-  const [batch, setBatch] = useState("");
-  const [division, setDivision] = useState("");
-  const [semester, setSemester] = useState("");
-  const [subject, setSubject] = useState("");
-
   const [cprData, setCprData] = useState<CPRRow[]>([]);
   const [originalCprData, setOriginalCprData] = useState<CPRRow[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showTable, setShowTable] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [dateDetailRows, setDateDetailRows] = useState<Set<string>>(new Set());
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleViewCPR = () => {
-    if (center && school && batch && division && semester && subject) {
-      const data = dummyCPRData.map((row) => ({ ...row }));
-      setCprData(data);
-      setOriginalCprData(data);
+  const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setSelectedSubject(value);
+
+    if (value === "cs201") {
+      const flattened = flattenDataWithRowSpans(mockBackendData.data.modules);
+      setCprData(flattened);
+      setOriginalCprData([...flattened]);
       setHasChanges(false);
-      setShowTable(true);
+      setExpandedRows(new Set());
+      setDateDetailRows(new Set());
+    } else {
+      setCprData([]);
+      setOriginalCprData([]);
+      setHasChanges(false);
+      setExpandedRows(new Set());
+      setDateDetailRows(new Set());
     }
   };
 
-const handleStatusChange = async (id: string, newStatus: CPRRow["status"]) => {
-  const now = new Date().toISOString();
+  const isRowDelayed = (row: CPRRow): boolean => {
+    if (row.status === "Completed") return false;
+    const now = new Date();
+    const plannedCompletion = new Date(row.completionDate);
+    return now > plannedCompletion;
+  };
 
-  setCprData((prev) =>
-    prev.map((row) => {
-      if (row.id !== id) return row;
-
-      let updated = { ...row, status: newStatus };
-
-      if (row.status === "Pending" && newStatus === "In Progress") {
-        updated.actualStartDate = now;
-      }
-
-      if (row.status === "In Progress" && newStatus === "Completed") {
-        updated.actualCompletionDate = now;
-      }
-
-      return updated;
-    })
-  );
-
-  try {
-    await axios.patch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/sub-topics/${id}/status`,
-      { status: newStatus },
-      { withCredentials: true }
-    );
-  } catch (error) {
-    console.error("Error updating status:", error);
+  const handleStatusChange = (id: string, newStatus: CPRRow["status"]) => {
+    const now = new Date().toISOString();
 
     setCprData((prev) =>
-      prev.map((row) =>
-        row.id === id ? { ...row, status: row.status } : row
-      )
+      prev.map((row) => {
+        if (row.id !== id) return row;
+
+        let updated = { ...row, status: newStatus };
+
+        if (row.status === "Pending" && newStatus === "In Progress") {
+          updated.actualStartDate = now;
+        }
+
+        if (row.status === "In Progress" && newStatus === "Completed") {
+          updated.actualCompletionDate = now;
+        }
+
+        if (row.status === "Pending" && newStatus === "Completed") {
+          updated.actualStartDate = now;
+          updated.actualCompletionDate = now;
+        }
+
+        return updated;
+      })
     );
 
-    alert("Failed to update status. Please try again.");
-  }
-};
-
+    setHasChanges(true);
+  };
 
   const saveChanges = () => {
     setIsSaving(true);
@@ -244,423 +386,465 @@ const handleStatusChange = async (id: string, newStatus: CPRRow["status"]) => {
       alert("CPR changes saved successfully!");
     }, 800);
   };
-  const schoolOptions =
-    teachingDetails?.schools.map((s: any) => ({
-      value: s.id,
-      label: s.name,
-    })) || [];
 
-  const getBatchOptions = (schoolId: string) => {
-    const school = teachingDetails?.schools.find((s: any) => s.id === schoolId);
-    return (
-      school?.batches.map((b: any) => ({
-        value: b.id,
-        label: b.name,
-      })) || []
-    );
+  const toggleRow = (id: string) => {
+    setExpandedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
   };
 
-  const getDivisionOptions = (schoolId: string, batchId: string) => {
-    const batch = teachingDetails?.schools
-      .find((s: any) => s.id === schoolId)
-      ?.batches.find((b: any) => b.id === batchId);
-
-    return (
-      batch?.divisions.map((d: any) => ({
-        value: d.id,
-        label: d.code,
-      })) || []
-    );
+  const toggleDateDetails = (id: string) => {
+    setDateDetailRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
   };
 
-  const getSemesterOptions = (
-    schoolId: string,
-    batchId: string,
-    divisionId: string
-  ) => {
-    const division = teachingDetails?.schools
-      .find((s: any) => s.id === schoolId)
-      ?.batches.find((b: any) => b.id === batchId)
-      ?.divisions.find((d: any) => d.id === divisionId);
-
-    return (
-      division?.semesters.map((sem: any) => ({
-        value: sem.id,
-        label: `Semester ${sem.number}`,
-      })) || []
-    );
-  };
-
-  const getSubjectOptions = (
-    schoolId: string,
-    batchId: string,
-    divisionId: string,
-    semesterId: string
-  ) => {
-    const semester = teachingDetails?.schools
-      .find((s: any) => s.id === schoolId)
-      ?.batches.find((b: any) => b.id === batchId)
-      ?.divisions.find((d: any) => d.id === divisionId)
-      ?.semesters.find((sem: any) => sem.id === semesterId);
-
-    return (
-      semester?.subjects.map((subj: any) => ({
-        value: subj.id,
-        label: subj.name,
-      })) || []
-    );
-  };
-
-  const getTeachingDetails = async () => {
-    try {
-      const response = await axios.get<TeachingDetailsResponse>(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/teaching-details`,
-        { withCredentials: true }
-      );
-      setTeachingDetails(response.data);
-    } catch (error) {
-      console.error("Error fetching teaching details:", error);
-    }
-  };
-
-  useEffect(() => {
-    getTeachingDetails();
-  }, []);
-
-  useEffect(() => {
-    if (originalCprData.length > 0 && cprData.length > 0) {
-      const changed =
-        JSON.stringify(cprData) !== JSON.stringify(originalCprData);
-      setHasChanges(changed);
-    }
-  }, [cprData, originalCprData]);
-
-  const allSelected =
-    center && school && batch && division && semester && subject;
+  const ShimmerRow = () => (
+    <div className="flex flex-col p-3 border-b border-gray-200 animate-pulse">
+      <div className="flex justify-between mb-2">
+        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+      </div>
+      <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+      <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-lg border border-gray-200 p-6 mb-6">
-          <h1 className="text-3xl font-bold text-white">CPR Management</h1>
-          <p className="text-md text-gray-200">
-            Track and manage course progress for your subjects
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            CPR Management
+          </h1>
+          <p className="text-gray-600 text-sm sm:text-base">
+            Track and manage course progress for your subjects.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4 text-sm">
-          {/* School */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-2">
-              School
-            </label>
-            <div className="relative">
-              <select
-                value={selectedSchool}
-                onChange={(e) => {
-                  setSelectedSchool(e.target.value);
-                  setSelectedBatch("");
-                  setSelectedDivision("");
-                  setSelectedSemester("");
-                  setSelectedSubject("");
-                }}
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
-                    focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
-                    appearance-none bg-white cursor-pointer"
-              >
-                <option value="">Select School</option>
-                {schoolOptions.map((option: any) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={16}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-              />
-            </div>
-          </div>
-
-          {/* Batch */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-2">
-              Batch
-            </label>
-            <div className="relative">
-              <select
-                value={selectedBatch}
-                onChange={(e) => {
-                  setSelectedBatch(e.target.value);
-                  setSelectedDivision("");
-                  setSelectedSemester("");
-                  setSelectedSubject("");
-                }}
-                disabled={!selectedSchool}
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
-                    focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
-                    disabled:bg-gray-100 disabled:cursor-not-allowed 
-                    appearance-none bg-white cursor-pointer"
-              >
-                <option value="">Select Batch</option>
-                {getBatchOptions(selectedSchool).map((batch: any) => (
-                  <option key={batch.value} value={batch.value}>
-                    {batch.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={16}
-                className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                  !selectedSchool ? "text-gray-300" : "text-gray-400"
-                }`}
-              />
-            </div>
-          </div>
-
-          {/* Division */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-2">
-              Division
-            </label>
-            <div className="relative">
-              <select
-                value={selectedDivision}
-                onChange={(e) => {
-                  setSelectedDivision(e.target.value);
-                  setSelectedSemester("");
-                  setSelectedSubject("");
-                }}
-                disabled={!selectedBatch}
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
-                    focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
-                    disabled:bg-gray-100 disabled:cursor-not-allowed 
-                    appearance-none bg-white cursor-pointer"
-              >
-                <option value="">Select Division</option>
-                {getDivisionOptions(selectedSchool, selectedBatch).map(
-                  (division: any) => (
-                    <option key={division.value} value={division.value}>
-                      {division.label}
-                    </option>
-                  )
-                )}
-              </select>
-              <ChevronDown
-                size={16}
-                className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                  !selectedBatch ? "text-gray-300" : "text-gray-400"
-                }`}
-              />
-            </div>
-          </div>
-
-          {/* Semester */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-2">
-              Semester
-            </label>
-            <div className="relative">
-              <select
-                value={selectedSemester}
-                onChange={(e) => {
-                  setSelectedSemester(e.target.value);
-                  setSelectedSubject("");
-                }}
-                disabled={!selectedDivision}
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
-                    focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
-                    disabled:bg-gray-100 disabled:cursor-not-allowed 
-                    appearance-none bg-white cursor-pointer"
-              >
-                <option value="">Select Semester</option>
-                {getSemesterOptions(
-                  selectedSchool,
-                  selectedBatch,
-                  selectedDivision
-                ).map((sem: any) => (
-                  <option key={sem.value} value={sem.value}>
-                    {sem.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={16}
-                className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                  !selectedDivision ? "text-gray-300" : "text-gray-400"
-                }`}
-              />
-            </div>
-          </div>
-
-          {/* Subject */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-2">
-              Subject
-            </label>
-            <div className="relative">
-              <select
-                value={selectedSubject}
-                onChange={(e) => {
-                  setSelectedSubject(e.target.value);
-                }}
-                disabled={!selectedSemester}
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm 
-                    focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent 
-                    disabled:bg-gray-100 disabled:cursor-not-allowed 
-                    appearance-none bg-white cursor-pointer"
-              >
-                <option value="">Select Subject</option>
-                {getSubjectOptions(
-                  selectedSchool,
-                  selectedBatch,
-                  selectedDivision,
-                  selectedSemester
-                ).map((subj: any) => (
-                  <option key={subj.value} value={subj.value}>
-                    {subj.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={16}
-                className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                  !selectedSemester ? "text-gray-300" : "text-gray-400"
-                }`}
-              />
+        {/* Subject Dropdown */}
+        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-5 rounded-lg shadow-sm border border-gray-200 mb-6">
+          <label
+            htmlFor="subject"
+            className="block text-sm font-medium text-gray-100 mb-2"
+          >
+            Subject
+          </label>
+          <div className="relative">
+            <select
+              id="subject"
+              value={selectedSubject}
+              onChange={handleSubjectChange}
+              className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer appearance-none text-sm"
+            >
+              <option value="">Select a Subject to Proceed</option>
+              {subjects.map((subj) => (
+                <option key={subj.value} value={subj.value}>
+                  {subj.label}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+              <ChevronDown className="w-5 h-5 text-gray-400" />
             </div>
           </div>
         </div>
 
-        {showTable && (
-          <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              Course Progress Report
-            </h3>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full border border-gray-300 rounded-sm">
+        {!selectedSubject ? (
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-5">
+            <div className="h-6 bg-gray-200 rounded w-36 mb-4"></div>
+            <div className="space-y-4 md:hidden">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <ShimmerRow key={i} />
+              ))}
+            </div>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full border border-gray-300 rounded-lg">
                 <thead>
                   <tr className="bg-gray-50">
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Module
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Topic
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Sub Topic
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Lecture Count
-                    </th>
-                    <th
-                      className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b"
-                      style={{ width: "180px" }}
-                    >
-                      Status
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Planned Start
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Actual Start
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Planned End
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Actual End
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
-                      Lecture ID
-                    </th>
+                    {["Module", "Topic", "Sub Topic", "Lectures", "Status"].map(
+                      (h) => (
+                        <th
+                          key={h}
+                          className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b"
+                        >
+                          {h}
+                        </th>
+                      )
+                    )}
                   </tr>
                 </thead>
                 <tbody>
-                  {cprData.map((row) => (
-                    <tr key={row.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 border-b text-sm text-gray-800">
-                        {row.module}
-                      </td>
-                      <td className="px-4 py-3 border-b text-sm text-gray-800">
-                        {row.topic}
-                      </td>
-                      <td className="px-4 py-3 border-b text-sm text-gray-800">
-                        {row.subTopic}
-                      </td>
-                      <td className="px-4 py-3 border-b text-sm text-center text-gray-800">
-                        {row.lectureCount}
-                      </td>
-                      <td className="px-4 py-3 border-b">
-                        <div className="relative inline-block w-full max-w-xs">
-                          <select
-                            value={row.status}
-                            onChange={(e) =>
-                              handleStatusChange(
-                                row.id,
-                                e.target.value as CPRRow["status"]
-                              )
-                            }
-                            className="w-full px-3 py-1.5 border border-gray-300 rounded-sm bg-white appearance-none text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
-                          >
-                            <option value="Pending">Pending</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Completed">Completed</option>
-                          </select>
-                          <ChevronDown
-                            size={16}
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
-                          />
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 border-b text-sm text-gray-600">
-                        {row.startDate}
-                      </td>
-                      <td className="px-4 py-3 border-b text-sm">
-                        {row.actualStartDate
-                          ? new Date(row.actualStartDate).toLocaleString(
-                              "en-IN",
-                              {
-                                dateStyle: "short",
-                                timeStyle: "short",
-                              }
-                            )
-                          : "-"}
-                      </td>
-                      <td className="px-4 py-3 border-b text-sm text-gray-600">
-                        {row.completionDate}
-                      </td>
-                      <td className="px-4 py-3 border-b text-sm">
-                        {row.actualCompletionDate
-                          ? new Date(row.actualCompletionDate).toLocaleString(
-                              "en-IN",
-                              {
-                                dateStyle: "short",
-                                timeStyle: "short",
-                              }
-                            )
-                          : "-"}
-                      </td>
-                      <td className="px-4 py-3 border-b text-sm font-mono text-gray-800">
-                        {row.lectureId}
-                      </td>
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <td key={j} className="px-3 py-3 border-b">
+                          <div className="h-4 bg-gray-200 rounded"></div>
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
+                Course Progress Report
+              </h3>
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-blue-50 rounded transition-colors"
+              >
+                <ChevronDown
+                  size={16}
+                  className={`transform transition-transform ${
+                    isExpanded ? "rotate-180" : ""
+                  }`}
+                />
+                {isExpanded ? "Collapse All" : "Expand All"}
+              </button>
+            </div>
 
+            {/* Mobile Cards View */}
+            <div className="space-y-4 md:hidden">
+              {cprData.length === 0 ? (
+                <p className="text-center text-gray-500 py-6">
+                  No data available for selected subject.
+                </p>
+              ) : (
+                cprData.map((row) => {
+                  const isDelayed = isRowDelayed(row);
+                  const isExpandedRow = expandedRows.has(row.id);
+                  const isDateExpanded = dateDetailRows.has(row.id);
+
+                  return (
+                    <div
+                      key={row.id}
+                      className={`border rounded-lg overflow-hidden ${
+                        isDelayed
+                          ? "border-red-200 bg-red-50"
+                          : "border-gray-200"
+                      }`}
+                    >
+                      {/* Main Row */}
+                      <div
+                        className="p-4 border-b bg-gray-50"
+                        onClick={() => toggleRow(row.id)}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-semibold text-gray-800 text-sm">
+                            Lecture {row.lectureCount}
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <label className="inline-flex items-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={row.status === "Completed"}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  const newStatus = e.target.checked
+                                    ? "Completed"
+                                    : "Pending";
+                                  handleStatusChange(row.id, newStatus);
+                                }}
+                                className="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                              />
+                            </label>
+                            <ChevronDown
+                              size={16}
+                              className={`transform transition-transform ${
+                                isExpandedRow ? "rotate-180" : ""
+                              } text-gray-500`}
+                            />
+                          </div>
+                        </div>
+                        <p className="text-gray-600 text-sm font-medium truncate">
+                          {row.subTopic}
+                        </p>
+                      </div>
+
+                      {/* Expanded Content */}
+                      {isExpandedRow && (
+                        <div className="p-4 space-y-3 text-sm">
+                          {row.showModuleCell && (
+                            <div>
+                              <strong className="text-gray-700">Module:</strong>{" "}
+                              <span className="text-blue-900 font-medium">
+                                {row.module}
+                              </span>
+                            </div>
+                          )}
+                          {row.showTopicCell && (
+                            <div>
+                              <strong className="text-gray-700">Topic:</strong>{" "}
+                              <span className="text-green-800 font-medium">
+                                {row.topic}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Status Buttons */}
+                          <div>
+                            <strong className="text-gray-700">Status:</strong>
+                            <div className="flex gap-1 mt-2 flex-wrap">
+                              {(
+                                ["Pending", "In Progress", "Completed"] as const
+                              ).map((status) => (
+                                <button
+                                  key={status}
+                                  onClick={() =>
+                                    handleStatusChange(row.id, status)
+                                  }
+                                  className={`px-3 py-1 text-xs rounded border min-w-[80px] ${
+                                    row.status === status
+                                      ? "bg-blue-100 border-blue-300 text-blue-800 font-medium"
+                                      : "bg-white border-gray-300 hover:bg-gray-50"
+                                  }`}
+                                >
+                                  {status}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Toggle Date Details */}
+                          <button
+                            onClick={() => toggleDateDetails(row.id)}
+                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+                          >
+                            {isDateExpanded ? (
+                              <>
+                                <EyeOff size={14} /> Hide Dates
+                              </>
+                            ) : (
+                              <>
+                                <Eye size={14} /> Show Dates
+                              </>
+                            )}
+                          </button>
+
+                          {/* Date Details */}
+                          {isDateExpanded && (
+                            <div className="text-xs text-gray-600 space-y-1 pt-2 border-t">
+                              <div>
+                                <strong>Planned Start:</strong> {row.startDate}
+                              </div>
+                              <div>
+                                <strong>Actual Start:</strong>{" "}
+                                {row.actualStartDate
+                                  ? new Date(
+                                      row.actualStartDate
+                                    ).toLocaleString("en-IN", {
+                                      dateStyle: "short",
+                                      timeStyle: "short",
+                                    })
+                                  : "-"}
+                              </div>
+                              <div>
+                                <strong>Planned End:</strong>{" "}
+                                {row.completionDate}
+                              </div>
+                              <div>
+                                <strong>Actual End:</strong>{" "}
+                                {row.actualCompletionDate
+                                  ? new Date(
+                                      row.actualCompletionDate
+                                    ).toLocaleString("en-IN", {
+                                      dateStyle: "short",
+                                      timeStyle: "short",
+                                    })
+                                  : "-"}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full border border-gray-300 rounded-lg">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-48">
+                      Module
+                    </th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-52">
+                      Topic
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">
+                      Sub Topic
+                    </th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-24">
+                      Lectures
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b w-32">
+                      {isExpanded ? "Status (Full)" : "Completed"}
+                    </th>
+                    {isExpanded && (
+                      <>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">
+                          Planned Start
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">
+                          Actual Start
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">
+                          Planned End
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">
+                          Actual End
+                        </th>
+                      </>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {cprData.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={isExpanded ? 9 : 5}
+                        className="px-4 py-8 text-center text-gray-500"
+                      >
+                        No data available for selected subject.
+                      </td>
+                    </tr>
+                  ) : (
+                    cprData.map((row) => {
+                      const isDelayed = isRowDelayed(row);
+                      return (
+                        <tr
+                          key={row.id}
+                          className={`${
+                            isDelayed ? "bg-red-50" : "hover:bg-gray-50"
+                          } transition-colors`}
+                        >
+                          {row.showModuleCell && (
+                            <td
+                              rowSpan={row.moduleRowSpan}
+                              className="px-3 py-3 border-b text-sm font-medium text-blue-900 bg-blue-50 align-top"
+                            >
+                              {row.module}
+                            </td>
+                          )}
+                          {row.showTopicCell && (
+                            <td
+                              rowSpan={row.topicRowSpan}
+                              className="px-3 py-3 border-b text-sm font-medium text-green-800 bg-green-50 align-top"
+                            >
+                              {row.topic}
+                            </td>
+                          )}
+                          <td className="px-4 py-3 border-b text-sm text-gray-800 truncate max-w-xs">
+                            {row.subTopic}
+                          </td>
+                          <td className="px-3 py-3 border-b text-sm text-center text-gray-600">
+                            {row.lectureCount}
+                          </td>
+
+                          {!isExpanded ? (
+                            <td className="px-4 py-3 border-b text-center">
+                              <label className="inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={row.status === "Completed"}
+                                  onChange={() => {
+                                    const newStatus =
+                                      row.status === "Completed"
+                                        ? "Pending"
+                                        : "Completed";
+                                    handleStatusChange(row.id, newStatus);
+                                  }}
+                                  className="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                                />
+                              </label>
+                            </td>
+                          ) : (
+                            <td className="px-4 py-3 border-b">
+                              <select
+                                value={row.status}
+                                onChange={(e) =>
+                                  handleStatusChange(
+                                    row.id,
+                                    e.target.value as CPRRow["status"]
+                                  )
+                                }
+                                className={`w-full px-2 py-1.5 text-xs border rounded focus:ring-1 focus:ring-blue-500 ${
+                                  isDelayed
+                                    ? "border-red-500 bg-red-50 text-red-900"
+                                    : "border-gray-300"
+                                }`}
+                              >
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                              </select>
+                            </td>
+                          )}
+
+                          {isExpanded && (
+                            <>
+                              <td className="px-4 py-3 border-b text-xs text-gray-600">
+                                {row.startDate}
+                              </td>
+                              <td className="px-4 py-3 border-b text-xs">
+                                {row.actualStartDate
+                                  ? new Date(
+                                      row.actualStartDate
+                                    ).toLocaleDateString("en-IN")
+                                  : "-"}
+                              </td>
+                              <td className="px-4 py-3 border-b text-xs text-gray-600">
+                                {row.completionDate}
+                              </td>
+                              <td className="px-4 py-3 border-b text-xs">
+                                {row.actualCompletionDate
+                                  ? new Date(
+                                      row.actualCompletionDate
+                                    ).toLocaleDateString("en-IN")
+                                  : "-"}
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Save Button */}
             {hasChanges && (
-              <div className="mt-6 flex items-center gap-3">
+              <div className="mt-6 flex justify-center">
                 <button
                   onClick={saveChanges}
                   disabled={isSaving}
-                  className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-sm hover:bg-green-700 transition-colors disabled:opacity-70 cursor-pointer"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-70 text-sm sm:text-base"
                 >
                   {isSaving ? (
                     <>
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2 size={18} className="animate-spin" />
                       Saving...
                     </>
                   ) : (

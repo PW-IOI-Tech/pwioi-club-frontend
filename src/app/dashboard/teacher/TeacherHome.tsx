@@ -13,6 +13,7 @@ import {
   FileImage,
 } from "lucide-react";
 import Image from "next/image";
+import { PostShimmer } from "../superadmin/feed/Feed";
 
 interface User {
   teacherId: string;
@@ -91,7 +92,7 @@ interface FeedProps {
   onLike: (postId: string) => void;
   onFlag: (postId: string) => void;
   getRoleBadgeColor: (role: string) => string;
-  loading:boolean;
+  loading: boolean;
 }
 
 interface ProfileHeaderProps {
@@ -971,10 +972,10 @@ const Feed: React.FC<FeedProps> = ({
   onLike,
   onFlag,
   getRoleBadgeColor,
-  loading
+  loading,
 }) => {
   if (loading) {
-    return <p className="text-center py-4">Loading Feed...</p>;
+    return <PostShimmer />;
   }
   const uniquePosts = posts.filter(
     (post, index, self) => index === self.findIndex((p) => p.id === post.id)
@@ -997,7 +998,7 @@ const Feed: React.FC<FeedProps> = ({
 };
 
 const ProfileHeader: React.FC<any> = ({ user }) => {
-   const [userDetail, setUserDetail] = useState<any>(null);
+  const [userDetail, setUserDetail] = useState<any>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
