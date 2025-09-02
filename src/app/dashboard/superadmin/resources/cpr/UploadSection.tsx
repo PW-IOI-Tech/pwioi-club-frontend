@@ -55,7 +55,12 @@ export default function CPRUploadSection() {
   const [successMessage, setSuccessMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ Fetch Centers
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [loadingBatches, setLoadingBatches] = useState(false);
+  const [loadingDivisions, setLoadingDivisions] = useState(false);
+  const [loadingSemesters, setLoadingSemesters] = useState(false);
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
+
   useEffect(() => {
     const fetchCenters = async () => {
       try {
@@ -82,9 +87,14 @@ export default function CPRUploadSection() {
     fetchCenters();
   }, []);
 
-  // ✅ Fetch Schools when Center selected
   useEffect(() => {
-    if (!selectedCenter) return;
+    if (!selectedCenter) {
+      setSchools([]);
+      setSelectedSchool("");
+      return;
+    }
+    setLoadingSchools(true);
+    setSchools([]);
     const fetchSchools = async () => {
       try {
         const res = await axios.get(
@@ -93,15 +103,22 @@ export default function CPRUploadSection() {
         );
         setSchools(res.data?.data || []);
       } catch (err) {
-        console.error("Failed to fetch schools");
+        console.error("Failed to fetch schools", err);
+      } finally {
+        setLoadingSchools(false);
       }
     };
     fetchSchools();
   }, [selectedCenter]);
 
-  // ✅ Fetch Batches when School selected
   useEffect(() => {
-    if (!selectedSchool) return;
+    if (!selectedSchool) {
+      setBatches([]);
+      setSelectedBatch("");
+      return;
+    }
+    setLoadingBatches(true);
+    setBatches([]);
     const fetchBatches = async () => {
       try {
         const res = await axios.get(
@@ -109,16 +126,23 @@ export default function CPRUploadSection() {
           { withCredentials: true }
         );
         setBatches(res.data?.data || []);
-      } catch {
-        console.error("Failed to fetch batches");
+      } catch (err) {
+        console.error("Failed to fetch batches", err);
+      } finally {
+        setLoadingBatches(false);
       }
     };
     fetchBatches();
   }, [selectedSchool]);
 
-  // ✅ Fetch Divisions when Batch selected
   useEffect(() => {
-    if (!selectedBatch) return;
+    if (!selectedBatch) {
+      setDivisions([]);
+      setSelectedDivision("");
+      return;
+    }
+    setLoadingDivisions(true);
+    setDivisions([]);
     const fetchDivisions = async () => {
       try {
         const res = await axios.get(
@@ -126,16 +150,23 @@ export default function CPRUploadSection() {
           { withCredentials: true }
         );
         setDivisions(res.data?.data || []);
-      } catch {
-        console.error("Failed to fetch divisions");
+      } catch (err) {
+        console.error("Failed to fetch divisions", err);
+      } finally {
+        setLoadingDivisions(false);
       }
     };
     fetchDivisions();
   }, [selectedBatch]);
 
-  // ✅ Fetch Semesters when Division selected
   useEffect(() => {
-    if (!selectedDivision) return;
+    if (!selectedDivision) {
+      setSemesters([]);
+      setSelectedSemester("");
+      return;
+    }
+    setLoadingSemesters(true);
+    setSemesters([]);
     const fetchSemesters = async () => {
       try {
         const res = await axios.get(
@@ -143,16 +174,23 @@ export default function CPRUploadSection() {
           { withCredentials: true }
         );
         setSemesters(res.data?.data || []);
-      } catch {
-        console.error("Failed to fetch semesters");
+      } catch (err) {
+        console.error("Failed to fetch semesters", err);
+      } finally {
+        setLoadingSemesters(false);
       }
     };
     fetchSemesters();
   }, [selectedDivision]);
 
-  // ✅ Fetch Subjects when Semester selected
   useEffect(() => {
-    if (!selectedSemester) return;
+    if (!selectedSemester) {
+      setSubjects([]);
+      setSelectedSubject("");
+      return;
+    }
+    setLoadingSubjects(true);
+    setSubjects([]);
     const fetchSubjects = async () => {
       try {
         const res = await axios.get(
@@ -160,8 +198,10 @@ export default function CPRUploadSection() {
           { withCredentials: true }
         );
         setSubjects(res.data?.data || []);
-      } catch {
-        console.error("Failed to fetch subjects");
+      } catch (err) {
+        console.error("Failed to fetch subjects", err);
+      } finally {
+        setLoadingSubjects(false);
       }
     };
     fetchSubjects();
@@ -278,13 +318,13 @@ export default function CPRUploadSection() {
     try {
       const formData = new FormData();
       formData.append("file", uploadedFile!);
-      formData.append("subject_id", selectedSubject); // ✅ send subject_id to backend
+      formData.append("subject_id", selectedSubject);
 
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/upload`,
         formData,
         {
-          withCredentials: true, // so JWT cookie goes along
+          withCredentials: true,
           headers: { "Content-Type": "multipart/form-data" },
         }
       );
@@ -367,6 +407,7 @@ export default function CPRUploadSection() {
           </div>
         </div>
 
+        {/* Filter Section */}
         <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8 mb-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
             Select CPR Details
@@ -374,7 +415,7 @@ export default function CPRUploadSection() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-4 text-sm">
             {/* Center */}
-            <div>
+            <div className="relative">
               <label className="block font-medium text-gray-700 mb-2">
                 Center
               </label>
@@ -389,7 +430,7 @@ export default function CPRUploadSection() {
                     setSelectedSemester("");
                     setSelectedSubject("");
                   }}
-                  className="w-full px-3 py-2 pr-10 border rounded-sm"
+                  className="w-full px-3 py-2 pr-10 border rounded-sm appearance-none cursor-pointer"
                 >
                   <option value="">Select Center</option>
                   {centers.map((c) => (
@@ -398,125 +439,191 @@ export default function CPRUploadSection() {
                     </option>
                   ))}
                 </select>
+                <ChevronDown className="absolute right-3 top-1/2 w-4 h-4 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>
 
             {/* School */}
-            <div>
+            <div className="relative">
               <label className="block font-medium text-gray-700 mb-2">
                 School
               </label>
-              <select
-                value={selectedSchool}
-                disabled={!selectedCenter}
-                onChange={(e) => {
-                  setSelectedSchool(e.target.value);
-                  setSelectedBatch("");
-                  setSelectedDivision("");
-                  setSelectedSemester("");
-                  setSelectedSubject("");
-                }}
-                className="w-full px-3 py-2 border rounded-sm"
-              >
-                <option value="">Select School</option>
-                {schools.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
+              <div className="relative">
+                <select
+                  value={selectedSchool}
+                  disabled={!selectedCenter || loadingSchools}
+                  onChange={(e) => {
+                    setSelectedSchool(e.target.value);
+                    setSelectedBatch("");
+                    setSelectedDivision("");
+                    setSelectedSemester("");
+                    setSelectedSubject("");
+                  }}
+                  className={`
+                    w-full px-3 py-2 pr-10 border rounded-sm appearance-none
+                    ${
+                      !selectedCenter || loadingSchools
+                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                        : "bg-white text-gray-900 cursor-pointer"
+                    }
+                  `}
+                >
+                  <option value="">
+                    {loadingSchools ? "Loading..." : "Select School"}
                   </option>
-                ))}
-              </select>
+                  {!loadingSchools &&
+                    schools.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 w-4 h-4 text-gray-400 pointer-events-none -translate-y-1/2" />
+              </div>
             </div>
 
             {/* Batch */}
-            <div>
+            <div className="relative">
               <label className="block font-medium text-gray-700 mb-2">
                 Batch
               </label>
-              <select
-                value={selectedBatch}
-                disabled={!selectedSchool}
-                onChange={(e) => {
-                  setSelectedBatch(e.target.value);
-                  setSelectedDivision("");
-                  setSelectedSemester("");
-                  setSelectedSubject("");
-                }}
-                className="w-full px-3 py-2 border rounded-sm"
-              >
-                <option value="">Select Batch</option>
-                {batches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
+              <div className="relative">
+                <select
+                  value={selectedBatch}
+                  disabled={!selectedSchool || loadingBatches}
+                  onChange={(e) => {
+                    setSelectedBatch(e.target.value);
+                    setSelectedDivision("");
+                    setSelectedSemester("");
+                    setSelectedSubject("");
+                  }}
+                  className={`
+                    w-full px-3 py-2 pr-10 border rounded-sm appearance-none
+                    ${
+                      !selectedSchool || loadingBatches
+                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                        : "bg-white text-gray-900 cursor-pointer"
+                    }
+                  `}
+                >
+                  <option value="">
+                    {loadingBatches ? "Loading..." : "Select Batch"}
                   </option>
-                ))}
-              </select>
+                  {!loadingBatches &&
+                    batches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 w-4 h-4 text-gray-400 pointer-events-none -translate-y-1/2" />
+              </div>
             </div>
 
             {/* Division */}
-            <div>
+            <div className="relative">
               <label className="block font-medium text-gray-700 mb-2">
                 Division
               </label>
-              <select
-                value={selectedDivision}
-                disabled={!selectedBatch}
-                onChange={(e) => {
-                  setSelectedDivision(e.target.value);
-                  setSelectedSemester("");
-                  setSelectedSubject("");
-                }}
-                className="w-full px-3 py-2 border rounded-sm"
-              >
-                <option value="">Select Division</option>
-                {divisions.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.code}
+              <div className="relative">
+                <select
+                  value={selectedDivision}
+                  disabled={!selectedBatch || loadingDivisions}
+                  onChange={(e) => {
+                    setSelectedDivision(e.target.value);
+                    setSelectedSemester("");
+                    setSelectedSubject("");
+                  }}
+                  className={`
+                    w-full px-3 py-2 pr-10 border rounded-sm appearance-none
+                    ${
+                      !selectedBatch || loadingDivisions
+                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                        : "bg-white text-gray-900 cursor-pointer"
+                    }
+                  `}
+                >
+                  <option value="">
+                    {loadingDivisions ? "Loading..." : "Select Division"}
                   </option>
-                ))}
-              </select>
+                  {!loadingDivisions &&
+                    divisions.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.code}
+                      </option>
+                    ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 w-4 h-4 text-gray-400 pointer-events-none -translate-y-1/2" />
+              </div>
             </div>
 
             {/* Semester */}
-            <div>
+            <div className="relative">
               <label className="block font-medium text-gray-700 mb-2">
                 Semester
               </label>
-              <select
-                value={selectedSemester}
-                disabled={!selectedDivision}
-                onChange={(e) => {
-                  setSelectedSemester(e.target.value);
-                  setSelectedSubject("");
-                }}
-                className="w-full px-3 py-2 border rounded-sm"
-              >
-                <option value="">Select Semester</option>
-                {semesters.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    Semester {s.number}
+              <div className="relative">
+                <select
+                  value={selectedSemester}
+                  disabled={!selectedDivision || loadingSemesters}
+                  onChange={(e) => {
+                    setSelectedSemester(e.target.value);
+                    setSelectedSubject("");
+                  }}
+                  className={`
+                    w-full px-3 py-2 pr-10 border rounded-sm appearance-none
+                    ${
+                      !selectedDivision || loadingSemesters
+                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                        : "bg-white text-gray-900 cursor-pointer"
+                    }
+                  `}
+                >
+                  <option value="">
+                    {loadingSemesters ? "Loading..." : "Select Semester"}
                   </option>
-                ))}
-              </select>
+                  {!loadingSemesters &&
+                    semesters.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        Semester {s.number}
+                      </option>
+                    ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 w-4 h-4 text-gray-400 pointer-events-none -translate-y-1/2" />
+              </div>
             </div>
 
             {/* Subject */}
-            <div>
+            <div className="relative">
               <label className="block font-medium text-gray-700 mb-2">
                 Subject
               </label>
-              <select
-                value={selectedSubject}
-                disabled={!selectedSemester}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="w-full px-3 py-2 border rounded-sm"
-              >
-                <option value="">Select Subject</option>
-                {subjects.map((sub) => (
-                  <option key={sub.id} value={sub.id}>
-                    {sub.name}
+              <div className="relative">
+                <select
+                  value={selectedSubject}
+                  disabled={!selectedSemester || loadingSubjects}
+                  onChange={(e) => setSelectedSubject(e.target.value)}
+                  className={`
+                    w-full px-3 py-2 pr-10 border rounded-sm appearance-none
+                    ${
+                      !selectedSemester || loadingSubjects
+                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                        : "bg-white text-gray-900 cursor-pointer"
+                    }
+                  `}
+                >
+                  <option value="">
+                    {loadingSubjects ? "Loading..." : "Select Subject"}
                   </option>
-                ))}
-              </select>
+                  {!loadingSubjects &&
+                    subjects.map((sub) => (
+                      <option key={sub.id} value={sub.id}>
+                        {sub.name}
+                      </option>
+                    ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 w-4 h-4 text-gray-400 pointer-events-none -translate-y-1/2" />
+              </div>
             </div>
           </div>
 
@@ -533,6 +640,7 @@ export default function CPRUploadSection() {
           )}
         </div>
 
+        {/* CPR Table */}
         {showCPRTable && (
           <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8 mb-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">
@@ -552,7 +660,19 @@ export default function CPRUploadSection() {
                   </tr>
                 </thead>
                 <tbody>
-                  {cprData ? (
+                  {loadingCpr ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-6 text-center text-gray-500"
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <Loader2 className="animate-spin" size={16} />
+                          Loading CPR data...
+                        </div>
+                      </td>
+                    </tr>
+                  ) : cprData ? (
                     <tr className="border-t border-gray-200 hover:bg-gray-50">
                       <td className="px-4 py-2">{cprData.subject?.name}</td>
                       <td className="px-4 py-2">{cprData.subject?.code}</td>
@@ -599,6 +719,7 @@ export default function CPRUploadSection() {
           </div>
         )}
 
+        {/* Upload Section */}
         <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
             Upload CPR File
@@ -627,6 +748,15 @@ export default function CPRUploadSection() {
             onDragOver={handleDrag}
             onDrop={handleDrop}
           >
+            {/* Hidden File Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xls,.xlsx"
+              onChange={handleFileInput}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+
             {!(
               selectedCenter &&
               selectedSchool &&
@@ -641,100 +771,89 @@ export default function CPRUploadSection() {
                   Select all fields to enable upload.
                 </p>
               </div>
-            ) : (
-              <>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xls,.xlsx"
-                  onChange={handleFileInput}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            ) : uploadStatus === "success" ? (
+              <div className="space-y-4">
+                <CheckCircle className="text-green-500 mx-auto" size={40} />
+                <h3 className="text-lg font-semibold text-green-700">
+                  Upload Successful!
+                </h3>
+                <p className="text-gray-600">{successMessage}</p>
+              </div>
+            ) : uploadStatus === "uploading" ? (
+              <div className="space-y-4">
+                <Loader2
+                  className="text-[#1B3A6A] animate-spin mx-auto"
+                  size={40}
                 />
-
-                {uploadStatus === "success" ? (
-                  <div className="space-y-4">
-                    <CheckCircle className="text-green-500 mx-auto" size={40} />
-                    <h3 className="text-lg font-semibold text-green-700">
-                      Upload Successful!
-                    </h3>
-                    <p className="text-gray-600">{successMessage}</p>
-                  </div>
-                ) : uploadStatus === "uploading" ? (
-                  <div className="space-y-4">
-                    <Loader2
-                      className="text-[#1B3A6A] animate-spin mx-auto"
-                      size={40}
-                    />
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      Uploading CPR...
-                    </h3>
-                    <p className="text-gray-600">Please wait</p>
-                  </div>
-                ) : uploadedFile ? (
-                  <div className="space-y-4">
-                    <CheckCircle className="text-green-500 mx-auto" size={40} />
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      File Ready
-                    </h3>
-                    <div className="flex items-center justify-center gap-2 text-gray-600">
-                      <FileSpreadsheet size={20} />
-                      <span className="break-all">{uploadedFile.name}</span>
-                      <span>
-                        ({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)
-                      </span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row justify-center gap-3">
-                      <button
-                        onClick={removeFile}
-                        className="flex items-center justify-center gap-2 px-4 py-2 text-[#1B3A6A] border border-[#1B3A6A] rounded-sm hover:bg-red-200 transition-colorsz z-50 cursor-pointer"
-                      >
-                        <X size={16} /> Remove
-                      </button>
-                      <button
-                        onClick={uploadFile}
-                        className="px-6 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors font-medium z-50 cursor-pointer"
-                      >
-                        Upload CPR
-                      </button>
-                    </div>
-                  </div>
-                ) : uploadStatus === "error" ? (
-                  <div className="space-y-4">
-                    <AlertCircle className="text-red-500 mx-auto" size={40} />
-                    <h3 className="text-lg font-semibold text-red-700">
-                      Upload Failed
-                    </h3>
-                    <p className="text-red-600 break-words">{errorMessage}</p>
-                    <button
-                      onClick={resetUpload}
-                      className="px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-600 hover:text-white transition-colors z-50 cursor-pointer"
-                    >
-                      Try Again
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4 flex flex-col items-center">
-                    <Upload
-                      className={dragActive ? "text-blue-500" : "text-gray-400"}
-                      size={40}
-                    />
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      {dragActive ? "Drop your file here" : "Upload CPR File"}
-                    </h3>
-                    <p className="text-gray-600">
-                      Drag and drop or{" "}
-                      <span className="text-blue-600 font-medium">browse</span>{" "}
-                      to upload
-                    </p>
-                    <div className="text-xs text-gray-500">
-                      .xls, .xlsx • Max 10MB
-                    </div>
-                  </div>
-                )}
-              </>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Uploading CPR...
+                </h3>
+                <p className="text-gray-600">Please wait</p>
+              </div>
+            ) : uploadedFile ? (
+              <div className="space-y-4">
+                <CheckCircle className="text-green-500 mx-auto" size={40} />
+                <h3 className="text-lg font-semibold text-gray-800">
+                  File Ready
+                </h3>
+                <div className="flex items-center justify-center gap-2 text-gray-600">
+                  <FileSpreadsheet size={20} />
+                  <span className="break-all">{uploadedFile.name}</span>
+                  <span>
+                    ({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </span>
+                </div>
+                <div className="flex flex-col sm:flex-row justify-center gap-3">
+                  <button
+                    onClick={removeFile}
+                    className="flex items-center justify-center gap-2 px-4 py-2 text-[#1B3A6A] border border-[#1B3A6A] rounded-sm hover:bg-red-200 transition-colors z-50 cursor-pointer"
+                  >
+                    <X size={16} /> Remove
+                  </button>
+                  <button
+                    onClick={uploadFile}
+                    className="px-6 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors font-medium z-50 cursor-pointer"
+                  >
+                    Upload CPR
+                  </button>
+                </div>
+              </div>
+            ) : uploadStatus === "error" ? (
+              <div className="space-y-4">
+                <AlertCircle className="text-red-500 mx-auto" size={40} />
+                <h3 className="text-lg font-semibold text-red-700">
+                  Upload Failed
+                </h3>
+                <p className="text-red-600 break-words">{errorMessage}</p>
+                <button
+                  onClick={resetUpload}
+                  className="px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-600 hover:text-white transition-colors z-50 cursor-pointer"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4 flex flex-col items-center">
+                <Upload
+                  className={dragActive ? "text-blue-500" : "text-gray-400"}
+                  size={40}
+                />
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {dragActive ? "Drop your file here" : "Upload CPR File"}
+                </h3>
+                <p className="text-gray-600">
+                  Drag and drop or{" "}
+                  <span className="text-blue-600 font-medium">browse</span> to
+                  upload
+                </p>
+                <div className="text-xs text-gray-500">
+                  .xls, .xlsx • Max 10MB
+                </div>
+              </div>
             )}
           </div>
 
+          {/* Info Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="text-center p-4 rounded-lg border border-gray-100 bg-gray-50">
               <div className="w-12 h-12 bg-[#D4E3F5] rounded-lg flex items-center justify-center mx-auto mb-3">
@@ -778,6 +897,7 @@ export default function CPRUploadSection() {
         </div>
       </div>
 
+      {/* Modal */}
       {showSchemaHelp && (
         <SchemaHelpModal
           isOpen={showSchemaHelp}
