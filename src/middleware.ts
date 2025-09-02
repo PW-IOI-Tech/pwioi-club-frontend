@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
-  const token = req.cookies.get("token")?.value; // adjust cookie name if different
+  const token = req.cookies.get("token")?.value;
 
-  // Protect all /dashboard routes
+  console.log("Path:", req.nextUrl.pathname);
+  console.log("Cookies:", req.cookies.getAll());
+
   if (req.nextUrl.pathname.startsWith("/dashboard")) {
     if (!token) {
-      // redirect to login if no token
-      return NextResponse.redirect(new URL("/login", req.url));
+      return NextResponse.redirect(new URL("/", req.nextUrl.origin));
     }
   }
 
@@ -16,5 +17,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard", "/dashboard/:path*"],
 };

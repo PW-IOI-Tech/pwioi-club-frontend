@@ -3,9 +3,11 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
 
 export default function StudentCallbackPage() {
   const searchParams = useSearchParams();
+  const { setAccessToken } = useAuth();
   const router = useRouter();
   const code = searchParams.get("code");
   const backendUrl =
@@ -24,6 +26,7 @@ export default function StudentCallbackPage() {
 
           localStorage.setItem("accessToken", tokens.accessToken);
           localStorage.setItem("refreshToken", tokens.refreshToken);
+          setAccessToken(tokens.accessToken);
           localStorage.setItem("user", JSON.stringify(user));
 
           router.push("/dashboard/superadmin");
