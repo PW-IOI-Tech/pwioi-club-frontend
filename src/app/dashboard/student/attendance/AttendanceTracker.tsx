@@ -19,6 +19,10 @@ import {
   Target,
   Award,
 } from "lucide-react";
+import {
+  AttendanceDetailsShimmer,
+  CourseInformationShimmer,
+} from "./AttendanceShimmer";
 
 interface MonthlyBreakdown {
   month: string;
@@ -438,9 +442,7 @@ const AttendanceTracker: React.FC = () => {
                 })}
               </div>
             ) : (
-              <div className="flex justify-center items-center h-full w-full">
-                Loading Course Information...
-              </div>
+              <CourseInformationShimmer />
             )}
           </div>
         </div>
@@ -449,9 +451,7 @@ const AttendanceTracker: React.FC = () => {
           <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] border border-slate-900 overflow-hidden shadow-2xl">
               {modalLoading ? (
-                <div className="w-full min-h-[90vh] flex justify-center items-center">
-                  Loading Attendance Details...
-                </div>
+                <AttendanceDetailsShimmer />
               ) : (
                 <>
                   <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-blue-900 p-4 text-white">

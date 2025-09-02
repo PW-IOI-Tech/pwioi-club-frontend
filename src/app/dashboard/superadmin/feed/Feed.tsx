@@ -1165,7 +1165,7 @@ const AdminFeed: React.FC<any> = () => {
 
 export default AdminFeed;
 
-const PostShimmer = () => {
+export const PostShimmer = () => {
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden animate-pulse">
       {/* Header Skeleton */}

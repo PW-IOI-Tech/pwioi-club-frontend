@@ -11,6 +11,7 @@ import DegreePartnerCard from "./Components/DegreePartnerCard";
 import PersonalDetailsCard from "./Components/PersonalDetailsCard";
 import ProjectsCard from "./Components/ProjectsCard";
 import SocialLinksCard from "./Components/SocialLinksCard";
+import { ProfileBuilderShimmer } from "./ProfileBuilderShimmer";
 
 const StudentProfileDashboard = () => {
   const [contactData, setContactData] = useState<any>(null);
@@ -57,10 +58,10 @@ const StudentProfileDashboard = () => {
       }));
     } catch (err) {
       console.error(`Failed to update ${field}`, err);
-    } 
+    }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <ProfileBuilderShimmer />;
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">
