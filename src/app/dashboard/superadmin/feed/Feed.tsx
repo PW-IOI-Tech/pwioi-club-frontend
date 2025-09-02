@@ -82,7 +82,7 @@ interface FeedProps {
   onLike: (postId: string) => void;
   onFlag: (postId: string) => void;
   getRoleBadgeColor: (role: string) => string;
-  loading:boolean;
+  loading: boolean;
 }
 
 interface ProfileHeaderProps {
@@ -191,7 +191,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/media/remove`,
         {
           withCredentials: true,
-          data: { key:key },
+          data: { key: key },
         }
       );
 
@@ -408,7 +408,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
   );
 };
 
-const PostHeader: React.FC<any> = ({ post,getRoleBadgeColor }) => (
+const PostHeader: React.FC<any> = ({ post, getRoleBadgeColor }) => (
   <div className="p-4 pb-3">
     <div className="flex items-start justify-between">
       <div className="flex items-center space-x-3">
@@ -425,9 +425,13 @@ const PostHeader: React.FC<any> = ({ post,getRoleBadgeColor }) => (
             <h3 className="font-semibold text-gray-900 text-sm">
               {post?.userInfo?.name}
             </h3>
-            <span  className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
+            <span
+              className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
                 post?.author_type
-              )}`}>{post?.author_type}</span>
+              )}`}
+            >
+              {post?.author_type}
+            </span>
             {post.assignedBy && (
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-br from-white to-indigo-50 text-slate-800 border border-slate-400">
                 📌 {post?.author_type}
@@ -814,7 +818,7 @@ const Post: React.FC<any> = ({
 
       {post?.media?.length > 0 && (
         <div className="px-4 pb-3 grid grid-cols-1 gap-2">
-          {post.media.map((mediaItem:any) => (
+          {post.media.map((mediaItem: any) => (
             <div key={mediaItem.id}>
               {mediaItem.type === "IMAGE" ? (
                 <img
@@ -853,7 +857,13 @@ const Feed: React.FC<FeedProps> = ({
   loading,
 }) => {
   if (loading) {
-    return <p className="text-center py-4">Loading Feed...</p>;
+    return (
+      <div className="space-y-6">
+        {[...Array(3)].map((_, i) => (
+          <PostShimmer key={i} />
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -885,11 +895,7 @@ const ProfileHeader: React.FC<any> = ({ user }) => (
         <p className="text-xs font-medium mb-1 text-blue-900">
           {user?.designation}
         </p>
-        {user?.role &&(
-          <p className="text-[11px] font-medium">
-            {user?.role}
-          </p>
-        )}
+        {user?.role && <p className="text-[11px] font-medium">{user?.role}</p>}
       </div>
     </div>
   </div>
@@ -1073,28 +1079,31 @@ const AdminFeed: React.FC<any> = () => {
     setReportModal({ isOpen: true, postId });
   };
 
-const handleReportSubmit = async (): Promise<void> => {
-  if (!reportModal.postId || !reportReason.trim()) {
-    alert("Please provide a reason for reporting.");
-    return;
-  }
+  const handleReportSubmit = async (): Promise<void> => {
+    if (!reportModal.postId || !reportReason.trim()) {
+      alert("Please provide a reason for reporting.");
+      return;
+    }
 
-  try {
-    const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags`, {
-      postId: reportModal.postId,
-      reason: reportReason,  
-    }, {withCredentials:true});
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags`,
+        {
+          postId: reportModal.postId,
+          reason: reportReason,
+        },
+        { withCredentials: true }
+      );
 
-    console.log("Report submitted:", res.data);
-    alert("Report submitted successfully!");
-  } catch (err: any) {
-    console.error("Error reporting:", err.response?.data || err.message);
-    alert(err.response?.data?.message || "Failed to submit report");
-  } finally {
-    handleReportClose();
-  }
-};
-
+      console.log("Report submitted:", res.data);
+      alert("Report submitted successfully!");
+    } catch (err: any) {
+      console.error("Error reporting:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to submit report");
+    } finally {
+      handleReportClose();
+    }
+  };
 
   const handleReportClose = (): void => {
     setReportModal({ isOpen: false, postId: null });
@@ -1155,3 +1164,61 @@ const handleReportSubmit = async (): Promise<void> => {
 };
 
 export default AdminFeed;
+
+const PostShimmer = () => {
+  return (
+    <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden animate-pulse">
+      {/* Header Skeleton */}
+      <div className="p-4 pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+            <div className="space-y-2 flex-1">
+              <div className="h-3 bg-gray-300 rounded w-24"></div>
+              <div className="h-2 bg-gray-300 rounded w-16"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Skeleton */}
+      <div className="px-4 py-3">
+        <div className="space-y-2">
+          <div className="h-2 bg-gray-300 rounded w-full"></div>
+          <div className="h-2 bg-gray-300 rounded w-5/6"></div>
+          <div className="h-2 bg-gray-300 rounded w-4/6"></div>
+        </div>
+      </div>
+
+      {/* Media Skeleton (optional box) */}
+      <div className="px-4 pb-3">
+        <div className="w-full h-48 bg-gray-300 rounded-sm"></div>
+      </div>
+
+      {/* Actions Skeleton */}
+      <div className="px-4 py-3 border-t border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex space-x-4">
+            <div className="h-8 w-16 bg-gray-300 rounded-md"></div>
+            <div className="h-8 w-20 bg-gray-300 rounded-md"></div>
+            <div className="h-8 w-16 bg-gray-300 rounded-md"></div>
+          </div>
+          <div className="h-6 w-6 bg-gray-300 rounded-md"></div>
+        </div>
+      </div>
+
+      {/* Comments Skeleton */}
+      <div className="px-4 py-3 border-t border-gray-50 space-y-3">
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="flex space-x-3">
+            <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+            <div className="flex-1">
+              <div className="h-4 bg-gray-300 rounded w-3/4 mb-1"></div>
+              <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};

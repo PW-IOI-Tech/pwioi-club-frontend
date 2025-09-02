@@ -40,40 +40,39 @@ export default function AdminManagement() {
 
   const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin`;
 
-const fetchAdmins = useCallback(async () => {
-  try {
-    setLoading(true);
-    const res = await axios.get(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/superadmin`,
-      { withCredentials: true }
-    );
-
-    if (res.data.success) {
-      // Flatten admins_by_role
-      const allAdmins = res.data.admins_by_role.flatMap((roleGroup: any) =>
-        roleGroup.admins.map((a: any) => ({
-          id: a.id,
-          name: a.name,
-          email: a.email,
-          phone: a.phone,
-          pwId: a.pwId || "N/A",
-          linkedin: a.linkedin || "N/A",
-          designation: a.designation,
-          role: typeof a.role === "object" ? a.role.role : a.role,
-          createdAt: a.createdAt,
-          updatedAt: a.updatedAt,
-        }))
+  const fetchAdmins = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/superadmin`,
+        { withCredentials: true }
       );
 
-      setAdmins(allAdmins);
-    }
-  } catch (err: any) {
-    setError(err.response?.data?.message || "Failed to fetch admins");
-  } finally {
-    setLoading(false);
-  }
-}, []);
+      if (res.data.success) {
+        // Flatten admins_by_role
+        const allAdmins = res.data.admins_by_role.flatMap((roleGroup: any) =>
+          roleGroup.admins.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            email: a.email,
+            phone: a.phone,
+            pwId: a.pwId || "N/A",
+            linkedin: a.linkedin || "N/A",
+            designation: a.designation,
+            role: typeof a.role === "object" ? a.role.role : a.role,
+            createdAt: a.createdAt,
+            updatedAt: a.updatedAt,
+          }))
+        );
 
+        setAdmins(allAdmins);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch admins");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchAdmins();
@@ -180,7 +179,7 @@ const fetchAdmins = useCallback(async () => {
   }, []);
 
   if (loading) {
-    return <p className="text-center mt-8">Loading admins...</p>;
+    return <ManagementShimmer />;
   }
 
   if (error) {
@@ -266,3 +265,65 @@ const fetchAdmins = useCallback(async () => {
     </div>
   );
 }
+
+export const ManagementShimmer = () => {
+  return (
+    <div className="min-h-screen bg-gray-50 p-2">
+      <div className="max-w-7xl mx-auto space-y-4">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-300 rounded w-64 mb-2"></div>
+          <div className="h-4 bg-gray-300 rounded w-80 opacity-70"></div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 overflow-hidden animate-pulse">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-8 h-8 bg-gray-300 rounded-full mx-auto"></div>
+              <div className="h-4 bg-gray-300 rounded w-32 mx-auto"></div>
+              <div className="h-10 bg-gray-300 rounded w-20 mx-auto"></div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 overflow-hidden animate-pulse">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-12 h-12 bg-gray-300 rounded-full mx-auto flex items-center justify-center">
+                <div className="w-6 h-6 bg-gray-400 rounded-full"></div>
+              </div>
+              <div className="h-5 bg-gray-300 rounded w-40 mx-auto"></div>
+              <div className="h-4 bg-gray-300 rounded w-32 mx-auto"></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-sm border border-gray-400 overflow-hidden animate-pulse">
+          <div className="p-6 border-b border-gray-200">
+            <div className="h-6 bg-gray-300 rounded w-48"></div>
+          </div>
+          <div className="p-4">
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="grid grid-cols-12 gap-4 items-center">
+                  <div className="col-span-3 h-4 bg-gray-300 rounded"></div>
+                  <div className="col-span-3 h-4 bg-gray-300 rounded"></div>
+                  <div className="col-span-2 h-4 bg-gray-300 rounded"></div>
+                  <div className="col-span-2 h-8 bg-gray-300 rounded-full"></div>
+                  <div className="col-span-2 flex justify-end space-x-2">
+                    <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                    <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+            <div className="h-4 bg-gray-300 rounded w-24"></div>
+            <div className="flex space-x-2">
+              <div className="w-8 h-8 bg-gray-300 rounded"></div>
+              <div className="w-8 h-8 bg-gray-300 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

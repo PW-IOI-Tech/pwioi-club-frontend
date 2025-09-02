@@ -19,6 +19,7 @@ import {
   DoorOpen,
   Shield,
   Flag,
+  Compass,
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -123,6 +124,12 @@ export default function AdminDashboard() {
           description: "Curriculum and subject administration",
         },
         {
+          id: "exams",
+          label: "Exams Management",
+          icon: ClipboardList,
+          description: "Examination scheduling and results",
+        },
+        {
           id: "classes",
           label: "Class Management",
           icon: Clock,
@@ -151,12 +158,6 @@ export default function AdminDashboard() {
           icon: CalendarDays,
           description: "Event planning and coordination",
         },
-        {
-          id: "exams",
-          label: "Exams Management",
-          icon: ClipboardList,
-          description: "Examination scheduling and results",
-        },
       ],
     },
     {
@@ -169,6 +170,12 @@ export default function AdminDashboard() {
           description: "Facility and room allocation management",
         },
         {
+          id: "clubs",
+          label: "Clubs Management",
+          icon: Users,
+          description: "Student and faculty club administration",
+        },
+        {
           id: "policies",
           label: "Policies Management",
           icon: Shield,
@@ -179,6 +186,12 @@ export default function AdminDashboard() {
           label: "Flag Management",
           icon: Flag,
           description: "System flags and status indicators",
+        },
+        {
+          id: "cpr",
+          label: "CPR Management",
+          icon: Compass,
+          description: "Critical process and response management",
         },
       ],
     },
@@ -231,7 +244,7 @@ export default function AdminDashboard() {
                         <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all" />
                       </div>
 
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-900 transition-colors">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-900 transition-colors leading-tight">
                         {item.label}
                       </h3>
                       <p className="text-sm text-gray-600 leading-tight">

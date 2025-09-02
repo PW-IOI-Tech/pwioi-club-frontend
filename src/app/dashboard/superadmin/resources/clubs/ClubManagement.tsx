@@ -332,8 +332,8 @@ function StatCard({ title, value, icon, bgColor, textColor }: StatCardProps) {
 function ShimmerSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[...Array(3)].map((_, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {[...Array(2)].map((_, i) => (
           <div
             key={i}
             className="bg-white p-6 rounded-sm border border-gray-300 text-center"

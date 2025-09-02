@@ -46,6 +46,11 @@ export default function DivSemManagement() {
   const [selectedCenter, setSelectedCenter] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("");
   const [selectedBatch, setSelectedBatch] = useState("");
+
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [loadingBatches, setLoadingBatches] = useState(false);
+  const [loadingDivisions, setLoadingDivisions] = useState(false);
+
   const [filtersComplete, setFiltersComplete] = useState(false);
 
   const fetchSemesters = useCallback(
@@ -61,7 +66,7 @@ export default function DivSemManagement() {
             return {
               id: sem.id,
               division: division ? division.code : sem.division_id,
-              number: sem.number, 
+              number: sem.number,
               startDate: new Date(sem.start_date).toLocaleDateString(),
               endDate: new Date(sem.end_date).toLocaleDateString(),
             };
@@ -74,7 +79,7 @@ export default function DivSemManagement() {
         setError(err.response?.data?.message || "Failed to fetch semesters");
       }
     },
-    [selectedBatch]
+    [divisions]
   );
 
   const handleAddSemester = useCallback(
@@ -102,7 +107,7 @@ export default function DivSemManagement() {
           );
           const newSemester: Semester = {
             id: res.data.data.id,
-            division: division ? division.code : res.data.data.division_id, // ✅
+            division: division ? division.code : res.data.data.division_id,
             number: res.data.data.number,
             startDate: new Date(res.data.data.start_date).toLocaleDateString(),
             endDate: new Date(res.data.data.end_date).toLocaleDateString(),
@@ -130,7 +135,7 @@ export default function DivSemManagement() {
         setError(err.response?.data?.message || "Failed to add semester");
       }
     },
-    []
+    [divisions]
   );
 
   const handleUpdateSemester = useCallback(async (updated: any) => {
@@ -200,7 +205,6 @@ export default function DivSemManagement() {
     }
   }, []);
 
-  // ---- FILTERS ----
   const handleCenterChange = (center: string) => {
     setSelectedCenter(center);
     setSelectedSchool("");
@@ -223,6 +227,10 @@ export default function DivSemManagement() {
     setFiltersComplete(isComplete);
 
     if (isComplete) {
+      setLoadingDivisions(true);
+      setFilteredDivisions([]);
+      setFilteredSemesters([]);
+
       const fetchDivisions = async () => {
         try {
           const res = await axios.get(
@@ -256,22 +264,30 @@ export default function DivSemManagement() {
             setDivisions(mapped);
             setFilteredDivisions(mapped);
 
-            // fetch semesters for each division
+            setSemesters([]);
+            setFilteredSemesters([]);
             mapped.forEach((d: any) => fetchSemesters(d.id));
           }
         } catch (err: any) {
           setError(err.response?.data?.message || "Failed to fetch divisions");
+        } finally {
+          setLoadingDivisions(false);
         }
       };
 
       fetchDivisions();
     } else {
-      setFilteredDivisions([]);
+      setLoadingDivisions(false);
     }
-    setFilteredSemesters([]);
-  }, [selectedCenter, selectedSchool, selectedBatch]);
+  }, [
+    selectedCenter,
+    selectedSchool,
+    selectedBatch,
+    centers,
+    schools,
+    batches,
+  ]);
 
-  // ---- CENTERS/SCHOOLS/BATCHES ----
   useEffect(() => {
     const fetchCenters = async () => {
       try {
@@ -297,8 +313,15 @@ export default function DivSemManagement() {
   }, []);
 
   useEffect(() => {
-    if (!selectedCenter) return;
+    if (!selectedCenter) {
+      setSchools([]);
+      setSelectedSchool("");
+      return;
+    }
+
     const fetchSchools = async () => {
+      setLoadingSchools(true);
+      setSchools([]);
       try {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${selectedCenter}`,
@@ -306,29 +329,43 @@ export default function DivSemManagement() {
         );
         setSchools(res.data?.data || []);
       } catch (err) {
-        console.error("Failed to fetch schools");
+        console.error("Failed to fetch schools", err);
+        setSchools([]);
+      } finally {
+        setLoadingSchools(false);
       }
     };
+
     fetchSchools();
   }, [selectedCenter]);
 
   useEffect(() => {
-    if (!selectedSchool) return;
+    if (!selectedSchool) {
+      setBatches([]);
+      setSelectedBatch("");
+      return;
+    }
+
     const fetchBatches = async () => {
+      setLoadingBatches(true);
+      setBatches([]);
       try {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
           { withCredentials: true }
         );
         setBatches(res.data?.data || []);
-      } catch {
-        console.error("Failed to fetch batches");
+      } catch (err) {
+        console.error("Failed to fetch batches", err);
+        setBatches([]);
+      } finally {
+        setLoadingBatches(false);
       }
     };
+
     fetchBatches();
   }, [selectedSchool]);
 
-  // ---- DIVISION HANDLERS ----
   const handleUpdateDivision = useCallback(async (updated: any) => {
     const div = updated as Division;
     try {
@@ -437,6 +474,8 @@ export default function DivSemManagement() {
     );
   }
 
+  const showShimmer = !filtersComplete || loadingDivisions;
+
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -446,94 +485,93 @@ export default function DivSemManagement() {
 
         {/* Filters */}
         <div className="bg-gradient-to-br from-white to-indigo-50 p-6 rounded-sm border border-gray-400">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
             Select Filters
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Center Dropdown */}
             <div className="relative">
-              <label
-                htmlFor="center"
-                className="block text-xs font-medium text-gray-100 mb-2"
+              <select
+                id="center"
+                value={selectedCenter}
+                onChange={(e) => handleCenterChange(e.target.value)}
+                className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm"
               >
-                Center
-              </label>
-              <div className="relative">
-                <select
-                  id="center"
-                  value={selectedCenter}
-                  onChange={(e) => handleCenterChange(e.target.value)}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm"
-                >
-                  <option value="">Select Center</option>
-                  {centers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-
-                <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
-              </div>
+                <option value="">Select Center</option>
+                {centers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
             </div>
 
+            {/* School Dropdown */}
             <div className="relative">
-              <label
-                htmlFor="school"
-                className="block text-xs font-medium text-gray-100 mb-2"
+              <select
+                id="school"
+                value={selectedSchool}
+                onChange={(e) => handleSchoolChange(e.target.value)}
+                disabled={!selectedCenter || loadingSchools}
+                className={`
+                  w-full p-3 pr-10 border border-gray-300 rounded-md
+                  focus:ring-2 focus:ring-blue-500 appearance-none text-sm
+                  ${
+                    !selectedCenter || loadingSchools
+                      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                      : "bg-white text-gray-900"
+                  }
+                `}
               >
-                School
-              </label>
-              <div className="relative">
-                <select
-                  id="school"
-                  value={selectedSchool}
-                  onChange={(e) => handleSchoolChange(e.target.value)}
-                  disabled={!selectedCenter}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">Select School</option>
-                  {schools.map((sch) => (
+                <option value="">
+                  {loadingSchools ? "Loading..." : "Select School"}
+                </option>
+                {!loadingSchools &&
+                  schools.map((sch) => (
                     <option key={sch.id} value={sch.id}>
                       {sch.name}
                     </option>
                   ))}
-                </select>
-
-                <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
-              </div>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
             </div>
 
+            {/* Batch Dropdown */}
             <div className="relative">
-              <label
-                htmlFor="batch"
-                className="block text-xs font-medium text-gray-100 mb-2"
+              <select
+                id="batch"
+                value={selectedBatch}
+                onChange={(e) => setSelectedBatch(e.target.value)}
+                disabled={!selectedSchool || loadingBatches}
+                className={`
+                  w-full p-3 pr-10 border border-gray-300 rounded-md
+                  focus:ring-2 focus:ring-blue-500 appearance-none text-sm
+                  ${
+                    !selectedSchool || loadingBatches
+                      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                      : "bg-white text-gray-900"
+                  }
+                `}
               >
-                Batch
-              </label>
-              <div className="relative">
-                <select
-                  id="batch"
-                  value={selectedBatch}
-                  onChange={(e) => setSelectedBatch(e.target.value)}
-                  disabled={!selectedSchool || batches.length === 0}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">Select Batch</option>
-                  {batches.map((batch) => (
+                <option value="">
+                  {loadingBatches ? "Loading..." : "Select Batch"}
+                </option>
+                {!loadingBatches &&
+                  batches.map((batch) => (
                     <option key={batch.id} value={batch.id}>
                       {batch.name}
                     </option>
                   ))}
-                </select>
-
-                <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
-              </div>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
             </div>
           </div>
         </div>
 
-        {!filtersComplete ? (
-          <div className="h-64 bg-gray-200 rounded-sm animate-pulse"></div>
+        {/* Content */}
+        {showShimmer ? (
+          <ShimmerTableSkeleton />
         ) : (
           <>
             {/* Add Division Button */}
@@ -559,7 +597,16 @@ export default function DivSemManagement() {
               ]}
               onDelete={handleDeleteDivision}
               onEdit={handleUpdateDivision}
-              hiddenColumns={["id","centerId","schoolId","batchId","startDate","endDate","createdAt","updatedAt"]}
+              hiddenColumns={[
+                "id",
+                "centerId",
+                "schoolId",
+                "batchId",
+                "startDate",
+                "endDate",
+                "createdAt",
+                "updatedAt",
+              ]}
               columns={[
                 { accessorKey: "code", header: "Code" },
                 { accessorKey: "center", header: "Center" },
@@ -586,12 +633,16 @@ export default function DivSemManagement() {
 
             {canAddSemester && (
               <Table
-                data={filteredSemesters.filter((sem) =>
-    filteredDivisions.some((div) => div.id === sem.division) // match by id ✅
-  ).map((sem) => ({
-    ...sem,
-    division: filteredDivisions.find((d) => d.id === sem.division)?.code || sem.division
-  }))}
+                data={filteredSemesters
+                  .filter((sem) =>
+                    filteredDivisions.some((div) => div.id === sem.division)
+                  )
+                  .map((sem) => ({
+                    ...sem,
+                    division:
+                      filteredDivisions.find((d) => d.id === sem.division)
+                        ?.code || sem.division,
+                  }))}
                 title="Semesters"
                 filterField="division"
                 nonEditableFields={["id"]}
@@ -624,6 +675,32 @@ export default function DivSemManagement() {
           onSemesterCreated={handleAddSemester}
           divisions={filteredDivisions}
         />
+      </div>
+    </div>
+  );
+}
+
+function ShimmerTableSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      {/* Division Table Skeleton */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-300">
+        <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-14 bg-gray-100 rounded"></div>
+          ))}
+        </div>
+      </div>
+
+      {/* Semester Table Skeleton */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-300">
+        <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+        <div className="space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-14 bg-gray-100 rounded"></div>
+          ))}
+        </div>
       </div>
     </div>
   );

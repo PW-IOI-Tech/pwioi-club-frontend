@@ -221,10 +221,8 @@ export default function SchoolManagement() {
           </div>
         </div>
 
-        {!selectedLocation || !showContent ? (
+        {!selectedLocation || !showContent || loading ? (
           <ShimmerSkeleton />
-        ) : loading ? (
-          <p className="p-6">Loading schools...</p>
         ) : (
           <>
             {/* Stats */}
@@ -291,7 +289,7 @@ export default function SchoolManagement() {
           onClose={handleCloseAddModal}
           onSchoolCreated={handleAddSchool}
           prefillLocation={selectedLocation}
-          centers={centers}    
+          centers={centers}
         />
       </div>
     </div>
