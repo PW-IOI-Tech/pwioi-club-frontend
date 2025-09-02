@@ -58,6 +58,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
     rank: "#142",
   };
 
+  // Removed "Academics & Course" from menu items
   const menuItems = [
     { id: "home", label: "Home", icon: House, href: "/dashboard/student" },
     {
@@ -81,7 +82,6 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
   ];
 
   const getActiveSection = () => {
-    if (pathname.includes("/acads")) return "academics";
     if (pathname.includes("/attendance")) return "attendance";
     if (pathname.includes("/help")) return "help";
     return "home";
@@ -132,7 +132,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
 
   const handleLogout = () => {
     console.log("Logout clicked");
-    router.push("/auth/student/login");
+    router.push("/auth/login/student");
   };
 
   const handleCodingPlatformRedirect = () => {
@@ -164,12 +164,14 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
         />
       )}
 
+      {/* Sidebar */}
       <div
         className={`hidden lg:flex sticky top-0 h-screen bg-slate-900 border-r border-slate-700/50 shadow-2xl transition-all duration-300 ease-in-out ${
           isSidebarExpanded ? "w-64" : "w-20"
         }`}
       >
         <div className="flex flex-col w-full">
+          {/* Logo & Toggle */}
           <div className="p-5 border-b border-slate-700/50 flex items-center space-x-3 bg-slate-800/50">
             <button
               onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
@@ -192,6 +194,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
             )}
           </div>
 
+          {/* Coding Platform Button */}
           <div className="p-5 border-b border-slate-700/50 bg-slate-800/30">
             <button
               onClick={handleCodingPlatformRedirect}
@@ -215,6 +218,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
             </button>
           </div>
 
+          {/* Main Navigation */}
           <nav className="flex-1 p-4 space-y-2 mt-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -252,6 +256,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
             })}
           </nav>
 
+          {/* Profile Button */}
           <div className="p-4 border-t border-slate-700/50 bg-gradient-to-r from-slate-800/30 to-slate-700/20">
             <button
               className={`w-full flex items-center text-slate-300 hover:bg-slate-700/50 hover:text-white hover:scale-105 active:scale-95 py-2.5 px-3 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border border-transparent hover:border-slate-600/30 ${
@@ -284,73 +289,112 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
 
+      {/* Profile Sidebar (Right Side Panel) */}
       <div
         id="profile-sidebar"
-        className={`fixed inset-y-0 right-0 z-50 w-80 h-screen bg-white shadow-xl flex flex-col transition-transform duration-400 ease-in-out border-l border-slate-200 overflow-hidden ${
+        className={`fixed inset-y-0 right-0 z-50 w-80 h-screen bg-white shadow-xl flex flex-col transition-transform duration-400 ease-in-out border-l border-slate-200 ${
           isProfileSidebarOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-4 text-white relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent"></div>
-            <div className="relative z-10">
-              <div className="flex items-start justify-between mb-4">
-                <h2 className="text-lg font-bold tracking-wide">
-                  Student Profile
-                </h2>
-                <button
-                  onClick={() => setIsProfileSidebarOpen(false)}
-                  className="p-1.5 hover:bg-slate-700/50 hover:scale-110 active:scale-95 rounded-lg transition-all duration-200 border border-slate-600/30 flex-shrink-0 cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+        {/* Header */}
+        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-4 text-white relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent"></div>
+          <div className="relative z-10">
+            <div className="flex items-start justify-between mb-4">
+              <h2 className="text-lg font-bold tracking-wide">
+                Student Profile
+              </h2>
+              <button
+                onClick={() => setIsProfileSidebarOpen(false)}
+                className="p-1.5 hover:bg-slate-700/50 hover:scale-110 active:scale-95 rounded-lg transition-all duration-200 border border-slate-600/30 flex-shrink-0 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-              <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-200">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 flex items-center justify-center shadow-lg border border-white/20 hover:shadow-xl transition-all duration-200">
-                    <User className="w-8 h-8 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg tracking-wide">
-                      {userData.name}
-                    </h3>
-                    <p className="text-blue-200 text-xs font-medium">
-                      {userData.course}
-                    </p>
-                    <p className="text-slate-300 text-[11px] font-medium">
-                      {userData.studentId} • {userData.batch}
-                    </p>
-                  </div>
+            <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-200">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 flex items-center justify-center shadow-lg border border-white/20 hover:shadow-xl transition-all duration-200">
+                  <User className="w-8 h-8 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg tracking-wide">
+                    {userData.name}
+                  </h3>
+                  <p className="text-blue-200 text-xs font-medium">
+                    {userData.course}
+                  </p>
+                  <p className="text-slate-300 text-[11px] font-medium">
+                    {userData.studentId} • {userData.batch}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="p-4 py-6 bg-gradient-to-b from-white to-slate-50">
-          <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
-            Quick Actions
-          </h3>
-          <nav className="space-y-2">
-            <a
-              href="/dashboard/student/profile"
-              className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-blue-200 shadow-sm hover:shadow-md text-sm cursor-pointer group"
-            >
-              <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
-              <span className="font-medium">My Profile</span>
-            </a>
-          <div className="p-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-red-50 shadow-t-lg">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center space-x-2 px-3 py-2.5 bg-gradient-to-r from-red-50 to-red-100 text-red-700 hover:from-red-500 hover:to-red-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 font-semibold border border-red-200 hover:border-red-300 shadow-sm hover:shadow-md text-sm cursor-pointer group"
-            >
-              <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-300" />
-              <span>Sign Out</span>
-            </button>
+
+        {/* Scrollable Content: Quick Actions & Contact Info */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Quick Actions */}
+          <div className="p-4 py-6 bg-gradient-to-b from-white to-slate-50">
+            <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
+              Quick Actions
+            </h3>
+            <nav className="space-y-2">
+              <a
+                href="/dashboard/student/profile"
+                className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-blue-200 shadow-sm hover:shadow-md text-sm cursor-pointer group"
+              >
+                <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+                <span className="font-medium">My Profile</span>
+              </a>
+
+              <button
+                onClick={handleCodingPlatformRedirect}
+                className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-indigo-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md text-sm cursor-pointer group"
+              >
+                <Code className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
+                <span className="font-medium">Coding Platform</span>
+                <ExternalLink className="w-3.5 h-3.5 ml-auto group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
+              </button>
+            </nav>
           </div>
+
+          {/* Contact Info */}
+          <div className="p-4 py-6 bg-gradient-to-br from-slate-50 to-slate-100 border-t border-slate-200">
+            <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
+              Contact Information
+            </h3>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2.5 p-2 rounded-lg hover:bg-white/70 transition-all duration-200 cursor-pointer">
+                <Mail className="w-3.5 h-3.5 text-slate-500" />
+                <span className="text-sm text-slate-700 font-medium">
+                  {userData.email}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2.5 p-2 rounded-lg hover:bg-white/70 transition-all duration-200 cursor-pointer">
+                <Phone className="w-3.5 h-3.5 text-slate-500" />
+                <span className="text-sm text-slate-700 font-medium">
+                  {userData.phone}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ✅ STICKY Sign Out Button - Always at the bottom */}
+        <div className="p-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-red-50">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center space-x-2 px-3 py-2.5 bg-gradient-to-r from-red-50 to-red-100 text-red-700 hover:from-red-500 hover:to-red-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 font-semibold border border-red-200 hover:border-red-300 shadow-sm hover:shadow-md text-sm cursor-pointer group"
+          >
+            <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-300" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </div>
 
+      {/* Mobile Sidebar */}
       <div
         id="mobile-sidebar"
         className={`lg:hidden fixed inset-y-0 right-0 z-40 w-72 h-screen bg-slate-900 border-l border-slate-700/50 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
@@ -429,6 +473,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
 
+      {/* Page Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out">
         <div className="p-1 lg:p-8">{children}</div>
       </div>
