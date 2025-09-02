@@ -9,6 +9,7 @@ import {
   User,
   UserCheck,
 } from "lucide-react";
+import { ProfileHeaderShimmer } from "../ProfileBuilderShimmer";
 
 interface ProfileData {
   studentId: string;
@@ -45,11 +46,7 @@ const ProfileHeader = () => {
   }, []);
 
   if (!profileData) {
-    return (
-      <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-lg border border-gray-200 p-6 mb-6">
-        <p className="text-gray-300">Loading profile...</p>
-      </div>
-    );
+    return <ProfileHeaderShimmer />;
   }
 
   return (
