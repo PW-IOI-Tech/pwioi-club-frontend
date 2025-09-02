@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import AttendanceDashboard from "./CPRDashboard";
+import CPRDashboard from "./CPRDashboard";
 
 export const metadata: Metadata = {
-  title: "Attendance Dashboard",
+  title: "CPR Dashboard",
 };
 
 export default function Page() {
-  return <AttendanceDashboard />;
+  return <CPRDashboard />;
 }
