@@ -170,6 +170,11 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
           label: "Marks Dashboard",
           href: "/dashboard/superadmin/dashboard/marks",
         },
+        {
+          id: "cpr",
+          label: "CPR Dashboard",
+          href: "/dashboard/superadmin/dashboard/cpr",
+        },
       ],
     },
   ];
