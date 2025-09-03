@@ -15,6 +15,7 @@ interface AddClubModalProps {
     coreMembers: string[];
   }) => void;
   prefillLocation: string;
+  faculties?: string[];
 }
 
 const AddClubModal: React.FC<AddClubModalProps> = ({

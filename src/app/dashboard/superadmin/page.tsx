@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation"; // Add useRouter
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   GraduationCap,
@@ -25,18 +25,22 @@ import {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const userString = localStorage.getItem("user");
-  let userName = "";
+  const [userName, setUserName] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (userString) {
-    try {
-      const userObj = JSON.parse(userString);
-      userName = userObj.name;
-    } catch (error) {
-      console.error("Error parsing user data:", error);
-      userName = "";
+  useEffect(() => {
+    const userString = localStorage.getItem("user");
+    if (userString) {
+      try {
+        const userObj = JSON.parse(userString);
+        setUserName(userObj.name || "");
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        setUserName("");
+      }
     }
-  }
+    setIsLoading(false);
+  }, []);
 
   const routeMap: Record<string, string> = {
     // People Management
@@ -216,6 +220,17 @@ export default function AdminDashboard() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto">
@@ -223,7 +238,7 @@ export default function AdminDashboard() {
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-lg shadow-sm border border-gray-400 p-6 py-8 mb-8">
           <h1 className="text-2xl md:text-3xl text-white mb-2">
             Welcome back, <br className="block sm:hidden" />
-            <span className="font-bold">{userName}</span>!{" "}
+            <span className="font-bold">{userName || "Admin"}</span>!{" "}
             <span className="">👋</span>
           </h1>
           <p className="text-gray-300 leading-tight sm:w-3/4 text-sm">

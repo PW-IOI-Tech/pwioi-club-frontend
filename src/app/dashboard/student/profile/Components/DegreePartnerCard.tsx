@@ -11,16 +11,13 @@ interface DegreePartnerData {
   endDate: string;
 }
 
-interface FormData extends DegreePartnerData {}
-
 const DegreePartnerCard = () => {
   const [degreePartner, setDegreePartner] = useState<DegreePartnerData | null>(
     null
   );
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<DegreePartnerData>({
     collegeName: "",
     degreeName: "",
     specialization: "",
@@ -42,23 +39,16 @@ const DegreePartnerCard = () => {
         { withCredentials: true }
       );
 
-      if (response.data?.success) {
+      if (response.data?.success && response.data.data.externalDegree) {
         const { externalDegree } = response.data.data;
-        if (externalDegree) {
-          // Map backend snake_case → frontend camelCase
-          const mappedData: DegreePartnerData = {
-            collegeName: externalDegree.college_name,
-            degreeName: externalDegree.degree_name,
-            specialization: externalDegree.specialization,
-            startDate: externalDegree.start_date.split("T")[0],
-            endDate: externalDegree.end_date.split("T")[0],
-          };
-
-          setDegreePartner(mappedData);
-          setFormData(mappedData);
-        } else {
-          setDegreePartner(null);
-        }
+        const mappedData: DegreePartnerData = {
+          collegeName: externalDegree.college_name,
+          degreeName: externalDegree.degree_name,
+          specialization: externalDegree.specialization,
+          startDate: externalDegree.start_date.split("T")[0],
+          endDate: externalDegree.end_date.split("T")[0],
+        };
+        setDegreePartner(mappedData);
       }
     } catch (error) {
       console.error("Error fetching degree partner:", error);
@@ -71,24 +61,16 @@ const DegreePartnerCard = () => {
     fetchDegreePartner();
   }, [studentId]);
 
-  const handleOpenModal = () => {
-    if (degreePartner) {
-      setFormData({
-        collegeName: degreePartner.collegeName,
-        degreeName: degreePartner.degreeName,
-        specialization: degreePartner.specialization,
-        startDate: degreePartner.startDate.split("T")[0],
-        endDate: degreePartner.endDate.split("T")[0],
-      });
-    } else {
-      setFormData({
+  const openModal = () => {
+    setFormData(
+      degreePartner || {
         collegeName: "",
         degreeName: "",
         specialization: "",
         startDate: "",
         endDate: "",
-      });
-    }
+      }
+    );
     setFormError(null);
     setIsModalOpen(true);
   };
@@ -120,14 +102,12 @@ const DegreePartnerCard = () => {
           degree_name: formData.degreeName,
           specialisation: formData.specialization,
           start_date: new Date(formData.startDate).toISOString(),
-          end_date: formData.endDate
-            ? new Date(formData.endDate).toISOString()
-            : null,
+          end_date: new Date(formData.endDate).toISOString(),
         },
         { withCredentials: true }
       );
 
-      setDegreePartner({ ...formData });
+      setDegreePartner(formData);
       setIsModalOpen(false);
     } catch (error: any) {
       setFormError(
@@ -136,22 +116,29 @@ const DegreePartnerCard = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Degree Partner</h3>
+        <p className="text-sm text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-50 rounded-sm shadow-lg border border-gray-400 p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-gray-900">Degree Partner</h3>
         <button
-          onClick={handleOpenModal}
-          className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-300 cursor-pointer"
+          onClick={openModal}
+          className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
           aria-label="Edit degree partner"
         >
           <Edit3 className="w-4 h-4" />
         </button>
       </div>
 
-      {loading ? (
-        <p className="text-sm text-gray-600">Loading...</p>
-      ) : degreePartner ? (
+      {degreePartner ? (
         <div className="flex items-start space-x-4 p-4 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
           <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center shadow-md">
             <RiGraduationCapFill className="w-6 h-6 text-white" />
@@ -187,7 +174,7 @@ const DegreePartnerCard = () => {
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
@@ -254,7 +241,7 @@ const DegreePartnerCard = () => {
                       name="startDate"
                       value={formData.startDate}
                       onChange={handleChange}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer"
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                     />
                   </div>
                   <div>
@@ -266,7 +253,7 @@ const DegreePartnerCard = () => {
                       name="endDate"
                       value={formData.endDate}
                       onChange={handleChange}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer"
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                     />
                   </div>
                 </div>
@@ -275,13 +262,13 @@ const DegreePartnerCard = () => {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-sm text-sm font-medium transition cursor-pointer"
+                    className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-sm text-sm font-medium transition"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-700 text-white rounded-sm text-sm font-medium transition cursor-pointer"
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-700 text-white rounded-sm text-sm font-medium transition"
                   >
                     Save
                   </button>

@@ -355,7 +355,7 @@ export default function CPRManagement() {
       prev.map((row) => {
         if (row.id !== id) return row;
 
-        let updated = { ...row, status: newStatus };
+        const updated = { ...row, status: newStatus };
 
         if (row.status === "Pending" && newStatus === "In Progress") {
           updated.actualStartDate = now;
