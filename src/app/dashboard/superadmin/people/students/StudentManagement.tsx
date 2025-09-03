@@ -175,6 +175,26 @@ export default function StudentManagement() {
     fetchStudents();
   }, [selectedDivision]);
 
+  const selectedCenterName = useMemo(() => {
+    const c = centers.find((c) => c.id === selectedCenter);
+    return c?.name || "";
+  }, [centers, selectedCenter]);
+
+  const selectedSchoolName = useMemo(() => {
+    const c = schools.find((c) => c.id === selectedSchool);
+    return c?.name || "";
+  }, [schools, selectedSchool]);
+
+  const selectedBatchName = useMemo(() => {
+    const c = batches.find((c) => c.id === selectedBatch);
+    return c?.name || "";
+  }, [batches, selectedBatch]);
+
+  const selectedDivisionName = useMemo(() => {
+    const c = divisions.find((c) => c.id === selectedDivision);
+    return c?.code || "";
+  }, [divisions, selectedDivision]);
+
   const allFiltersSelected =
     !!selectedCenter &&
     !!selectedSchool &&
@@ -267,7 +287,7 @@ export default function StudentManagement() {
                     setSelectedBatch("");
                     setSelectedDivision("");
                   }}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm"
+                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm cursor-pointer"
                 >
                   <option value="">Select Center</option>
                   {centers.map((c) => (
@@ -298,7 +318,7 @@ export default function StudentManagement() {
                     setSelectedDivision("");
                   }}
                   disabled={!selectedCenter || loadingSchools}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
+                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-200 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <option value="">
                     {loadingSchools ? "Loading..." : "Select School"}
@@ -331,7 +351,7 @@ export default function StudentManagement() {
                     setSelectedDivision("");
                   }}
                   disabled={!selectedSchool || loadingBatches}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
+                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-200 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <option value="">
                     {loadingBatches ? "Loading..." : "Select Batch"}
@@ -363,7 +383,7 @@ export default function StudentManagement() {
                     setSelectedDivision(e.target.value);
                   }}
                   disabled={!selectedBatch || loadingDivisions}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
+                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-200 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <option value="">
                     {loadingDivisions ? "Loading..." : "Select Division"}
@@ -392,10 +412,16 @@ export default function StudentManagement() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 text-center">
+              <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 text-center flex flex-col items-center justify-center">
                 <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
                 <h4 className="text-lg text-slate-900 mb-1">
-                  Students in selected batch
+                  Students in{" "}
+                  <span className="font-bold">{selectedCenterName}</span> |{" "}
+                  <span className="font-bold">
+                    {selectedSchoolName +
+                      selectedBatchName +
+                      selectedDivisionName}
+                  </span>
                 </h4>
                 <p className="text-5xl font-bold text-[#1B3A6A]">
                   {statistics.totalStudents}

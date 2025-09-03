@@ -91,6 +91,11 @@ export default function TeacherManagement() {
     return c?.name || "";
   }, [centers, selectedLocation]);
 
+  const selectedSchoolName = useMemo(() => {
+    const c = schools.find((c) => c.id === selectedSchool);
+    return c?.name || "";
+  }, [schools, selectedSchool]);
+
   const statistics = useMemo(() => {
     return {
       totalTeachers: teachers.length,
@@ -247,10 +252,12 @@ export default function TeacherManagement() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 text-center">
+              <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 text-center flex items-center justify-center flex-col">
                 <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
                 <h4 className="text-lg text-slate-900 mb-1">
-                  Teachers in selected center and school
+                  Teachers in{" "}
+                  <span className="font-bold">{selectedCenterName}</span> |{" "}
+                  <span className="font-bold">{selectedSchoolName}</span>
                 </h4>
                 <p className="text-5xl font-bold text-[#1B3A6A]">
                   {statistics.totalTeachers}
