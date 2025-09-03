@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
 
 interface UserData {
   id: string;
@@ -46,6 +47,8 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
 
   const pathname = usePathname();
   const router = useRouter();
+    const { logout } = useAuth();
+  
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -167,8 +170,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   }, [isMobileMenuOpen, isProfileSidebarOpen]);
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    router.push("/auth/login/student");
+    logout(); 
   };
 
   const handleCodingPlatformRedirect = () => {

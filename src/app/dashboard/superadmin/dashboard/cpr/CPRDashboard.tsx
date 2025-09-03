@@ -3,54 +3,19 @@
 import { useState, useEffect } from "react";
 import { Calendar, ChevronDown } from "lucide-react";
 import Table from "../../Table";
+import axios from "axios";
 
-const centers = [
-  { id: "c1", name: "Downtown Campus" },
-  { id: "c2", name: "Uptown Learning Center" },
-  { id: "c3", name: "Westside Academy" },
-];
+interface Center {
+  id: string;
+  name: string;
+  location: string;
+  code: string;
+}
 
-const schools = [
-  { id: "s1", name: "School of Computer Science" },
-  { id: "s2", name: "School of Engineering" },
-  { id: "s3", name: "School of Mathematics" },
-];
-
-const mockSubjectData = [
-  {
-    id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-    subject_name: "Data Structures and Algorithms",
-    subject_code: "CS201",
-    teacher_name: "Dr. Evelyn Reed",
-    total_sub_topics: 65,
-    completed_sub_topics: 32,
-    in_progress_sub_topics: 3,
-    pending_sub_topics: 30,
-    completion_lag: 1.5,
-  },
-  {
-    id: "f0e9d8c7-b6a5-4321-fedc-ba9876543210",
-    subject_name: "Database Management Systems",
-    subject_code: "CS202",
-    teacher_name: "Prof. Alan Grant",
-    total_sub_topics: 50,
-    completed_sub_topics: 25,
-    in_progress_sub_topics: 10,
-    pending_sub_topics: 15,
-    completion_lag: -1.25,
-  },
-  {
-    id: "12345678-abcd-efab-cdef-1234567890ab",
-    subject_name: "Operating Systems",
-    subject_code: "CS203",
-    teacher_name: "Dr. Ian Malcolm",
-    total_sub_topics: 0,
-    completed_sub_topics: 0,
-    in_progress_sub_topics: 0,
-    pending_sub_topics: 0,
-    completion_lag: 0,
-  },
-];
+interface School {
+  id: string;
+  name: string;
+}
 
 interface Subject {
   id: string;
@@ -65,9 +30,11 @@ interface Subject {
 }
 
 export default function CPRDashboard() {
+  const [centers, setCenters] = useState<Center[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("");
-  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [statistics, setStatistics] = useState({
     totalSubjects: 0,
     totalSubTopics: 0,
@@ -80,15 +47,82 @@ export default function CPRDashboard() {
   const bothFiltersSelected = selectedLocation && selectedSchool;
 
   useEffect(() => {
-    if (bothFiltersSelected) {
-      const timer = setTimeout(() => {
-        setSubjects(mockSubjectData);
-      }, 300);
-      return () => clearTimeout(timer);
-    } else {
-      setSubjects([]);
-    }
-  }, [bothFiltersSelected]);
+    const getCenters = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+          { withCredentials: true }
+        );
+
+        const fetchedCenters: Center[] = res.data.data.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          location: c.location,
+          code: c.code,
+        }));
+
+        setCenters(fetchedCenters);
+      } catch (err) {
+        console.error("Error fetching centers:", err);
+      }
+    };
+
+    getCenters();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedLocation) return;
+
+    const getSchools = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${selectedLocation}`,
+          { withCredentials: true }
+        );
+
+        setSchools(res.data.data);
+      } catch (err) {
+        console.error("Error fetching schools:", err);
+      }
+    };
+
+    getSchools();
+  }, [selectedLocation]);
+
+  useEffect(() => {
+    if (!bothFiltersSelected) return;
+
+    const getCprData = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/summary/school`,
+          {
+            params: { centerId: selectedLocation, schoolId: selectedSchool },
+            withCredentials: true,
+          }
+        );
+
+        const formattedSubjects: Subject[] = res.data.data.map((item: any) => ({
+          id: item.subject.id,
+          subject_name: item.subject.name,
+          subject_code: item.subject.code,
+          teacher_name:
+            item.teacher_name || item.subject.teacher?.name || "N/A",
+          total_sub_topics: item.total_sub_topics,
+          completed_sub_topics: item.completed_sub_topics,
+          in_progress_sub_topics: item.in_progress_sub_topics,
+          pending_sub_topics: item.pending_sub_topics,
+          completion_lag: item.completion_lag,
+        }));
+
+        setSubjects(formattedSubjects);
+      } catch (err) {
+        console.error("Error fetching CPR data:", err);
+      }
+    };
+
+    getCprData();
+  }, [bothFiltersSelected, selectedLocation, selectedSchool]);
 
   useEffect(() => {
     if (subjects.length === 0) {
@@ -132,24 +166,30 @@ export default function CPRDashboard() {
     });
   }, [subjects]);
 
-  const handleDeleteSubject = (id: string | number) => {
-    console.log("Deleting subject:", id);
+const handleDeleteSubject = async (id: string | number) => {
+  try {
+    await axios.delete(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/subject/${id}`,
+      { withCredentials: true }
+    );
+
     setSubjects((prev) => prev.filter((s) => s.id !== id));
-  };
+  } catch (err) {
+    console.error("Error deleting subject:", err);
+    alert("Failed to delete subject. Please try again.");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Page Title */}
         <h2 className="text-3xl font-bold text-slate-900">CPR Management</h2>
 
-        {/* Filter Card */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-white text-sm font-semibold mb-4">
             Filter Subjects
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Center Filter */}
             <div className="relative">
               <label
                 htmlFor="center"
@@ -175,7 +215,6 @@ export default function CPRDashboard() {
               </div>
             </div>
 
-            {/* School Filter */}
             <div className="relative">
               <label
                 htmlFor="school"
@@ -209,7 +248,6 @@ export default function CPRDashboard() {
           )}
         </div>
 
-        {/* Insight Cards */}
         {bothFiltersSelected && subjects.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Total Subjects */}
@@ -268,7 +306,6 @@ export default function CPRDashboard() {
           </div>
         )}
 
-        {/* Table Section */}
         {bothFiltersSelected && (
           <Table
             data={subjects}
@@ -303,7 +340,6 @@ export default function CPRDashboard() {
           />
         )}
 
-        {/* No Data State */}
         {bothFiltersSelected && subjects.length === 0 && (
           <div className="bg-white border border-gray-200 rounded-sm p-8 text-center">
             <p className="text-gray-500">

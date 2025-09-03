@@ -19,6 +19,7 @@ import {
   Calendar,
 } from "lucide-react";
 import Image from "next/image";
+import { useAuth } from "@/context/AuthContext";
 
 const StudentLayout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
@@ -28,6 +29,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
   const [userInfo, setUserInfo] = useState<any>(null);
   const pathname = usePathname();
   const router = useRouter();
+  const { logout } = useAuth();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -132,8 +134,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
   }, [isMobileMenuOpen, isProfileSidebarOpen]);
 
   const handleLogout = () => {
-    console.log("Logout clicked");
-    router.push("/auth/student/login");
+    logout();
   };
 
   const handleCodingPlatformRedirect = () => {

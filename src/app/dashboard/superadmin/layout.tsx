@@ -17,6 +17,7 @@ import {
   ChartPie,
 } from "lucide-react";
 import Image from "next/image";
+import { useAuth } from "@/context/AuthContext";
 
 const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -24,6 +25,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { logout } = useAuth();
 
   const menuItems = [
     { id: "home", label: "Home", icon: House, href: "/dashboard/superadmin" },
@@ -241,8 +243,8 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
     };
   }, [isMobileMenuOpen]);
 
-  const handleLogout = () => {
-    router.push("/auth/admin/login");
+const handleLogout = () => {
+    logout();
   };
 
   const goToFeed = () => {

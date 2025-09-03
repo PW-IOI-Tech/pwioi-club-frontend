@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 interface AuthContextType {
   accessToken: string | null;
@@ -55,15 +56,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const logout = () => {
+const logout = async () => {
+  try {
+    await axios.post(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/logout`,
+      {},
+      { withCredentials: true }
+    );
+
     setAccessToken(null);
     setRefreshToken(null);
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     localStorage.removeItem("userDetails");
+
     router.push("/");
-  };
+  } catch (err) {
+    console.error("Logout failed:", err);
+  }
+};
 
   return (
     <AuthContext.Provider value={{ accessToken, setAccessToken, logout }}>
