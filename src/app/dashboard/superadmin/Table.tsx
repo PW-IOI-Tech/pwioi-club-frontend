@@ -288,9 +288,21 @@ const Table: React.FC<TableProps> = ({
     setEditingField(null);
   };
 
+  const handleEditBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      closeEditModal();
+    }
+  };
+
   const closeDeleteModal = () => {
     setDeleteModalOpen(false);
     setFieldToDelete(null);
+  };
+
+  const handleDeleteBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      closeDeleteModal();
+    }
   };
 
   const renderCellContent = (item: GenericTableItem, column: ColumnConfig) => {
@@ -395,7 +407,10 @@ const Table: React.FC<TableProps> = ({
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 overflow-hidden">
       {/* Edit Modal */}
       {editModalOpen && editingField && (
-        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div
+          className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={handleEditBackdropClick}
+        >
           <div className="bg-white rounded-sm max-w-md w-full max-h-[90vh] flex flex-col shadow-2xl border border-gray-400">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -450,7 +465,10 @@ const Table: React.FC<TableProps> = ({
 
       {/* Delete Modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div
+          className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={handleDeleteBackdropClick}
+        >
           <div className="bg-white rounded-sm border border-gray-400 max-w-md w-full shadow-2xl">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">

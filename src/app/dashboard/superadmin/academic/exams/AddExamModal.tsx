@@ -17,7 +17,7 @@ interface AddExamModalProps {
   selectedBatch: string;
   selectedDivision: string;
   selectedSemester: string;
-  selectedSubject:string;
+  selectedSubject: string;
 }
 
 type ExamType = "Midterm" | "Final" | "Quiz" | "Assignment" | "Practical";
@@ -47,7 +47,7 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
   selectedBatch,
   selectedDivision,
   selectedSemester,
-  selectedSubject
+  selectedSubject,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     examName: "",
@@ -59,6 +59,12 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
 
   React.useEffect(() => {
     if (isOpen) {
@@ -74,24 +80,23 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
     }
   }, [isOpen]);
 
-const handleInputChange = (
-  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-) => {
-  const { name, value } = e.target;
-  setFormData((prev) => ({
-    ...prev,
-    [name]: name === "weightage" ? Number(value) : value,
-  }));
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "weightage" ? Number(value) : value,
+    }));
 
-  if (formErrors[name]) {
-    setFormErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[name];
-      return newErrors;
-    });
-  }
-};
-
+    if (formErrors[name]) {
+      setFormErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -195,7 +200,10 @@ const handleInputChange = (
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-sm p-6 max-w-lg w-full border border-gray-400 max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add New Exam</h3>
 

@@ -33,6 +33,12 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
   React.useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -69,11 +75,7 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
       errors.divisionId = "Division is required";
     }
 
-    if (
-      !formData.number ||
-      formData.number < 1 ||
-      formData.number > 8
-    ) {
+    if (!formData.number || formData.number < 1 || formData.number > 8) {
       errors.number = "Semester must be 1–8";
     }
 
@@ -118,7 +120,10 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-sm p-6 max-w-lg w-full border border-gray-400">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add Semester</h3>
 
@@ -166,9 +171,7 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
                   value={formData.number}
                   onChange={handleInputChange}
                   className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
-                    formErrors.number
-                      ? "border-red-500"
-                      : "border-gray-300"
+                    formErrors.number ? "border-red-500" : "border-gray-300"
                   }`}
                 >
                   {Array.from({ length: 8 }, (_, i) => (
@@ -183,9 +186,7 @@ const AddSemesterModal: React.FC<AddSemesterModalProps> = ({
                 />
               </div>
               {formErrors.number && (
-                <p className="mt-1 text-sm text-red-600">
-                  {formErrors.number}
-                </p>
+                <p className="mt-1 text-sm text-red-600">{formErrors.number}</p>
               )}
             </div>
 

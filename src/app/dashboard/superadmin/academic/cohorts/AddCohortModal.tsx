@@ -94,21 +94,27 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
   const [loadingTeachers, setLoadingTeachers] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
   useEffect(() => {
     const fetchSchools = async () => {
       if (!centerId) return;
-      
+
       setLoadingSchools(true);
       try {
         const res = await axios.get(`${BACKEND_URL}/api/schools/${centerId}`, {
           withCredentials: true,
         });
-        
+
         const fetchedSchools: School[] = res.data.data.map((school: any) => ({
           id: school.id,
           name: school.name,
         }));
-        
+
         setSchools(fetchedSchools);
       } catch (err) {
         console.error("Error fetching schools:", err);
@@ -117,7 +123,7 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
         setLoadingSchools(false);
       }
     };
-    
+
     if (isOpen && centerId) {
       fetchSchools();
     }
@@ -129,28 +135,33 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
         setTeachers([]);
         return;
       }
-      
+
       setLoadingTeachers(true);
       try {
-        const res = await axios.get(`${BACKEND_URL}/api/teachers/school/${formData.school}`, {
-          withCredentials: true,
-        });
-        
-        const fetchedTeachers: Teacher[] = res.data.data.map((teacher: any) => ({
-          id: teacher.id,
-          name: teacher.name,
-          email: teacher.email,
-          phone: teacher.phone,
-          pwId: teacher.pwId,
-          gender: teacher.gender,
-          role: teacher.role,
-          designation: teacher.designation,
-          linkedin: teacher.linkedin,
-          github_link: teacher.github_link,
-          personal_mail: teacher.personal_mail,
-          createdAt: teacher.createdAt,
-        }));
-        
+        const res = await axios.get(
+          `${BACKEND_URL}/api/teachers/school/${formData.school}`,
+          {
+            withCredentials: true,
+          }
+        );
+
+        const fetchedTeachers: Teacher[] = res.data.data.map(
+          (teacher: any) => ({
+            id: teacher.id,
+            name: teacher.name,
+            email: teacher.email,
+            phone: teacher.phone,
+            pwId: teacher.pwId,
+            gender: teacher.gender,
+            role: teacher.role,
+            designation: teacher.designation,
+            linkedin: teacher.linkedin,
+            github_link: teacher.github_link,
+            personal_mail: teacher.personal_mail,
+            createdAt: teacher.createdAt,
+          })
+        );
+
         setTeachers(fetchedTeachers);
       } catch (err) {
         console.error("Error fetching teachers:", err);
@@ -159,7 +170,7 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
         setLoadingTeachers(false);
       }
     };
-    
+
     fetchTeachers();
   }, [formData.school]);
 
@@ -361,7 +372,10 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-sm p-6 max-w-3xl w-full border border-gray-400 max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add New Cohort</h3>
 
@@ -434,7 +448,9 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                   {loadingTeachers ? (
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="animate-spin mr-2" size={16} />
-                      <span className="text-sm text-gray-500">Loading teachers...</span>
+                      <span className="text-sm text-gray-500">
+                        Loading teachers...
+                      </span>
                     </div>
                   ) : getAvailableTeachers().length === 0 ? (
                     <p className="text-sm text-gray-500">
@@ -456,9 +472,13 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                             className="rounded text-[#1B3A6A] focus:ring-[#1B3A6A]"
                           />
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium">{teacher.name}</span>
+                            <span className="text-sm font-medium">
+                              {teacher.name}
+                            </span>
                             {teacher.designation && (
-                              <span className="text-xs text-gray-500">{teacher.designation}</span>
+                              <span className="text-xs text-gray-500">
+                                {teacher.designation}
+                              </span>
                             )}
                           </div>
                         </label>
@@ -576,7 +596,7 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                     <button
                       type="button"
                       onClick={removeFile}
-                      className="flex items-center justify-center gap-1 text-red-600 hover:text-red-800 text-sm mx-auto"
+                      className="flex items-center justify-center gap-1 text-red-600 hover:text-red-800 text-sm mx-auto cursor-pointer"
                     >
                       <X size={16} /> Remove File
                     </button>
@@ -605,7 +625,7 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                     <button
                       type="button"
                       onClick={removeFile}
-                      className="flex items-center justify-center gap-1 text-red-600 hover:text-red-800 text-sm mx-auto"
+                      className="flex items-center justify-center gap-1 text-red-600 hover:text-red-800 text-sm mx-auto cursor-pointer"
                     >
                       <X size={16} /> Remove
                     </button>
@@ -623,7 +643,7 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
                         setUploadStatus("idle");
                         setErrorMessage("");
                       }}
-                      className="text-sm text-red-600 underline hover:text-red-800"
+                      className="text-sm text-red-600 underline hover:text-red-800 cursor-pointer"
                     >
                       Try Again
                     </button>
@@ -643,7 +663,8 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
               </div>
 
               <p className="text-xs text-gray-500 mt-2">
-                You can drag & drop or click to select a file. This file is required to create the cohort.
+                You can drag & drop or click to select a file. This file is
+                required to create the cohort.
               </p>
               {formErrors.uploadedFile && (
                 <p className="mt-1 text-sm text-red-600">
@@ -658,14 +679,14 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
               type="button"
               onClick={handleClose}
               disabled={isCreating}
-              className="px-4 py-2 border border-gray-300 rounded-sm text-slate-900 hover:bg-gray-100 disabled:opacity-50"
+              className="px-4 py-2 border border-gray-300 rounded-sm text-slate-900 hover:bg-gray-100 disabled:opacity-50 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isCreating}
-              className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50"
+              className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 cursor-pointer"
             >
               {isCreating ? (
                 <>

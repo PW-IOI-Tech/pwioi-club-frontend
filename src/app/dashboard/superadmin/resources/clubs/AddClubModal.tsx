@@ -39,6 +39,12 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
   const [coreMembersInput, setCoreMembersInput] = useState("");
   const [facultyInput, setFacultyInput] = useState("");
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       setFormData((prev) => ({ ...prev, centerLocation: prefillLocation }));
@@ -202,7 +208,10 @@ const AddClubModal: React.FC<AddClubModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-sm p-6 max-w-lg w-full border border-gray-400 max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add New Club</h3>
 
