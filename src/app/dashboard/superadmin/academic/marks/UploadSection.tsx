@@ -26,40 +26,46 @@ interface TeachingDetailsResponse {
     email: string;
     designation: string;
   };
-  schools: {
+  centers: {
     id: string;
     name: string;
-    batches: {
+    schools: {
       id: string;
       name: string;
-      divisions: {
+      batches: {
         id: string;
-        code: string;
-        total_students: number;
-        semesters: {
+        name: string;
+        divisions: {
           id: string;
-          number: number;
-          start_date: string;
-          end_date: string;
-          is_current: boolean;
-          subjects: {
+          code: string;
+          total_students: number;
+          semesters: {
             id: string;
-            name: string;
-            code: string;
-            credits: number;
-            exam_types: any;
-            total_exam_types: number;
-            total_exams: number;
+            number: number;
+            start_date: string;
+            end_date: string;
+            is_current: boolean;
+            subjects: {
+              id: string;
+              name: string;
+              code: string;
+              credits: number;
+              exam_types: any;
+              total_exam_types: number;
+              total_exams: number;
+            }[];
+            total_subjects: number;
           }[];
-          total_subjects: number;
+          total_semesters: number;
         }[];
-        total_semesters: number;
+        total_divisions: number;
       }[];
-      total_divisions: number;
+      total_batches: number;
     }[];
-    total_batches: number;
+    total_schools: number;
   }[];
   summary: {
+    total_centers: number;
     total_schools: number;
     total_batches: number;
     total_divisions: number;
@@ -83,6 +89,7 @@ interface Student {
 export default function UploadSection({}: UploadSectionProps) {
   const [teachingDetails, setTeachingDetails] =
     useState<TeachingDetailsResponse | null>(null);
+  const [center, setCenter] = useState("");
   const [school, setSchool] = useState("");
   const [batch, setBatch] = useState("");
   const [division, setDivision] = useState("");
@@ -120,7 +127,17 @@ export default function UploadSection({}: UploadSectionProps) {
     getTeachingDetails();
   }, []);
 
-  const canGetStudents = school && batch && division && semester && subject;
+  const canGetStudents =
+    center && school && batch && division && semester && subject;
+
+  useEffect(() => {
+    setSchool("");
+    setBatch("");
+    setDivision("");
+    setSemester("");
+    setSubject("");
+    setShowStudents(false);
+  }, [center]);
 
   useEffect(() => {
     setBatch("");
@@ -160,7 +177,7 @@ export default function UploadSection({}: UploadSectionProps) {
           withCredentials: true,
         }
       );
-      setStudents(response?.data?.data);
+      setStudents(response?.data?.data || []);
       setShowStudents(true);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -270,7 +287,6 @@ export default function UploadSection({}: UploadSectionProps) {
     try {
       const formData = new FormData();
       formData.append("marksFile", uploadedFile);
-      console.log(examNumber);
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${examNumber}/upload`,
@@ -301,14 +317,27 @@ export default function UploadSection({}: UploadSectionProps) {
     document.body.removeChild(link);
   };
 
-  const schoolOptions =
-    teachingDetails?.schools.map((s) => ({
-      value: s.id,
-      label: s.name,
+  const centerOptions =
+    teachingDetails?.centers.map((c) => ({
+      value: c.id,
+      label: c.name,
     })) || [];
 
+  const getSchoolOptions = (centerId: string) => {
+    const center = teachingDetails?.centers.find((c) => c.id === centerId);
+    return (
+      center?.schools.map((s) => ({
+        value: s.id,
+        label: s.name,
+      })) || []
+    );
+  };
+
   const getBatchOptions = (schoolId: string) => {
-    const school = teachingDetails?.schools.find((s) => s.id === schoolId);
+    if (!center) return [];
+    const school = teachingDetails?.centers
+      .find((c) => c.id === center)
+      ?.schools.find((s) => s.id === schoolId);
     return (
       school?.batches.map((b) => ({
         value: b.id,
@@ -318,8 +347,9 @@ export default function UploadSection({}: UploadSectionProps) {
   };
 
   const getDivisionOptions = (schoolId: string, batchId: string) => {
-    const batch = teachingDetails?.schools
-      .find((s) => s.id === schoolId)
+    const batch = teachingDetails?.centers
+      .find((c) => c.id === center)
+      ?.schools.find((s) => s.id === schoolId)
       ?.batches.find((b) => b.id === batchId);
 
     return (
@@ -335,8 +365,9 @@ export default function UploadSection({}: UploadSectionProps) {
     batchId: string,
     divisionId: string
   ) => {
-    const division = teachingDetails?.schools
-      .find((s) => s.id === schoolId)
+    const division = teachingDetails?.centers
+      .find((c) => c.id === center)
+      ?.schools.find((s) => s.id === schoolId)
       ?.batches.find((b) => b.id === batchId)
       ?.divisions.find((d) => d.id === divisionId);
 
@@ -354,8 +385,9 @@ export default function UploadSection({}: UploadSectionProps) {
     divisionId: string,
     semesterId: string
   ) => {
-    const semester = teachingDetails?.schools
-      .find((s) => s.id === schoolId)
+    const semester = teachingDetails?.centers
+      .find((c) => c.id === center)
+      ?.schools.find((s) => s.id === schoolId)
       ?.batches.find((b) => b.id === batchId)
       ?.divisions.find((d) => d.id === divisionId)
       ?.semesters.find((sem) => sem.id === semesterId);
@@ -375,8 +407,9 @@ export default function UploadSection({}: UploadSectionProps) {
     semesterId: string,
     subjectId: string
   ) => {
-    const subject = teachingDetails?.schools
-      ?.find((s) => s.id === schoolId)
+    const subject = teachingDetails?.centers
+      ?.find((c) => c.id === center)
+      ?.schools?.find((s) => s.id === schoolId)
       ?.batches?.find((b) => b.id === batchId)
       ?.divisions?.find((d) => d.id === divisionId)
       ?.semesters?.find((sem) => sem.id === semesterId)
@@ -400,8 +433,9 @@ export default function UploadSection({}: UploadSectionProps) {
     subjectId: string,
     examType: string
   ) => {
-    const examTypeObj = teachingDetails?.schools
-      ?.find((s) => s.id === schoolId)
+    const examTypeObj = teachingDetails?.centers
+      ?.find((c) => c.id === center)
+      ?.schools?.find((s) => s.id === schoolId)
       ?.batches?.find((b) => b.id === batchId)
       ?.divisions?.find((d) => d.id === divisionId)
       ?.semesters?.find((sem) => sem.id === semesterId)
@@ -446,7 +480,32 @@ export default function UploadSection({}: UploadSectionProps) {
             Select Exam Details
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 mb-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-4 mb-4 text-sm">
+            {/* Center */}
+            <div>
+              <label className="block font-medium text-gray-700 mb-2">
+                Center
+              </label>
+              <div className="relative">
+                <select
+                  value={center}
+                  onChange={(e) => setCenter(e.target.value)}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
+                >
+                  <option value="">Select Center</option>
+                  {centerOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+              </div>
+            </div>
+
             {/* School */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
@@ -458,10 +517,11 @@ export default function UploadSection({}: UploadSectionProps) {
                   onChange={(e) => {
                     setSchool(e.target.value);
                   }}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
+                  disabled={!center}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select School</option>
-                  {schoolOptions.map((option) => (
+                  {getSchoolOptions(center).map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -469,7 +529,9 @@ export default function UploadSection({}: UploadSectionProps) {
                 </select>
                 <ChevronDown
                   size={16}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
+                    !center ? "text-gray-300" : "text-gray-400"
+                  }`}
                 />
               </div>
             </div>
@@ -596,6 +658,7 @@ export default function UploadSection({}: UploadSectionProps) {
               </div>
             </div>
 
+            {/* Exam Type */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
                 Exam Type
