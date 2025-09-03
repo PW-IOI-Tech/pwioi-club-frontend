@@ -20,6 +20,7 @@ import {
   Shield,
   Flag,
   Compass,
+  Percent,
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -51,13 +52,14 @@ export default function AdminDashboard() {
     divisions: "/dashboard/superadmin/academic/divisions",
     semester: "/dashboard/superadmin/academic/divisions",
     subjects: "/dashboard/superadmin/academic/subjects",
+    exams: "/dashboard/superadmin/academic/exams",
+    marks: "/dashboard/superadmin/academic/marks",
     classes: "/dashboard/superadmin/academic/classes",
     cohorts: "/dashboard/superadmin/academic/cohorts",
 
     // Operations & Events
     jobs: "/dashboard/superadmin/operations/jobs",
     events: "/dashboard/superadmin/operations/events",
-    exams: "/dashboard/superadmin/academic/exams",
 
     // Resources & Governance
     rooms: "/dashboard/superadmin/resources/rooms",
@@ -139,6 +141,12 @@ export default function AdminDashboard() {
           label: "Exams Management",
           icon: ClipboardList,
           description: "Examination scheduling and results",
+        },
+        {
+          id: "marks",
+          label: "Marks Management",
+          icon: Percent,
+          description: "Upload xls file for student marks",
         },
         {
           id: "classes",
