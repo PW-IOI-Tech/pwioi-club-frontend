@@ -89,15 +89,29 @@ interface Student {
 export default function UploadSection({}: UploadSectionProps) {
   const [teachingDetails, setTeachingDetails] =
     useState<TeachingDetailsResponse | null>(null);
-  const [center, setCenter] = useState("");
-  const [school, setSchool] = useState("");
-  const [batch, setBatch] = useState("");
-  const [division, setDivision] = useState("");
-  const [semester, setSemester] = useState("");
-  const [subject, setSubject] = useState("");
-  const [examType, setExamType] = useState("");
-  const [examNumber, setExamNumber] = useState("");
-
+  const [centers, setCenters] = useState<any[]>([]);
+  const [schools, setSchools] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
+  const [divisions, setDivisions] = useState<any[]>([]);
+  const [semesters, setSemesters] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [examType, setExamType] = useState<any[]>([]);
+  const [examName, setExamName] = useState<any[]>([]);
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [loadingBatches, setLoadingBatches] = useState(false);
+  const [loadingDivisions, setLoadingDivisions] = useState(false);
+  const [loadingSemesters, setLoadingSemesters] = useState(false);
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [loadingExams, setLoadingExams] = useState(false);
+  const [loadingClasses, setLoadingClasses] = useState(false);
+  const [selectedCenter, setSelectedCenter] = useState<string>("");
+  const [selectedSchool, setSelectedSchool] = useState<string>("");
+  const [selectedBatch, setSelectedBatch] = useState<string>("");
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
+  const [selectedSemester, setSelectedSemester] = useState<string>("");
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
+  const [selectedExamType,setSelectedExamType]=useState("");
+  const [selectedExamName,setSelectedExamName]=useState("");
   const [students, setStudents] = useState<Student[]>([]);
   const [showStudents, setShowStudents] = useState(false);
 
@@ -111,68 +125,165 @@ export default function UploadSection({}: UploadSectionProps) {
   const [showSchemaHelp, setShowSchemaHelp] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const getTeachingDetails = async () => {
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+          { withCredentials: true }
+        );
+        if (res.data.success) {
+          setCenters(res.data.data);
+        }
+      } catch (err: any) {
+        console.error(err.response?.data?.message || "Failed to fetch centers");
+      }
+    };
+    fetchCenters();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCenter) {
+      setSchools([]);
+      setSelectedSchool("");
+      return;
+    }
+    setLoadingSchools(true);
+    setSchools([]);
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${selectedCenter}`,
+        { withCredentials: true }
+      )
+      .then((res) => setSchools(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch schools"))
+      .finally(() => setLoadingSchools(false));
+  }, [selectedCenter]);
+
+  useEffect(() => {
+    if (!selectedSchool) {
+      setBatches([]);
+      setSelectedBatch("");
+      return;
+    }
+    setLoadingBatches(true);
+    setBatches([]);
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
+        { withCredentials: true }
+      )
+      .then((res) => setBatches(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch batches"))
+      .finally(() => setLoadingBatches(false));
+  }, [selectedSchool]);
+
+  useEffect(() => {
+    if (!selectedBatch) {
+      setDivisions([]);
+      setSelectedDivision("");
+      return;
+    }
+    setLoadingDivisions(true);
+    setDivisions([]);
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/by-batch/${selectedBatch}`,
+        { withCredentials: true }
+      )
+      .then((res) => setDivisions(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch divisions"))
+      .finally(() => setLoadingDivisions(false));
+  }, [selectedBatch]);
+
+  useEffect(() => {
+    if (!selectedDivision) {
+      setSemesters([]);
+      setSelectedSemester("");
+      return;
+    }
+    setLoadingSemesters(true);
+    setSemesters([]);
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${selectedDivision}`,
+        { withCredentials: true }
+      )
+      .then((res) => setSemesters(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch semesters"))
+      .finally(() => setLoadingSemesters(false));
+  }, [selectedDivision]);
+
+  useEffect(() => {
+    if (!selectedSemester) {
+      setSubjects([]);
+      setSelectedSubject("");
+      return;
+    }
+    setLoadingSubjects(true);
+    setSubjects([]);
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/semesters/${selectedSemester}`,
+        { withCredentials: true }
+      )
+      .then((res) => setSubjects(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch subjects"))
+      .finally(() => setLoadingSubjects(false));
+  }, [selectedSemester]);
+
+useEffect(() => {
+  if (!selectedSubject) return;
+
+  setLoadingExams(true);
+
+  const fetchExams = async () => {
     try {
-      const response = await axios.get<TeachingDetailsResponse>(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/teaching-details`,
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/subject/${selectedSubject}`,
         { withCredentials: true }
       );
-      setTeachingDetails(response.data);
+
+      const exams = res.data?.data?.exams || [];
+
+      // Distinct exam types
+      const types = Array.from(new Set(exams.map((e: any) => e.exam_type))).map((t) => ({
+        value: t,
+        label: t,
+      }));
+
+      // All exam names with ids
+      const names = exams.map((e: any) => ({
+        value: e.id,
+        label: e.name,
+        type: e.exam_type,
+      }));
+
+      setExamType(types);
+      setExamName(names);
     } catch (error) {
-      console.error("Error fetching teaching details:", error);
+      console.error("Failed to fetch exams", error);
+    } finally {
+      setLoadingExams(false);
     }
   };
 
-  useEffect(() => {
-    getTeachingDetails();
-  }, []);
+  fetchExams();
+}, [selectedSubject]);
+
 
   const canGetStudents =
-    center && school && batch && division && semester && subject;
-
-  useEffect(() => {
-    setSchool("");
-    setBatch("");
-    setDivision("");
-    setSemester("");
-    setSubject("");
-    setShowStudents(false);
-  }, [center]);
-
-  useEffect(() => {
-    setBatch("");
-    setDivision("");
-    setSemester("");
-    setSubject("");
-    setShowStudents(false);
-  }, [school]);
-
-  useEffect(() => {
-    setDivision("");
-    setSemester("");
-    setSubject("");
-    setShowStudents(false);
-  }, [batch]);
-
-  useEffect(() => {
-    setSemester("");
-    setSubject("");
-    setShowStudents(false);
-  }, [division]);
-
-  useEffect(() => {
-    setSubject("");
-    setShowStudents(false);
-  }, [semester]);
-
-  useEffect(() => {
-    setShowStudents(false);
-  }, [subject]);
+    selectedCenter &&
+    selectedSchool &&
+    selectedBatch &&
+    selectedDivision &&
+    selectedSemester &&
+    selectedSubject;
 
   const handleGetStudents = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/${subject}/students`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/${selectedSubject}/students`,
         {
           withCredentials: true,
         }
@@ -289,7 +400,7 @@ export default function UploadSection({}: UploadSectionProps) {
       formData.append("marksFile", uploadedFile);
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${examNumber}/upload`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${selectedExamName}/upload`,
         formData,
         {
           withCredentials: true,
@@ -315,139 +426,6 @@ export default function UploadSection({}: UploadSectionProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const centerOptions =
-    teachingDetails?.centers.map((c) => ({
-      value: c.id,
-      label: c.name,
-    })) || [];
-
-  const getSchoolOptions = (centerId: string) => {
-    const center = teachingDetails?.centers.find((c) => c.id === centerId);
-    return (
-      center?.schools.map((s) => ({
-        value: s.id,
-        label: s.name,
-      })) || []
-    );
-  };
-
-  const getBatchOptions = (schoolId: string) => {
-    if (!center) return [];
-    const school = teachingDetails?.centers
-      .find((c) => c.id === center)
-      ?.schools.find((s) => s.id === schoolId);
-    return (
-      school?.batches.map((b) => ({
-        value: b.id,
-        label: b.name,
-      })) || []
-    );
-  };
-
-  const getDivisionOptions = (schoolId: string, batchId: string) => {
-    const batch = teachingDetails?.centers
-      .find((c) => c.id === center)
-      ?.schools.find((s) => s.id === schoolId)
-      ?.batches.find((b) => b.id === batchId);
-
-    return (
-      batch?.divisions.map((d) => ({
-        value: d.id,
-        label: d.code,
-      })) || []
-    );
-  };
-
-  const getSemesterOptions = (
-    schoolId: string,
-    batchId: string,
-    divisionId: string
-  ) => {
-    const division = teachingDetails?.centers
-      .find((c) => c.id === center)
-      ?.schools.find((s) => s.id === schoolId)
-      ?.batches.find((b) => b.id === batchId)
-      ?.divisions.find((d) => d.id === divisionId);
-
-    return (
-      division?.semesters.map((sem) => ({
-        value: sem.id,
-        label: `Semester ${sem.number}`,
-      })) || []
-    );
-  };
-
-  const getSubjectOptions = (
-    schoolId: string,
-    batchId: string,
-    divisionId: string,
-    semesterId: string
-  ) => {
-    const semester = teachingDetails?.centers
-      .find((c) => c.id === center)
-      ?.schools.find((s) => s.id === schoolId)
-      ?.batches.find((b) => b.id === batchId)
-      ?.divisions.find((d) => d.id === divisionId)
-      ?.semesters.find((sem) => sem.id === semesterId);
-
-    return (
-      semester?.subjects.map((subj) => ({
-        value: subj.id,
-        label: subj.name,
-      })) || []
-    );
-  };
-
-  const getExamTypeOptions = (
-    schoolId: string,
-    batchId: string,
-    divisionId: string,
-    semesterId: string,
-    subjectId: string
-  ) => {
-    const subject = teachingDetails?.centers
-      ?.find((c) => c.id === center)
-      ?.schools?.find((s) => s.id === schoolId)
-      ?.batches?.find((b) => b.id === batchId)
-      ?.divisions?.find((d) => d.id === divisionId)
-      ?.semesters?.find((sem) => sem.id === semesterId)
-      ?.subjects?.find((sub) => sub.id === subjectId);
-
-    return (
-      subject?.exam_types?.map((et: any) => ({
-        value: et.exam_type,
-        label: et.exam_type
-          .replace(/_/g, " ")
-          .replace(/\b\w/g, (c: any) => c.toUpperCase()),
-      })) ?? []
-    );
-  };
-
-  const getExamNumberOptions = (
-    schoolId: string,
-    batchId: string,
-    divisionId: string,
-    semesterId: string,
-    subjectId: string,
-    examType: string
-  ) => {
-    const examTypeObj = teachingDetails?.centers
-      ?.find((c) => c.id === center)
-      ?.schools?.find((s) => s.id === schoolId)
-      ?.batches?.find((b) => b.id === batchId)
-      ?.divisions?.find((d) => d.id === divisionId)
-      ?.semesters?.find((sem) => sem.id === semesterId)
-      ?.subjects?.find((sub) => sub.id === subjectId)
-      ?.exam_types?.find((et: any) => et.exam_type === examType);
-
-    return (
-      examTypeObj?.exams?.map((exam: any) => ({
-        value: exam.id,
-        label: exam.name,
-      })) || []
-    );
   };
 
   return (
@@ -488,14 +466,14 @@ export default function UploadSection({}: UploadSectionProps) {
               </label>
               <div className="relative">
                 <select
-                  value={center}
-                  onChange={(e) => setCenter(e.target.value)}
+                  value={selectedCenter}
+                  onChange={(e) => setSelectedCenter(e.target.value)}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select Center</option>
-                  {centerOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                  {centers.map((option, index) => (
+                    <option key={index} value={option.id}>
+                      {option.name}
                     </option>
                   ))}
                 </select>
@@ -513,24 +491,24 @@ export default function UploadSection({}: UploadSectionProps) {
               </label>
               <div className="relative">
                 <select
-                  value={school}
+                  value={selectedSchool}
                   onChange={(e) => {
-                    setSchool(e.target.value);
+                    setSelectedSchool(e.target.value);
                   }}
-                  disabled={!center}
+                  disabled={!selectedCenter}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select School</option>
-                  {getSchoolOptions(center).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                  {schools?.map((option, index) => (
+                    <option key={index} value={option.id}>
+                      {option.name}
                     </option>
                   ))}
                 </select>
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !center ? "text-gray-300" : "text-gray-400"
+                    !selectedCenter ? "text-gray-300" : "text-gray-400"
                   }`}
                 />
               </div>
@@ -543,24 +521,24 @@ export default function UploadSection({}: UploadSectionProps) {
               </label>
               <div className="relative">
                 <select
-                  value={batch}
+                  value={selectedBatch}
                   onChange={(e) => {
-                    setBatch(e.target.value);
+                    setSelectedBatch(e.target.value);
                   }}
-                  disabled={!school}
+                  disabled={!selectedSchool}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select Batch</option>
-                  {getBatchOptions(school).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                  {batches?.map((option, index) => (
+                    <option key={index} value={option.id}>
+                      {option.name}
                     </option>
                   ))}
                 </select>
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !school ? "text-gray-300" : "text-gray-400"
+                    !selectedSchool ? "text-gray-300" : "text-gray-400"
                   }`}
                 />
               </div>
@@ -573,24 +551,24 @@ export default function UploadSection({}: UploadSectionProps) {
               </label>
               <div className="relative">
                 <select
-                  value={division}
+                  value={selectedDivision}
                   onChange={(e) => {
-                    setDivision(e.target.value);
+                    setSelectedDivision(e.target.value);
                   }}
-                  disabled={!batch}
+                  disabled={!selectedBatch}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select Division</option>
-                  {getDivisionOptions(school, batch).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                  {divisions?.map((option, index) => (
+                    <option key={index} value={option.id}>
+                      {option.code}
                     </option>
                   ))}
                 </select>
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !batch ? "text-gray-300" : "text-gray-400"
+                    !selectedBatch ? "text-gray-300" : "text-gray-400"
                   }`}
                 />
               </div>
@@ -603,24 +581,24 @@ export default function UploadSection({}: UploadSectionProps) {
               </label>
               <div className="relative">
                 <select
-                  value={semester}
+                  value={selectedSemester}
                   onChange={(e) => {
-                    setSemester(e.target.value);
+                    setSelectedSemester(e.target.value);
                   }}
-                  disabled={!division}
+                  disabled={!selectedDivision}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select Semester</option>
-                  {getSemesterOptions(school, batch, division).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                  {semesters?.map((option, index) => (
+                    <option key={index} value={option.id}>
+                      {option.number}
                     </option>
                   ))}
                 </select>
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !division ? "text-gray-300" : "text-gray-400"
+                    !selectedDivision ? "text-gray-300" : "text-gray-400"
                   }`}
                 />
               </div>
@@ -633,26 +611,24 @@ export default function UploadSection({}: UploadSectionProps) {
               </label>
               <div className="relative">
                 <select
-                  value={subject}
+                  value={selectedSubject}
                   onChange={(e) => {
-                    setSubject(e.target.value);
+                    setSelectedSubject(e.target.value);
                   }}
-                  disabled={!semester}
+                  disabled={!selectedSemester}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select Subject</option>
-                  {getSubjectOptions(school, batch, division, semester).map(
-                    (option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    )
-                  )}
+                  {subjects?.map((option, index) => (
+                    <option key={index} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !semester ? "text-gray-300" : "text-gray-400"
+                    !selectedSemester ? "text-gray-300" : "text-gray-400"
                   }`}
                 />
               </div>
@@ -665,21 +641,15 @@ export default function UploadSection({}: UploadSectionProps) {
               </label>
               <div className="relative">
                 <select
-                  value={examType}
+                  value={selectedExamType}
                   onChange={(e) => {
-                    setExamType(e.target.value);
+                    setSelectedExamType(e.target.value);
                   }}
-                  disabled={!subject}
+                  disabled={!selectedSubject}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
                   <option value="">Select Exam Type</option>
-                  {getExamTypeOptions(
-                    school,
-                    batch,
-                    division,
-                    semester,
-                    subject
-                  ).map((option: any) => (
+                  {examType?.map((option: any) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -688,33 +658,25 @@ export default function UploadSection({}: UploadSectionProps) {
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !subject ? "text-gray-300" : "text-gray-400"
+                    !selectedSubject ? "text-gray-300" : "text-gray-400"
                   }`}
                 />
               </div>
             </div>
 
-            {/* Exam Number */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
-                Exam Number
+                Exam Name
               </label>
               <div className="relative">
                 <select
-                  value={examNumber}
-                  onChange={(e) => setExamNumber(e.target.value)}
-                  disabled={!examType}
+                  value={selectedExamName}
+                  onChange={(e) => setSelectedExamName(e.target.value)}
+                  disabled={!selectedExamType}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
                 >
-                  <option value="">Select Exam Number</option>
-                  {getExamNumberOptions(
-                    school,
-                    batch,
-                    division,
-                    semester,
-                    subject,
-                    examType
-                  ).map((option: any) => (
+                  <option value="">Select Exam Name</option>
+                  {examName?.map((option: any) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -723,7 +685,7 @@ export default function UploadSection({}: UploadSectionProps) {
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !examType ? "text-gray-300" : "text-gray-400"
+                    !selectedExamType ? "text-gray-300" : "text-gray-400"
                   }`}
                 />
               </div>
