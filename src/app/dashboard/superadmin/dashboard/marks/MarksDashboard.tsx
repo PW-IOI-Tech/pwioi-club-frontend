@@ -18,12 +18,10 @@ import {
   Users,
   TrendingUp,
   GraduationCap,
-  MapPin,
   Award,
   Target,
   BarChart3,
   FileText,
-  RefreshCw,
   ChevronRight,
 } from "lucide-react";
 
@@ -57,15 +55,15 @@ const MarksDashboard: React.FC = () => {
   const [semesters, setSemesters] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [testType, setTestType] = useState<any[]>([]);
-  const [testNumbers, setTestNumbers] = useState<any[]>([]);
+  const [testNumbers, _setTestNumbers] = useState<any[]>([]);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_loading, setLoading] = useState(false);
+  const [_error, setError] = useState<string | null>(null);
 
   const [dashboardStats, setDashboardStats] = useState<any>(null);
   const [chartData, setChartData] = useState<any[]>([]);
-  const [examTypes, setExamTypes] = useState<string[]>([]);
-  const [examNumbers, setExamNumbers] = useState<string[]>([]);
+  const [_examTypes, setExamTypes] = useState<string[]>([]);
+  const [_examNumbers, setExamNumbers] = useState<string[]>([]);
 
   useEffect(() => {
     axios

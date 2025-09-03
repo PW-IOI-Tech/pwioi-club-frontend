@@ -1,14 +1,14 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
-import { Loader } from "../../student/callback/page";
+import Loader from "../../Loader";
 
-export default function StudentCallbackPage() {
+function TeacherCallbackContent() {
   const searchParams = useSearchParams();
-     const { setAccessToken } = useAuth();
+  const { setAccessToken } = useAuth();
   const router = useRouter();
   const code = searchParams.get("code");
   const backendUrl =
@@ -37,7 +37,15 @@ export default function StudentCallbackPage() {
           router.push("/auth");
         });
     }
-  }, [code, backendUrl, router]);
+  }, [code, backendUrl, router, setAccessToken]);
 
   return <Loader />;
+}
+
+export default function TeacherCallbackPage() {
+  return (
+    <Suspense fallback={<Loader />}>
+      <TeacherCallbackContent />
+    </Suspense>
+  );
 }

@@ -34,7 +34,7 @@ export default function DivSemManagement() {
   const [batches, setBatches] = useState<any[]>([]);
 
   const [divisions, setDivisions] = useState<Division[]>([]);
-  const [semesters, setSemesters] = useState<Semester[]>([]);
+  const [_semesters, setSemesters] = useState<Semester[]>([]);
 
   const [filteredDivisions, setFilteredDivisions] = useState<Division[]>([]);
   const [filteredSemesters, setFilteredSemesters] = useState<Semester[]>([]);

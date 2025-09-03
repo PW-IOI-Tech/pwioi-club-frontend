@@ -64,7 +64,7 @@ const AttendanceTracker: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "present" | "absent"
   >("all");
-  const [previousAttendance, setPreviousAttendance] = useState<number | null>(
+  const [_previousAttendance, setPreviousAttendance] = useState<number | null>(
     null
   );
 

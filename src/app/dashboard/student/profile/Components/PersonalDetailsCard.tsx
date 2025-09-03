@@ -112,7 +112,7 @@ const PersonalDetailsCard = () => {
         <h3 className="text-lg font-bold text-gray-900">Personal Details</h3>
         <button
           onClick={handleOpenModal}
-          className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
+          className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-300 cursor-pointer"
           aria-label="Edit personal details"
         >
           <RiEdit2Line className="w-5 h-5" />
@@ -183,7 +183,7 @@ const PersonalDetailsCard = () => {
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
@@ -201,14 +201,14 @@ const PersonalDetailsCard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Father's Name
+                      Father&lsquo;s Name
                     </label>
                     <input
                       type="text"
                       name="fathers_name"
                       value={formData.fathers_name}
                       onChange={handleChange}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                     />
                   </div>
                   <div>
@@ -220,7 +220,7 @@ const PersonalDetailsCard = () => {
                       name="fathers_contact_number"
                       value={formData.fathers_contact_number}
                       onChange={handleChange}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                       placeholder="e.g., +91 XXXXXXXXXX"
                     />
                   </div>
@@ -233,7 +233,7 @@ const PersonalDetailsCard = () => {
                       name="fathers_occupation"
                       value={formData.fathers_occupation}
                       onChange={handleChange}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                     />
                   </div>
                 </div>
@@ -241,14 +241,14 @@ const PersonalDetailsCard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Mother's Name
+                      Mother&lsquo;s Name
                     </label>
                     <input
                       type="text"
                       name="mothers_name"
                       value={formData.mothers_name}
                       onChange={handleChange}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                     />
                   </div>
                   <div>
@@ -260,7 +260,7 @@ const PersonalDetailsCard = () => {
                       name="mothers_contact_number"
                       value={formData.mothers_contact_number}
                       onChange={handleChange}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                       placeholder="e.g., +91 XXXXXXXXXX"
                     />
                   </div>
@@ -273,7 +273,7 @@ const PersonalDetailsCard = () => {
                       name="mothers_occupation"
                       value={formData.mothers_occupation}
                       onChange={handleChange}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                     />
                   </div>
                 </div>
@@ -282,13 +282,13 @@ const PersonalDetailsCard = () => {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-sm text-sm font-medium transition"
+                    className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-sm text-sm font-medium transition cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-sm text-sm font-medium transition"
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-700 text-white rounded-sm text-sm font-medium transition cursor-pointer"
                   >
                     Save
                   </button>

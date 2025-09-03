@@ -12,7 +12,6 @@ import {
   User,
   FileImage,
 } from "lucide-react";
-import Image from "next/image";
 import { PostShimmer } from "../superadmin/feed/Feed";
 
 interface User {
@@ -84,10 +83,6 @@ interface FeedProps {
   onFlag: (postId: string) => void;
   getRoleBadgeColor: (role: string) => string;
   loading: boolean;
-}
-
-interface ProfileHeaderProps {
-  user: User;
 }
 
 interface ReportModalProps {

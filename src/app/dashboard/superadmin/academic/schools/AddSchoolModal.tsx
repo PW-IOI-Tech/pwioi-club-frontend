@@ -9,20 +9,13 @@ interface AddSchoolModalProps {
     schoolName: string;
   }) => void;
   prefillLocation?: string;
- centers?: { id: string; name: string }[];
+  centers?: { id: string; name: string }[];
 }
 
 interface FormData {
   location: string;
   schoolName: string;
 }
-
-const locations = [
-  { value: "bangalore", label: "Bangalore" },
-  { value: "lucknow", label: "Lucknow" },
-  { value: "pune", label: "Pune" },
-  { value: "noida", label: "Noida" },
-];
 
 const schoolNames = [
   { value: "SOT", label: "SOT - School of Technology" },
@@ -35,7 +28,7 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
   onClose,
   onSchoolCreated,
   prefillLocation,
-  centers
+  centers,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     location: "",
@@ -44,20 +37,25 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-useEffect(() => {
-  if (isOpen) {
-    if (prefillLocation) {
-      setFormData((prev) => ({
-        ...prev,
-        location: prefillLocation, 
-      }));
-    } else {
-      setFormData({ location: "", schoolName: "" });
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
     }
-    setFormErrors({});
-  }
-}, [isOpen, prefillLocation]);
+  };
 
+  useEffect(() => {
+    if (isOpen) {
+      if (prefillLocation) {
+        setFormData((prev) => ({
+          ...prev,
+          location: prefillLocation,
+        }));
+      } else {
+        setFormData({ location: "", schoolName: "" });
+      }
+      setFormErrors({});
+    }
+  }, [isOpen, prefillLocation]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -122,7 +120,10 @@ useEffect(() => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-sm p-6 max-w-md w-full border border-gray-400">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add New School</h3>
 
@@ -140,23 +141,23 @@ useEffect(() => {
               </label>
               <div className="relative">
                 <select
-  name="location"
-  value={formData.location}
-  onChange={handleInputChange}
-  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none ${
-    formErrors.location ? "border-red-500" : "border-gray-300"
-  } ${prefillLocation ? "bg-gray-50 cursor-not-allowed" : ""}`}
-  disabled={isSubmitting || !!prefillLocation}
->
-  <option value="">
-    {prefillLocation ? "" : "Select Location"}
-  </option>
-  {centers?.map((center) => (
-    <option key={center.id} value={center.id}>
-      {center.name}
-    </option>
-  ))}
-</select>
+                  name="location"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  className={`w-full pl-2 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none ${
+                    formErrors.location ? "border-red-500" : "border-gray-300"
+                  } ${prefillLocation ? "bg-gray-50 cursor-not-allowed" : ""}`}
+                  disabled={isSubmitting || !!prefillLocation}
+                >
+                  <option value="">
+                    {prefillLocation ? "" : "Select Location"}
+                  </option>
+                  {centers?.map((center) => (
+                    <option key={center.id} value={center.id}>
+                      {center.name}
+                    </option>
+                  ))}
+                </select>
 
                 {!prefillLocation && !isSubmitting && (
                   <ChevronDown

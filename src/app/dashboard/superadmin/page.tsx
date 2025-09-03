@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation"; // Add useRouter
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   GraduationCap,
@@ -20,11 +20,27 @@ import {
   Shield,
   Flag,
   Compass,
+  Percent,
 } from "lucide-react";
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const userName = "John Anderson";
+  const [userName, setUserName] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const userString = localStorage.getItem("user");
+    if (userString) {
+      try {
+        const userObj = JSON.parse(userString);
+        setUserName(userObj.name || "");
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        setUserName("");
+      }
+    }
+    setIsLoading(false);
+  }, []);
 
   const routeMap: Record<string, string> = {
     // People Management
@@ -40,13 +56,14 @@ export default function AdminDashboard() {
     divisions: "/dashboard/superadmin/academic/divisions",
     semester: "/dashboard/superadmin/academic/divisions",
     subjects: "/dashboard/superadmin/academic/subjects",
+    exams: "/dashboard/superadmin/academic/exams",
+    marks: "/dashboard/superadmin/academic/marks",
     classes: "/dashboard/superadmin/academic/classes",
     cohorts: "/dashboard/superadmin/academic/cohorts",
 
     // Operations & Events
     jobs: "/dashboard/superadmin/operations/jobs",
     events: "/dashboard/superadmin/operations/events",
-    exams: "/dashboard/superadmin/academic/exams",
 
     // Resources & Governance
     rooms: "/dashboard/superadmin/resources/rooms",
@@ -130,6 +147,12 @@ export default function AdminDashboard() {
           description: "Examination scheduling and results",
         },
         {
+          id: "marks",
+          label: "Marks Management",
+          icon: Percent,
+          description: "Upload xls file for student marks",
+        },
+        {
           id: "classes",
           label: "Class Management",
           icon: Clock,
@@ -197,6 +220,17 @@ export default function AdminDashboard() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto">
@@ -204,7 +238,7 @@ export default function AdminDashboard() {
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-lg shadow-sm border border-gray-400 p-6 py-8 mb-8">
           <h1 className="text-2xl md:text-3xl text-white mb-2">
             Welcome back, <br className="block sm:hidden" />
-            <span className="font-bold">{userName}</span>!{" "}
+            <span className="font-bold">{userName || "Admin"}</span>!{" "}
             <span className="">👋</span>
           </h1>
           <p className="text-gray-300 leading-tight sm:w-3/4 text-sm">

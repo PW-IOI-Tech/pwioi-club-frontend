@@ -36,7 +36,7 @@ export default function ExamManagement() {
   const [divisions, setDivisions] = useState<any[]>([]);
   const [semesters, setSemesters] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
-  const [exams, setExams] = useState<TableExam[]>([]);
+  const [_exams, setExams] = useState<TableExam[]>([]);
   const [filteredExams, setFilteredExams] = useState<TableExam[]>([]);
   const [error, setError] = useState("");
   const [isAddExamModalOpen, setIsAddExamModalOpen] = useState(false);

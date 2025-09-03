@@ -57,6 +57,12 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       if (prefillLocation) {
@@ -172,7 +178,10 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-sm p-6 max-w-lg w-full border border-gray-400 max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add New Policy</h3>
 
@@ -339,9 +348,7 @@ const AddPolicyModal: React.FC<AddPolicyModalProps> = ({
                 >
                   <option value="">Select Location</option>
 
-                    <option >
-                      {prefillLocation}
-                    </option>
+                  <option>{prefillLocation}</option>
                 </select>
                 {!prefillLocation && !isSubmitting && (
                   <ChevronDown

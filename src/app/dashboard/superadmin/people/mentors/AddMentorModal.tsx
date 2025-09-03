@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
 import axios from "axios";
 
 interface AddMentorModalProps {
@@ -20,9 +19,8 @@ interface FormData {
 const AddMentorModal: React.FC<AddMentorModalProps> = ({
   isOpen,
   onClose,
-  onMentorAdded, 
+  onMentorAdded,
 }) => {
-
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
@@ -33,6 +31,12 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -142,7 +146,10 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-sm p-6 max-w-lg w-full border border-gray-400 max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add New Mentor</h3>
 
@@ -245,16 +252,18 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
               </label>
               <div className="relative">
                 <input
-                type="text"
-                name="designation"
-                value={formData.designation}
-                onChange={handleInputChange}
-                placeholder="e.g., Software Engineer"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
-                  formErrors.designation ? "border-red-500" : "border-gray-300"
-                }`}
-                disabled={isSubmitting}
-              />
+                  type="text"
+                  name="designation"
+                  value={formData.designation}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Software Engineer"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                    formErrors.designation
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                  disabled={isSubmitting}
+                />
               </div>
               {formErrors.designation && (
                 <p className="mt-1 text-sm text-red-600">
@@ -269,16 +278,16 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
               </label>
               <div className="relative">
                 <input
-                type="text"
-                name="company"
-                value={formData.company}
-                onChange={handleInputChange}
-                placeholder="e.g.,Google"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
-                  formErrors.company ? "border-red-500" : "border-gray-300"
-                }`}
-                disabled={isSubmitting}
-              />
+                  type="text"
+                  name="company"
+                  value={formData.company}
+                  onChange={handleInputChange}
+                  placeholder="e.g.,Google"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
+                    formErrors.company ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={isSubmitting}
+                />
               </div>
               {formErrors.company && (
                 <p className="mt-1 text-sm text-red-600">

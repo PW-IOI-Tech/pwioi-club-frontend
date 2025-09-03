@@ -12,7 +12,6 @@ import {
   User,
   FileImage,
 } from "lucide-react";
-import Image from "next/image";
 
 interface User {
   batch: string;
@@ -83,10 +82,6 @@ interface FeedProps {
   onFlag: (postId: string) => void;
   getRoleBadgeColor: (role: string) => string;
   loading: boolean;
-}
-
-interface ProfileHeaderProps {
-  user: User;
 }
 
 interface ReportModalProps {

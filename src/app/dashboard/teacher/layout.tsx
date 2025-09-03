@@ -19,7 +19,6 @@ import {
   Calendar,
   Users,
   School,
-  Upload,
   CircleCheckBig,
 } from "lucide-react";
 import Image from "next/image";
@@ -44,7 +43,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
   const [userDetails, setUserDetails] = useState<UserData | null>(null);
-  const [counts,setCounts]=useState<any>();
+  const [counts, setCounts] = useState<any>();
 
   const pathname = usePathname();
   const router = useRouter();
@@ -62,24 +61,23 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-    useEffect(() => {
-  const fetchTeacherCounts = async () => {
+  useEffect(() => {
+    const fetchTeacherCounts = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/counts`,
+          {
+            withCredentials: true,
+          }
+        );
+        setCounts(response?.data?.data);
+      } catch (err) {
+        console.error("Failed to fetch teacher counts", err);
+      }
+    };
 
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/counts`,
-        {
-          withCredentials: true,
-        }
-      );
-      setCounts(response?.data?.data)
-    } catch (err) {
-      console.error("Failed to fetch teacher counts", err);
-    }
-  };
-
-  fetchTeacherCounts();
-}, [userDetails]);
+    fetchTeacherCounts();
+  }, [userDetails]);
 
   const userData = {
     name: userDetails?.name,
@@ -107,12 +105,6 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
       href: "/dashboard/teacher/attendance",
     },
     {
-      id: "upload",
-      label: "Upload Marks",
-      icon: Upload,
-      href: "/dashboard/teacher/upload",
-    },
-    {
       id: "cpr",
       label: "CPR Management",
       icon: CircleCheckBig,
@@ -129,7 +121,6 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   const getActiveSection = () => {
     if (pathname.includes("/acads")) return "academics";
     if (pathname.includes("/attendance")) return "attendance";
-    if (pathname.includes("/upload")) return "upload";
     if (pathname.includes("/cpr")) return "cpr";
     if (pathname.includes("/help")) return "help";
     return "home";

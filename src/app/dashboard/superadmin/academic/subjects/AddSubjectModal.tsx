@@ -19,7 +19,7 @@ interface AddSubjectModalProps {
   selectedDivision: string;
   selectedSemester: string;
   selectedCenter: string;
-  selectedCenterId: string
+  selectedCenterId: string;
 }
 
 interface FormData {
@@ -60,7 +60,7 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   selectedDivision,
   selectedSemester,
   selectedCenter,
-  selectedCenterId
+  selectedCenterId,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     subjectName: "",
@@ -77,6 +77,12 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   const [loadingSchools, setLoadingSchools] = useState(false);
   const [loadingTeachers, setLoadingTeachers] = useState(false);
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
   const normalizedCenter = selectedCenter.toLowerCase();
 
   // Fetch schools data
@@ -84,9 +90,12 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   const fetchSchools = async (centerId: string) => {
     try {
       setLoadingSchools(true);
-      const response = await axios.get(`${BACKEND_URL}/api/schools/${centerId}`, {
-        withCredentials: true,
-      });
+      const response = await axios.get(
+        `${BACKEND_URL}/api/schools/${centerId}`,
+        {
+          withCredentials: true,
+        }
+      );
       if (response.data.success) {
         setSchools(response.data.data);
       }
@@ -102,9 +111,12 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   const fetchTeachers = async (schoolId: string) => {
     try {
       setLoadingTeachers(true);
-      const response = await axios.get(`${BACKEND_URL}/api/teachers/school/${schoolId}`, {
-        withCredentials: true,
-      });
+      const response = await axios.get(
+        `${BACKEND_URL}/api/teachers/school/${schoolId}`,
+        {
+          withCredentials: true,
+        }
+      );
       if (response.data.success) {
         setTeachers(response.data.data);
       }
@@ -118,7 +130,12 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      console.log("AddSubjectModal opened with center:", selectedCenter, "and school:", selectedSchool);
+      console.log(
+        "AddSubjectModal opened with center:",
+        selectedCenter,
+        "and school:",
+        selectedSchool
+      );
       setFormData({
         subjectName: "",
         credits: "",
@@ -128,7 +145,7 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
         teacher: "",
       });
       setFormErrors({});
-      
+
       // Fetch schools when modal opens
       if (selectedCenter) {
         console.log("Fetching schools for center:", selectedCenter);
@@ -142,15 +159,17 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
     if (formData.teacherSchool && formData.teacherSchool !== selectedSchool) {
       fetchTeachers(formData.teacherSchool);
       // Reset teacher selection when school changes
-      setFormData(prev => ({ ...prev, teacher: "" }));
+      setFormData((prev) => ({ ...prev, teacher: "" }));
     } else if (selectedSchool) {
       // Fetch teachers for the initially selected school
-      const currentSchool = schools.find(school => school.name === selectedSchool);
+      const currentSchool = schools.find(
+        (school) => school.name === selectedSchool
+      );
       if (currentSchool) {
         fetchTeachers(currentSchool.id);
       }
     }
-  }, [formData.teacherSchool, schools, selectedSchool,]);
+  }, [formData.teacherSchool, schools, selectedSchool]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -258,7 +277,7 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   const getSchoolDisplayName = (schoolName: string): string => {
     const schoolMap: Record<string, string> = {
       SOT: "School of Technology",
-      SOM: "School of Management", 
+      SOM: "School of Management",
       SOD: "School of Design",
     };
     return schoolMap[schoolName] || schoolName;
@@ -267,7 +286,10 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-sm p-6 max-w-lg w-full border border-gray-400 max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-gray-800 mb-4">
           Add New Subject
@@ -415,14 +437,17 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
                   className={`w-full pl-3 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
                     formErrors.teacher ? "border-red-500" : "border-gray-300"
                   }`}
-                  disabled={isSubmitting || loadingTeachers || !formData.teacherSchool}
+                  disabled={
+                    isSubmitting || loadingTeachers || !formData.teacherSchool
+                  }
                 >
                   <option value="">
                     {loadingTeachers ? "Loading teachers..." : "Select Teacher"}
                   </option>
                   {teachers.map((teacher) => (
                     <option key={teacher.id} value={teacher.id}>
-                      {teacher.name} {teacher.designation && `- ${teacher.designation}`}
+                      {teacher.name}{" "}
+                      {teacher.designation && `- ${teacher.designation}`}
                     </option>
                   ))}
                 </select>

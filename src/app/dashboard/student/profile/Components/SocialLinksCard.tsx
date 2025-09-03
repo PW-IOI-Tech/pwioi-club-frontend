@@ -11,7 +11,6 @@ import {
   Github,
   Instagram,
   Facebook,
-  Youtube,
   Globe,
   LucideIcon,
   ChevronDown,
@@ -83,8 +82,7 @@ const platformConfigs: Record<string, PlatformConfig> = {
   Website: {
     name: "Website",
     icon: Globe, // pick a globe icon
-    urlPattern:
-      /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/,
+    urlPattern: /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/,
     placeholder: "https://yourwebsite.com",
   },
   Dribbble: {
@@ -112,7 +110,6 @@ const platformConfigs: Record<string, PlatformConfig> = {
     placeholder: "https://dev.to/your-username",
   },
 };
-
 
 interface ModalProps {
   isOpen: boolean;
@@ -541,7 +538,9 @@ const SocialLinksCard: React.FC = () => {
       );
 
       if (res.data.success) {
-        setSocialLinks((prev) => prev.filter((s) => s.id !== selectedSocial.id));
+        setSocialLinks((prev) =>
+          prev.filter((s) => s.id !== selectedSocial.id)
+        );
       }
       setShowDeleteModal(false);
     } catch (err) {
@@ -599,7 +598,7 @@ const SocialLinksCard: React.FC = () => {
           return (
             <div
               key={index}
-              className="flex items-center justify-between p-3 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400"
+              className="flex items-center justify-between p-3 bg-gradient-to-br from-white to-indigo-50 rounded-sm border-gray-400"
             >
               <div className="flex items-center space-x-3">
                 <div className="h-8 w-8 rounded-full bg-slate-900 p-1 flex items-center justify-center">
