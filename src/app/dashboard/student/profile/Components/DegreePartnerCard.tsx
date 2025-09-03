@@ -211,7 +211,7 @@ const DegreePartnerCard = () => {
                     name="collegeName"
                     value={formData.collegeName}
                     onChange={handleChange}
-                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                     placeholder="e.g., ABC University"
                   />
                 </div>
@@ -225,7 +225,7 @@ const DegreePartnerCard = () => {
                     name="degreeName"
                     value={formData.degreeName}
                     onChange={handleChange}
-                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                     placeholder="e.g., Bachelor of Science"
                   />
                 </div>
@@ -239,7 +239,7 @@ const DegreePartnerCard = () => {
                     name="specialization"
                     value={formData.specialization}
                     onChange={handleChange}
-                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                     placeholder="e.g., Computer Science"
                   />
                 </div>
@@ -254,7 +254,7 @@ const DegreePartnerCard = () => {
                       name="startDate"
                       value={formData.startDate}
                       onChange={handleChange}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer"
                     />
                   </div>
                   <div>
@@ -266,7 +266,7 @@ const DegreePartnerCard = () => {
                       name="endDate"
                       value={formData.endDate}
                       onChange={handleChange}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer"
                     />
                   </div>
                 </div>
@@ -281,7 +281,7 @@ const DegreePartnerCard = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-sm text-sm font-medium transition cursor-pointer"
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-700 text-white rounded-sm text-sm font-medium transition cursor-pointer"
                   >
                     Save
                   </button>

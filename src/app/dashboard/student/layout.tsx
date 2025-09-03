@@ -82,6 +82,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
   ];
 
   const getActiveSection = () => {
+    if (pathname.includes("/acads")) return "academics";
     if (pathname.includes("/attendance")) return "attendance";
     if (pathname.includes("/help")) return "help";
     return "home";

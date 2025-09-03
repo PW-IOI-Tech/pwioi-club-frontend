@@ -2,7 +2,7 @@ import { FaPhoneAlt } from "react-icons/fa";
 import { IoMdMail } from "react-icons/io";
 
 const ContactCard = ({ contactData }: { contactData: any }) => (
-  <div className="bg-white rounded-sm shadow-lg border border-gray-200 p-6">
+  <div className="bg-white rounded-sm shadow-lg border border-gray-400 p-6">
     <div className="flex items-center justify-between mb-2">
       <h3 className="text-lg font-bold text-gray-900">Contact Information</h3>
     </div>
