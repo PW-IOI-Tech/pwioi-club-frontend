@@ -237,7 +237,6 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
   }, [isMobileMenuOpen]);
 
   const handleLogout = () => {
-    console.log("Logout clicked");
     router.push("/auth/admin/login");
   };
 

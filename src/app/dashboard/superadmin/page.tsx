@@ -24,7 +24,18 @@ import {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const userName = "John Anderson";
+  const userString = localStorage.getItem("user");
+  let userName = "";
+
+  if (userString) {
+    try {
+      const userObj = JSON.parse(userString);
+      userName = userObj.name;
+    } catch (error) {
+      console.error("Error parsing user data:", error);
+      userName = "";
+    }
+  }
 
   const routeMap: Record<string, string> = {
     // People Management
