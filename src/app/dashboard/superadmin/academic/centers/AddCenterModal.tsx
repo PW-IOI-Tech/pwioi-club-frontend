@@ -67,16 +67,12 @@ const AddCenterModal: React.FC<AddCenterModalProps> = ({
 
     if (!formData.centerName.trim()) {
       errors.centerName = "Center name is required";
-    } else if (formData.centerName.length < 3) {
-      errors.centerName = "Center name must be at least 3 characters";
     } else if (formData.centerName.length > 100) {
       errors.centerName = "Center name must be less than 100 characters";
     }
 
     if (!formData.location.trim()) {
       errors.location = "Location is required";
-    } else if (formData.location.length < 5) {
-      errors.location = "Location must be at least 5 characters";
     } else if (formData.location.length > 200) {
       errors.location = "Location must be less than 200 characters";
     }
@@ -180,7 +176,7 @@ const AddCenterModal: React.FC<AddCenterModalProps> = ({
                 </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Enter a descriptive name for the center (3-100 characters)
+                Enter a descriptive name for the center (max 100 characters)
               </p>
             </div>
 
@@ -206,7 +202,7 @@ const AddCenterModal: React.FC<AddCenterModalProps> = ({
                 </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Enter the full address of the center (5-200 characters)
+                Enter the full address of the center (max 200 characters)
               </p>
             </div>
 
@@ -230,7 +226,7 @@ const AddCenterModal: React.FC<AddCenterModalProps> = ({
                 <p className="mt-1 text-sm text-red-600">{formErrors.code}</p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Enter a unique numeric code (1-999)
+                Enter a unique numeric code (1–999)
               </p>
             </div>
           </div>

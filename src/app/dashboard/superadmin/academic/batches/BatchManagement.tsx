@@ -258,7 +258,7 @@ export default function BatchManagement() {
               selectFields={{
                 department: ["SOT", "SOM", "SOH"],
               }}
-              nonEditableFields={["id", "center"]}
+              nonEditableFields={["id", "center", "department"]}
               onDelete={handleDeleteBatch}
               onEdit={handleUpdateBatch}
               hiddenColumns={["id"]}

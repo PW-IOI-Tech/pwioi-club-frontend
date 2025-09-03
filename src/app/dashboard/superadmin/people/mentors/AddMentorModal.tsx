@@ -84,7 +84,9 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
       errors.company = "Company is required";
     }
 
-    if (formData.linkedin && !formData.linkedin.includes("linkedin.com")) {
+    if (!formData.linkedin.trim()) {
+      errors.linkedin = "LinkedIn URL is required";
+    } else if (!formData.linkedin.includes("linkedin.com")) {
       errors.linkedin = "Please enter a valid LinkedIn URL";
     }
 
@@ -223,7 +225,7 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                LinkedIn Profile
+                LinkedIn Profile *
               </label>
               <input
                 type="url"
@@ -242,7 +244,7 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
                 </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Optional - Include full LinkedIn URL
+                Please include the full LinkedIn profile URL
               </p>
             </div>
 
@@ -282,7 +284,7 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
                   name="company"
                   value={formData.company}
                   onChange={handleInputChange}
-                  placeholder="e.g.,Google"
+                  placeholder="e.g., Google"
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                     formErrors.company ? "border-red-500" : "border-gray-300"
                   }`}

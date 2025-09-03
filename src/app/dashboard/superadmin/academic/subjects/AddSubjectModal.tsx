@@ -295,16 +295,6 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
           Add New Subject
         </h3>
 
-        {/* Context Info */}
-        <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-sm">
-          <p className="text-sm">
-            <strong>Adding subject for:</strong> {selectedCenter} →{" "}
-            {selectedSchool}
-            {selectedBatch}
-            {selectedDivision} - Semester {selectedSemester}
-          </p>
-        </div>
-
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             {/* Subject Name */}
@@ -382,7 +372,7 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
             {/* Teacher Center (Auto-filled, non-editable) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Teacher Center
+                Center
               </label>
               <div className="relative">
                 <input

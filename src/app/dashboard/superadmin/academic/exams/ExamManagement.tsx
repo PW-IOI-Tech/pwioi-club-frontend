@@ -427,7 +427,7 @@ export default function ExamManagement() {
                     onChange={(e) => filter.setter(e.target.value)}
                     disabled={filter.disabled || filter.loading}
                     className={`
-                      w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none
+                      w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none cursor-pointer
                       ${
                         filter.disabled || filter.loading
                           ? "bg-gray-100 text-gray-500 cursor-not-allowed"
