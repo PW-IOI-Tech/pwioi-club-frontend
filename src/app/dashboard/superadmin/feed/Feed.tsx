@@ -536,7 +536,7 @@ const PostActions: React.FC<PostActionsProps> = ({
           <div className="flex items-center space-x-4">
             {totalLikes > 0 && (
               <button
-                onClick={() => setShowLikesModal(true)}
+                onClick={() => setShowLikesModal(false)}
                 className="underline cursor-pointer"
               >
                 {totalLikes} {totalLikes === 1 ? "like" : "likes"}
@@ -868,9 +868,9 @@ const Feed: React.FC<FeedProps> = ({
 
   return (
     <div className="space-y-6">
-      {posts.map((post) => (
+      {posts.map((post,index) => (
         <Post
-          key={post.id}
+          key={index}
           post={post}
           likedPosts={likedPosts}
           onLike={onLike}
