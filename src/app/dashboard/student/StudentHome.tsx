@@ -12,9 +12,7 @@ import {
   User,
   FileImage,
 } from "lucide-react";
-import Image from "next/image";
-
-// --- INTERFACES ---
+import { PostShimmer } from "../superadmin/feed/Feed";
 
 interface User {
   batch: string;
@@ -84,10 +82,7 @@ interface FeedProps {
   onLike: (postId: string) => void;
   onFlag: (postId: string) => void;
   getRoleBadgeColor: (role: string) => string;
-}
-
-interface ProfileHeaderProps {
-  user: User;
+  loading: boolean;
 }
 
 interface ReportModalProps {
@@ -194,7 +189,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/media/remove`,
         {
           withCredentials: true,
-          data: { key:key },
+          data: { key: key },
         }
       );
 
@@ -410,8 +405,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
   );
 };
 
-// ... rest of the frontend code remains the same ...
-const PostHeader: React.FC<any> = ({ post,getRoleBadgeColor }) => (
+const PostHeader: React.FC<any> = ({ post, getRoleBadgeColor }) => (
   <div className="p-4 pb-3">
     <div className="flex items-start justify-between">
       <div className="flex items-center space-x-3">
@@ -428,9 +422,13 @@ const PostHeader: React.FC<any> = ({ post,getRoleBadgeColor }) => (
             <h3 className="font-semibold text-gray-900 text-sm">
               {post?.userInfo?.name}
             </h3>
-            {/* <span  className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
+            <span
+              className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(
                 post?.author_type
-              )}`}>{post?.author_type}</span> */}
+              )}`}
+            >
+              {post?.author_type}
+            </span>
             {post.assignedBy && (
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-br from-white to-indigo-50 text-slate-800 border border-slate-400">
                 📌 {post?.author_type}
@@ -608,7 +606,7 @@ const PostActions: React.FC<PostActionsProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="bg-gray-50 border border-gray-200 rounded-sm px-3 py-2">
                     <div className="font-medium text-sm text-gray-900">
-                      {comment?.userInfo?.name}
+                      {comment?.userInfo?.username}
                     </div>
                     <div className="text-sm text-gray-700">
                       {comment.content}
@@ -759,13 +757,13 @@ const PostActions: React.FC<PostActionsProps> = ({
     </div>
   );
 };
-
-const Post: React.FC<{
-  post: Post;
-  likedPosts: Set<string>;
-  onLike: (postId: string) => void;
-  onFlag: (postId: string) => void;
-}> = ({ post, likedPosts, onLike, onFlag }) => {
+const Post: React.FC<any> = ({
+  post,
+  likedPosts,
+  onLike,
+  onFlag,
+  getRoleBadgeColor,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const contentLines = post.content.split("\n");
@@ -785,7 +783,7 @@ const Post: React.FC<{
 
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
-      <PostHeader post={post} />
+      <PostHeader post={post} getRoleBadgeColor={getRoleBadgeColor} />
 
       <div className="px-4 py-3">
         <div className="text-gray-800 text-sm">
@@ -816,7 +814,7 @@ const Post: React.FC<{
 
       {post?.media?.length > 0 && (
         <div className="px-4 pb-3 grid grid-cols-1 gap-2">
-          {post.media.map((mediaItem) => (
+          {post.media.map((mediaItem: any) => (
             <div key={mediaItem.id}>
               {mediaItem.type === "IMAGE" ? (
                 <img
@@ -852,19 +850,31 @@ const Feed: React.FC<FeedProps> = ({
   onLike,
   onFlag,
   getRoleBadgeColor,
-}) => (
-  <div className="space-y-6">
-    {posts.map((post) => (
-      <Post
-        key={post.id}
-        post={post}
-        likedPosts={likedPosts}
-        onLike={onLike}
-        onFlag={onFlag}
-      />
-    ))}
-  </div>
-);
+  loading,
+}) => {
+  if (loading) {
+    return <PostShimmer />;
+  }
+
+  const uniquePosts = posts.filter(
+    (post, index, self) => index === self.findIndex((p) => p.id === post.id)
+  );
+
+  return (
+    <div className="space-y-6">
+      {uniquePosts.map((post, index) => (
+        <Post
+          key={`${post.id}-${index}`}
+          post={post}
+          likedPosts={likedPosts}
+          onLike={onLike}
+          onFlag={onFlag}
+          getRoleBadgeColor={getRoleBadgeColor}
+        />
+      ))}
+    </div>
+  );
+};
 
 const ProfileHeader: React.FC<any> = ({ user }) => (
   <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5 overflow-hidden">
@@ -1070,17 +1080,30 @@ const StudentHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
     setReportModal({ isOpen: true, postId });
   };
 
-  const handleReportSubmit = (): void => {
-    console.log(
-      "Reporting post:",
-      reportModal.postId,
-      "Reason:",
-      reportReason,
-      "Details:",
-      reportDetails
-    );
-    // Add actual API call to submit report here
-    handleReportClose();
+  const handleReportSubmit = async (): Promise<void> => {
+    if (!reportModal.postId || !reportReason.trim()) {
+      alert("Please provide a reason for reporting.");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags`,
+        {
+          postId: reportModal.postId,
+          reason: reportReason,
+        },
+        { withCredentials: true }
+      );
+
+      console.log("Report submitted:", res.data);
+      alert("Report submitted successfully!");
+    } catch (err: any) {
+      console.error("Error reporting:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to submit report");
+    } finally {
+      handleReportClose();
+    }
   };
 
   const handleReportClose = (): void => {
@@ -1117,8 +1140,8 @@ const StudentHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
               onLike={handleLike}
               onFlag={handleFlag}
               getRoleBadgeColor={getRoleBadgeColor}
+              loading={loading}
             />
-            {/* Add logic for infinite scroll trigger here if needed */}
           </div>
 
           <div className="lg:col-span-3 space-y-4 hidden sm:block">

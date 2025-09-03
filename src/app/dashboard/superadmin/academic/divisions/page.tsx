@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import CohortManagement from "./DivSemManagement";
 
 export const metadata: Metadata = {
-  title: "Cohort Management",
+  title: "Division & Semester Management",
 };
 
 export default function Page() {

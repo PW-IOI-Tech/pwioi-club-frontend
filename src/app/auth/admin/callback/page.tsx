@@ -1,11 +1,14 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
+import Loader from "../../Loader";
 
-export default function StudentCallbackPage() {
+function AdminCallbackContent() {
   const searchParams = useSearchParams();
+  const { setAccessToken } = useAuth();
   const router = useRouter();
   const code = searchParams.get("code");
   const backendUrl =
@@ -24,6 +27,7 @@ export default function StudentCallbackPage() {
 
           localStorage.setItem("accessToken", tokens.accessToken);
           localStorage.setItem("refreshToken", tokens.refreshToken);
+          setAccessToken(tokens.accessToken);
           localStorage.setItem("user", JSON.stringify(user));
 
           router.push("/dashboard/superadmin");
@@ -33,7 +37,15 @@ export default function StudentCallbackPage() {
           router.push("/auth");
         });
     }
-  }, [code, backendUrl, router]);
+  }, [code, backendUrl, router, setAccessToken]);
 
-  return <p className="text-center mt-10">Logging you in...</p>;
+  return <Loader />;
+}
+
+export default function AdminCallbackPage() {
+  return (
+    <Suspense fallback={<Loader />}>
+      <AdminCallbackContent />
+    </Suspense>
+  );
 }

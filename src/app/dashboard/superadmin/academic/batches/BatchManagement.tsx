@@ -1,98 +1,163 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Users, Plus, ChevronDown } from "lucide-react";
 import Table from "../../Table";
 import AddBatchModal from "./AddBatchModal";
+import axios from "axios";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 interface TableBatch {
   id: string;
   name: string;
   department: string;
-  center: string;
+  center: string; 
 }
 
-const initialBatches: TableBatch[] = [
-  {
-    id: "1",
-    name: "SOT24BAN",
-    department: "SOT",
-    center: "Bangalore",
-  },
-  {
-    id: "2",
-    name: "SOM24LUC",
-    department: "SOM",
-    center: "Lucknow",
-  },
-  {
-    id: "3",
-    name: "SOH24PUN",
-    department: "SOH",
-    center: "Pune",
-  },
-];
-
-const LOCATIONS = ["Bangalore", "Lucknow", "Pune", "Noida"] as const;
+interface Center {
+  id: string;
+  name: string;
+  location: string;
+  code: string;
+}
 
 export default function BatchManagement() {
-  const [batches, setBatches] = useState<TableBatch[]>(initialBatches);
-  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [batches, setBatches] = useState<TableBatch[]>([]);
+  const [centers, setCenters] = useState<Center[]>([]);
+  const [selectedCenter, setSelectedCenter] = useState<Center | null>(null);
   const [isAddBatchModalOpen, setIsAddBatchModalOpen] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const filteredBatches = useMemo(() => {
-    if (!selectedLocation) return [];
-    return batches.filter((batch) => batch.center === selectedLocation);
-  }, [batches, selectedLocation]);
+  // Fetch centers from backend
+  useEffect(() => {
+    const getCenters = async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/center/all`, {
+          withCredentials: true,
+        });
 
-  const statistics = useMemo(() => {
-    const filtered = batches.filter((b) => b.center === selectedLocation);
-    return {
-      totalBatches: filtered.length,
+        const fetchedCenters: Center[] = res.data.data.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          location: c.location,
+          code: c.code,
+        }));
+
+        setCenters(fetchedCenters);
+      } catch (err) {
+        console.error("Error fetching centers:", err);
+      }
     };
-  }, [batches, selectedLocation]);
 
-  const handleUpdateBatch = useCallback((updatedItem: any) => {
-    const batchItem = updatedItem as TableBatch;
-    setBatches((prev) =>
-      prev.map((batch) =>
-        batch.id === batchItem.id ? { ...batch, ...batchItem } : batch
-      )
-    );
+    getCenters();
   }, []);
 
-  const handleDeleteBatch = useCallback((id: string | number) => {
+  // Fetch batches for selected center
+  const fetchBatches = useCallback(async (centerId: string, centerName: string) => {
+    if (!centerId) return;
+    
+    setLoading(true);
+    try {
+      const res = await axios.get(`${BACKEND_URL}/api/batches/center/${centerId}`, {
+        withCredentials: true,
+      });
+
+      const fetchedBatches: TableBatch[] = res.data.data.map((batch: any) => ({
+        id: batch.id,
+        name: batch.name,
+        department: batch.school.name, 
+        center: centerName, 
+      }));
+
+      setBatches(fetchedBatches);
+    } catch (err) {
+      console.error("Error fetching batches:", err);
+      setBatches([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Filter batches by selected center (since we're already fetching by center, just return all batches)
+  const filteredBatches = useMemo(() => {
+    return batches; // No need to filter since we already fetch by center
+  }, [batches]);
+
+  // Stats for selected center (use all batches since we fetch by center)
+  const statistics = useMemo(() => {
+    return { totalBatches: batches.length };
+  }, [batches]);
+
+  const handleUpdateBatch = useCallback(async (updatedItem: any) => {
+    const batchItem = updatedItem as TableBatch;
+    
+    try {
+      await axios.patch(
+        `${BACKEND_URL}/api/batches/${batchItem.id}`,
+        { name: batchItem.name },
+        { withCredentials: true }
+      );
+
+      setBatches((prev) =>
+        prev.map((batch) =>
+          batch.id === batchItem.id ? { ...batch, ...batchItem } : batch
+        )
+      );
+    } catch (err) {
+      console.error("Error updating batch:", err);
+      // Optionally show error message to user
+    }
+  }, []);
+
+  const handleDeleteBatch = useCallback(async (id: string | number) => {
     const deleteId = typeof id === "number" ? id.toString() : id;
-    setBatches((prev) => prev.filter((batch) => batch.id !== deleteId));
+    
+    try {
+      await axios.delete(`${BACKEND_URL}/api/batches/${deleteId}`, {
+        withCredentials: true,
+      });
+
+      setBatches((prev) => prev.filter((batch) => batch.id !== deleteId));
+    } catch (err) {
+      console.error("Error deleting batch:", err);
+      // Optionally show error message to user
+    }
   }, []);
 
   const handleAddBatch = useCallback(
-    (newBatchData: {
-      centerName: string;
-      depName: string;
-      batchName: string;
-    }) => {
-      const newBatch: TableBatch = {
-        id: Date.now().toString(),
-        name: newBatchData.batchName,
-        department: newBatchData.depName,
-        center: selectedLocation,
-      };
+    async (newBatchData: { centerName: string; depName: string; batchName: string; schoolId: string }) => {
+      if (!selectedCenter) return;
 
-      setBatches((prev) => [...prev, newBatch]);
-      setIsAddBatchModalOpen(false);
+      try {
+         await axios.post(
+          `${BACKEND_URL}/api/batches/create`,
+          {
+            schoolId: newBatchData.schoolId,
+            name: newBatchData.batchName,
+          },
+          { withCredentials: true }
+        );
+
+        // Refresh batches after successful creation
+        fetchBatches(selectedCenter.id, selectedCenter.name);
+        setIsAddBatchModalOpen(false);
+      } catch (err) {
+        console.error("Error creating batch:", err);
+        // Optionally show error message to user
+      }
     },
-    [selectedLocation]
+    [selectedCenter, fetchBatches]
   );
 
   const handleOpenAddModal = useCallback(() => {
-    if (!selectedLocation) {
+    if (!selectedCenter) {
       alert("Please select a center location first.");
       return;
     }
     setIsAddBatchModalOpen(true);
-  }, [selectedLocation]);
+  }, [selectedCenter]);
 
   const handleCloseAddModal = useCallback(() => {
     setIsAddBatchModalOpen(false);
@@ -100,14 +165,15 @@ export default function BatchManagement() {
 
   const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    setSelectedLocation(value);
+    const found = centers.find((c) => c.id === value) || null;
+    setSelectedCenter(found);
 
-    if (value) {
-      setTimeout(() => {
-        setShowContent(true);
-      }, 400);
+    if (found) {
+      fetchBatches(found.id, found.name);
+      setTimeout(() => setShowContent(true), 400);
     } else {
       setShowContent(false);
+      setBatches([]);
     }
   };
 
@@ -116,6 +182,7 @@ export default function BatchManagement() {
       <div className="max-w-7xl mx-auto space-y-6">
         <h2 className="text-3xl font-bold text-slate-900">Batch Management</h2>
 
+        {/* Center Selection */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
           <label
             htmlFor="location"
@@ -126,14 +193,14 @@ export default function BatchManagement() {
           <div className="relative">
             <select
               id="location"
-              value={selectedLocation}
+              value={selectedCenter?.id || ""}
               onChange={handleLocationChange}
               className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer appearance-none text-sm"
             >
               <option value="">Select Location to Proceed</option>
-              {LOCATIONS.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
+              {centers.map((center) => (
+                <option key={center.id} value={center.id}>
+                  {center.name} 
                 </option>
               ))}
             </select>
@@ -143,12 +210,12 @@ export default function BatchManagement() {
           </div>
         </div>
 
-        {!selectedLocation ? (
-          <ShimmerSkeleton />
-        ) : !showContent ? (
+        {/* Content */}
+        {!selectedCenter || !showContent || loading ? (
           <ShimmerSkeleton />
         ) : (
           <>
+            {/* Stats + Add batch */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 text-center">
                 <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
@@ -176,7 +243,7 @@ export default function BatchManagement() {
 
             <Table
               data={filteredBatches}
-              title={`Batches in ${selectedLocation}`}
+              title={`Batches in ${selectedCenter.name}`}
               filterField="department"
               badgeFields={["department"]}
               selectFields={{
@@ -189,12 +256,13 @@ export default function BatchManagement() {
             />
           </>
         )}
-
+       
         <AddBatchModal
           isOpen={isAddBatchModalOpen}
           onClose={handleCloseAddModal}
           onBatchCreated={handleAddBatch}
-          prefillLocation={selectedLocation}
+          prefillLocation={selectedCenter?.location ||""}
+          centerId={selectedCenter?.id || ""}
         />
       </div>
     </div>

@@ -26,6 +26,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import AcademicsShimmer from "./AcademicShimmer";
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -44,7 +45,7 @@ interface FilterState {
 }
 
 interface StudentProfile {
-  batch: { name: string };
+  batch: string;
   semesterNo: number;
   id: string;
 }
@@ -58,11 +59,9 @@ interface AcademicData {
 const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/student-academics`;
 
 export default function AcademicsSection() {
-  const [studentProfile, _setStudentProfile] = useState<StudentProfile | null>({
-    batch: { name: "2023-2027" },
-    semesterNo: 1,
-    id: "Computer Science",
-  });
+  const [studentProfile, _setStudentProfile] = useState<StudentProfile | null>(
+    null
+  );
   const [academicData, setAcademicData] = useState<AcademicData | null>(null);
   const [activeFilters, setActiveFilters] = useState<FilterState | null>(null);
   const [pendingFilters, setPendingFilters] = useState<FilterState | null>(
@@ -82,26 +81,54 @@ export default function AcademicsSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exams, setExams] = useState<any[]>([]);
+  const [availableExamTypes, setAvailableExamTypes] = useState<string[]>([]);
+  // Fetch available exam types for a subject
+  const fetchExamTypes = useCallback(async (subjectId: string) => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/student-academics/exams/subject/${subjectId}/past-exam-types`,
+        {
+          withCredentials: true,
+        }
+      );
 
-
-const fetchExams = useCallback(async (subjectId: string, examType: string) => {
-  try {
-    const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${subjectId}`,
-      { exam_type: examType },
-      { withCredentials: true }
-    );
-
-    if (response.data.success) {
-      setExams(response.data.data.exams || []);
-      return response.data.data.exams;
+      if (response.data && Array.isArray(response.data)) {
+        setAvailableExamTypes(response.data);
+        return response.data;
+      }
+      setAvailableExamTypes([]);
+      return [];
+    } catch (err) {
+      console.error("Error fetching exam types:", err);
+      setAvailableExamTypes([]);
+      return [];
     }
-  } catch (err) {
-    console.error("Error fetching exams:", err);
-    setExams([]);
-  }
-}, []);
+  }, []);
 
+  const fetchExams = useCallback(
+    async (subjectId: string, examType: string) => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${subjectId}`,
+          {
+            params: { exam_type: examType },
+            withCredentials: true,
+          }
+        );
+
+        if (response.data.success) {
+          const exams = response.data.data.exams || [];
+          setExams(exams);
+          return exams;
+        }
+      } catch (err) {
+        console.error("Error fetching exams:", err);
+        setExams([]);
+        return [];
+      }
+    },
+    []
+  );
 
   const fetchCurrentSemester = useCallback(async () => {
     try {
@@ -117,7 +144,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
       }
     } catch (err) {
       console.error("Error fetching current semester:", err);
-      throw err;
+      return null;
     }
   }, []);
 
@@ -132,7 +159,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
       }
     } catch (err) {
       console.error("Error fetching past semesters:", err);
-      throw err;
+      return null;
     }
   }, []);
 
@@ -216,7 +243,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
         }
       } catch (err) {
         console.error(`Error fetching ${type} leaderboard:`, err);
-        // Set empty leaderboard data on error
         setLeaderboardData((prev: any) => ({
           ...prev,
           [type]: [],
@@ -228,8 +254,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
 
   useEffect(() => {
     const initializeAcademicData = async () => {
-      if (!studentProfile) return;
-
       try {
         setLoading(true);
 
@@ -238,9 +262,18 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
           fetchPastSemesters(),
         ]);
 
+        // Set student profile here
+
+        if (currentSemester?.semester_info) {
+          _setStudentProfile({
+            batch: currentSemester.semester_info.batch_name || "N/A",
+            semesterNo: currentSemester.semester_info.semester_number,
+            id: currentSemester.semester_info.student_id,
+          });
+        }
+
         const allCourses: any[] = [];
 
-        // Handle current semester subjects
         if (currentSemester?.subjects) {
           currentSemester.subjects.forEach((subject: any) => {
             allCourses.push({
@@ -254,8 +287,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
             });
           });
         }
-
-        // Handle past semesters subjects (if any exist)
         if (
           pastSemesters?.past_semesters &&
           pastSemesters.past_semesters.length > 0
@@ -277,26 +308,46 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
           });
         }
 
-        const academicData = {
+        setAcademicData({
           current_semester: currentSemester,
           past_semesters: pastSemesters?.past_semesters || [],
           courses: allCourses,
-        };
+        });
 
-        setAcademicData(academicData);
-
-        // Initialize filters with first available course
         if (allCourses.length > 0) {
           const firstCourse = allCourses[0];
           const initialFilters = {
             semester: firstCourse.semester,
             course: firstCourse.code,
-            testType: "FORTNIGHTLY",
-            testNumber: "1",
+            testType: "",
+            testNumber: "",
           };
 
-          setActiveFilters(initialFilters);
-          setPendingFilters(initialFilters);
+          // Fetch exam types for the first course
+          const examTypes = await fetchExamTypes(firstCourse.id);
+          if (examTypes && examTypes.length > 0) {
+            const updatedFilters = {
+              ...initialFilters,
+              testType: examTypes[0],
+            };
+
+            // Fetch exams for the first exam type
+            const initialExams = await fetchExams(firstCourse.id, examTypes[0]);
+            if (initialExams && initialExams.length > 0) {
+              const finalFilters = {
+                ...updatedFilters,
+                testNumber: initialExams[0].name,
+              };
+              setPendingFilters(finalFilters);
+              setActiveFilters(finalFilters);
+            } else {
+              setPendingFilters(updatedFilters);
+              setActiveFilters(updatedFilters);
+            }
+          } else {
+            setPendingFilters(initialFilters);
+            setActiveFilters(initialFilters);
+          }
         }
       } catch (err) {
         console.error("Error initializing academic data:", err);
@@ -307,12 +358,20 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
     };
 
     initializeAcademicData();
-  }, [studentProfile, fetchCurrentSemester, fetchPastSemesters]);
+  }, [fetchCurrentSemester, fetchPastSemesters, fetchExams, fetchExamTypes]);
 
-  // Update trends and leaderboard when filters change
   useEffect(() => {
     const updateData = async () => {
-      if (!activeFilters || !academicData) return;
+      if (
+        !activeFilters ||
+        !academicData ||
+        !activeFilters.semester ||
+        !activeFilters.course ||
+        !activeFilters.testType ||
+        !activeFilters.testNumber
+      ) {
+        return;
+      }
 
       const selectedCourse = academicData.courses.find(
         (c) => c.code === activeFilters.course
@@ -336,19 +395,10 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
         }
       }
 
-      if (!semesterId) {
-        console.warn(
-          "No semester ID found for semester:",
-          activeFilters.semester
-        );
-        return;
-      }
+      if (!semesterId) return;
 
-      const examName = `${getTestTypeLabel(activeFilters.testType)} ${
-        activeFilters.testNumber
-      }`;
+      const examName = activeFilters.testNumber;
 
-      // Fetch performance trends
       await fetchPerformanceTrends(
         semesterId,
         selectedCourse.id,
@@ -356,7 +406,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
         examName
       );
 
-      // Fetch both leaderboards
       await Promise.all([
         fetchLeaderboard(
           "class",
@@ -392,15 +441,28 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
     if (pendingFilters) setActiveFilters(pendingFilters);
   };
 
-  const handleResetFilters = () => {
+  const handleResetFilters = async () => {
     if (academicData?.courses && academicData.courses.length > 0) {
       const firstCourse = academicData.courses[0];
       const resetFilters = {
         semester: firstCourse.semester,
         course: firstCourse.code,
-        testType: "FORTNIGHTLY",
-        testNumber: "1",
+        testType: "",
+        testNumber: "",
       };
+
+      // Fetch exam types for the first course
+      const examTypes = await fetchExamTypes(firstCourse.id);
+      if (examTypes && examTypes.length > 0) {
+        resetFilters.testType = examTypes[0];
+
+        // Fetch exams for the first exam type
+        const initialExams = await fetchExams(firstCourse.id, examTypes[0]);
+        if (initialExams && initialExams.length > 0) {
+          resetFilters.testNumber = initialExams[0].name;
+        }
+      }
+
       setPendingFilters(resetFilters);
       setActiveFilters(resetFilters);
     }
@@ -422,31 +484,9 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
     );
   };
 
-  const getTestTypes = () => {
-    return [
-      { value: "FORTNIGHTLY", label: "Fortnightly Test" },
-      { value: "INTERNAL_ASSESSMENT", label: "Assignment" },
-      { value: "MID_SEM", label: "Mid Semester" },
-      { value: "END_SEM", label: "End Semester" },
-      { value: "INTERVIEW", label: "Interview" },
-      { value: "PROJECT", label: "Projects" },
-    ];
-  };
-
-  const getTestNumbers = () => {
-    return ["1", "2", "3", "4", "5"];
-  };
-
+  // Updated function to use enum names directly without custom mapping
   const getTestTypeLabel = (type: string) => {
-    const typeMap: { [key: string]: string } = {
-      FORTNIGHTLY: "Fortnightly Test",
-      INTERNAL_ASSESSMENT: "Assignment",
-      MID_SEM: "Mid Semester Exam",
-      END_SEM: "End Semester Exam",
-      INTERVIEW: "Interview",
-      PROJECT: "Project",
-    };
-    return typeMap[type] || type;
+    return type; // Return the enum value as-is
   };
 
   const getRankIcon = (rank: number) => {
@@ -523,11 +563,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg text-gray-600">Loading academic data...</div>
-      </div>
-    );
+    return <AcademicsShimmer />;
   }
 
   if (error) {
@@ -538,7 +574,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
     );
   }
 
-  if (!studentProfile || !academicData || !activeFilters || !pendingFilters) {
+  if (!studentProfile || !academicData || !pendingFilters) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg text-gray-600">Loading academic data...</div>
@@ -553,7 +589,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
-        {/* Header Section */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm border border-gray-400 shadow-sm p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -565,14 +600,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
               </p>
             </div>
 
-            {/* Quick Stats */}
             <div className="flex flex-wrap gap-4">
-              <div className="bg-gradient-to-br from-white to-indigo-50 px-4 py-3 rounded-sm border border-gray-200">
-                <div className="text-sm text-slate-900 font-medium">Batch</div>
-                <div className="text-xl font-bold text-slate-800">
-                  {studentProfile.batch?.name || "N/A"}
-                </div>
-              </div>
               <div className="bg-gradient-to-br from-white to-indigo-50 px-4 py-3 rounded-sm border border-gray-200">
                 <div className="text-sm text-slate-900 font-medium">
                   Semester
@@ -593,7 +621,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
           </div>
         </div>
 
-        {/* Filter Controls */}
         <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg p-6 border border-gray-400">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 bg-blue-100 rounded-sm flex items-center justify-center">
@@ -620,6 +647,8 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                         ...prev,
                         semester: parseInt(e.target.value),
                         course: "",
+                        testType: "",
+                        testNumber: "",
                       };
                     })
                   }
@@ -634,47 +663,78 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
               </div>
             </div>
 
-           <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Course
-  </label>
-  <div className="relative">
-    <select
-      className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
-      value={pendingFilters.course}
-      onChange={(e) => {
-        const selectedCourse = e.target.value;
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Course
+              </label>
+              <div className="relative">
+                <select
+                  className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
+                  value={pendingFilters.course}
+                  onChange={async (e) => {
+                    const selectedCourse = e.target.value;
 
-        setPendingFilters((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            course: selectedCourse, // ✅ update filter
-          };
-        });
+                    setPendingFilters((prev) => {
+                      if (!prev) return null;
+                      return {
+                        ...prev,
+                        course: selectedCourse,
+                        testType: "",
+                        testNumber: "",
+                      };
+                    });
 
-        // ✅ fetch exams only if we have testType
-        if (selectedCourse && pendingFilters?.testType) {
-          const selectedCourseObj = availableCourses.find(
-            (c: any) => c.code === selectedCourse
-          );
-          if (selectedCourseObj) {
-            fetchExams(selectedCourseObj.id, pendingFilters.testType);
-          }
-        }
-      }}
-    >
-      <option value="">Select Course</option>
-      {availableCourses.map((course: any, idx: number) => (
-        <option key={course.id || idx} value={course.code}>
-          {course.code?.toUpperCase?.() || ""}
-        </option>
-      ))}
-    </select>
-    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-  </div>
-</div>
+                    // Fetch exam types for the selected course
+                    if (selectedCourse) {
+                      const selectedCourseObj = availableCourses.find(
+                        (c: any) => c.code === selectedCourse
+                      );
+                      if (selectedCourseObj) {
+                        const examTypes = await fetchExamTypes(
+                          selectedCourseObj.id
+                        );
 
+                        // Auto-select first exam type if available
+                        if (examTypes && examTypes.length > 0) {
+                          setPendingFilters((prev) => {
+                            if (!prev) return null;
+                            return {
+                              ...prev,
+                              testType: examTypes[0],
+                            };
+                          });
+
+                          // Fetch exams for the first exam type
+                          const fetchedExams = await fetchExams(
+                            selectedCourseObj.id,
+                            examTypes[0]
+                          );
+
+                          // Auto-select first exam if available
+                          if (fetchedExams && fetchedExams.length > 0) {
+                            setPendingFilters((prev) => {
+                              if (!prev) return null;
+                              return {
+                                ...prev,
+                                testNumber: fetchedExams[0].name,
+                              };
+                            });
+                          }
+                        }
+                      }
+                    }
+                  }}
+                >
+                  <option value="">Select Course</option>
+                  {availableCourses.map((course: any, idx: number) => (
+                    <option key={course.id || idx} value={course.code}>
+                      {course.code?.toUpperCase?.()} - {course.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -683,19 +743,48 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
               <div className="relative">
                 <select
                   className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
-                  onChange={(e) =>
+                  value={pendingFilters.testType}
+                  onChange={async (e) => {
+                    const selectedTestType = e.target.value;
+
                     setPendingFilters((prev) => {
                       if (!prev) return null;
                       return {
                         ...prev,
-                        testType: e.target.value,
+                        testType: selectedTestType,
+                        testNumber: "",
                       };
-                    })
-                  }
+                    });
+
+                    // Fetch exams for current course and new test type
+                    if (pendingFilters?.course && selectedTestType) {
+                      const selectedCourseObj = availableCourses.find(
+                        (c: any) => c.code === pendingFilters.course
+                      );
+                      if (selectedCourseObj) {
+                        const fetchedExams = await fetchExams(
+                          selectedCourseObj.id,
+                          selectedTestType
+                        );
+
+                        // Auto-select first exam if available
+                        if (fetchedExams && fetchedExams.length > 0) {
+                          setPendingFilters((prev) => {
+                            if (!prev) return null;
+                            return {
+                              ...prev,
+                              testNumber: fetchedExams[0].name,
+                            };
+                          });
+                        }
+                      }
+                    }
+                  }}
                 >
-                  {getTestTypes().map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
+                  <option value="">Select Test Type</option>
+                  {availableExamTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
                     </option>
                   ))}
                 </select>
@@ -711,35 +800,49 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                 <select
                   className="w-full bg-white rounded-sm px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer shadow-sm"
                   value={pendingFilters.testNumber}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setPendingFilters((prev) => {
                       if (!prev) return null;
                       return {
                         ...prev,
                         testNumber: e.target.value,
                       };
-                    })
-                  }
+                    });
+                  }}
                 >
-                  {exams.map((test) => (
-                    <option key={test} value={test}>
-                       {test?.name}
+                  <option value="">Select Test</option>
+                  {exams.length > 0 ? (
+                    exams.map((exam, index) => (
+                      <option key={exam.id || index} value={exam.name}>
+                        {exam.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>
+                      No exams available
                     </option>
-                  ))}
+                  )}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={handleUpdateFilters}
-                disabled={!hasFiltersChanged() || !pendingFilters.course}
+                disabled={
+                  !hasFiltersChanged() ||
+                  !pendingFilters.course ||
+                  !pendingFilters.testType ||
+                  !pendingFilters.testNumber
+                }
                 className={`inline-flex items-center gap-2 px-6 py-3 rounded-sm text-sm font-medium transition-all duration-200 ${
-                  hasFiltersChanged() && pendingFilters.course
+                  hasFiltersChanged() &&
+                  pendingFilters.course &&
+                  pendingFilters.testType &&
+                  pendingFilters.testNumber
                     ? "bg-slate-900 hover:bg-slate-700 text-white shadow-md hover:shadow-lg transform cursor-pointer duration-200"
                     : "bg-gray-200 text-gray-500 cursor-not-allowed"
                 }`}
@@ -768,12 +871,12 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
           </div>
         </div>
 
-        {/* Performance Chart */}
         <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
           <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 px-6 py-4 drop-shadow-sm">
             <h3 className="text-xl font-semibold text-slate-900">
-              {activeFilters.course.toUpperCase()} -{" "}
-              {getTestTypeLabel(activeFilters.testType)} Performance Trend
+              {activeFilters?.course.toUpperCase()} -{" "}
+              {getTestTypeLabel(activeFilters?.testType ?? "Exam")} Performance
+              Trend
             </h3>
           </div>
           <div className="p-6">
@@ -823,10 +926,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
             )}
           </div>
         </div>
-
-        {/* Leaderboards Side by Side */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {/* Class Leaderboard */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -834,7 +934,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                   <Users className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Class Leaderboard - Test {activeFilters.testNumber}
+                  Class Leaderboard - {activeFilters?.testNumber || "Test"}
                 </h3>
               </div>
               <button
@@ -846,7 +946,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
             </div>
 
             <div className="p-6">
-              {/* Compact Info Tiles */}
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <div className="bg-gradient-to-br from-white to-indigo-50 p-3 rounded-sm shadow-sm border border-gray-400 text-center">
                   <div className="text-xs text-slate-900 font-medium mb-1">
@@ -871,7 +970,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                 </div>
               </div>
 
-              {/* Top 3 Students */}
               <div className="space-y-3">
                 {getLeaderboardData("class")
                   .slice(0, 3)
@@ -913,7 +1011,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
             </div>
           </div>
 
-          {/* Overall Leaderboard */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -921,7 +1018,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                   <Trophy className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Overall Leaderboard - Test {activeFilters.testNumber}
+                  Overall Leaderboard - {activeFilters?.testNumber || "Test"}
                 </h3>
               </div>
               <button
@@ -933,7 +1030,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
             </div>
 
             <div className="p-6">
-              {/* Compact Info Tiles */}
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <div className="bg-gradient-to-br from-white to-indigo-50 p-3 rounded-sm shadow-sm border border-gray-400 text-center">
                   <div className="text-xs text-slate-900 font-medium mb-1">
@@ -958,7 +1054,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                 </div>
               </div>
 
-              {/* Top 3 Students */}
               <div className="space-y-3">
                 {getLeaderboardData("overall")
                   .slice(0, 3)
@@ -1001,9 +1096,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
           </div>
         </div>
 
-        {/* Course Tables - Collapsible Sections */}
         <div className="space-y-6">
-          {/* Ongoing Courses */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
               <div className="flex items-center gap-3">
@@ -1011,7 +1104,8 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                   <BookOpen className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Current Courses - Semester {currentSemester.semester_number}
+                  Current Courses - Semester{" "}
+                  {currentSemester?.semester_info?.semester_number}
                 </h3>
                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                   {ongoingCourses.length} courses
@@ -1061,7 +1155,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
             </div>
           </div>
 
-          {/* Completed Courses - Collapsible */}
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
               <div className="flex items-center justify-between">
@@ -1181,7 +1274,6 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
           </div>
         </div>
 
-        {/* Leaderboard Modal */}
         {isLeaderboardModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
@@ -1197,7 +1289,7 @@ const fetchExams = useCallback(async (subjectId: string, examType: string) => {
                     </div>
                     <h2 className="text-xl font-semibold text-white">
                       {leaderboardType === "class" ? "Class" : "Overall"}{" "}
-                      Leaderboard - Test {activeFilters.testNumber}
+                      Leaderboard - {activeFilters?.testNumber || "Test"}
                     </h2>
                   </div>
                   <button

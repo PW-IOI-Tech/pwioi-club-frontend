@@ -9,6 +9,7 @@ interface AddSchoolModalProps {
     schoolName: string;
   }) => void;
   prefillLocation?: string;
+  centers?: { id: string; name: string }[];
 }
 
 interface FormData {
@@ -16,17 +17,10 @@ interface FormData {
   schoolName: string;
 }
 
-const locations = [
-  { value: "bangalore", label: "Bangalore" },
-  { value: "lucknow", label: "Lucknow" },
-  { value: "pune", label: "Pune" },
-  { value: "noida", label: "Noida" },
-];
-
 const schoolNames = [
   { value: "SOT", label: "SOT - School of Technology" },
   { value: "SOM", label: "SOM - School of Management" },
-  { value: "SOH", label: "SOH - School of Humanities" },
+  { value: "SOH", label: "SOH - School of Healthcare" },
 ];
 
 const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
@@ -34,6 +28,7 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
   onClose,
   onSchoolCreated,
   prefillLocation,
+  centers,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     location: "",
@@ -42,12 +37,18 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       if (prefillLocation) {
         setFormData((prev) => ({
           ...prev,
-          location: prefillLocation.toLowerCase(),
+          location: prefillLocation,
         }));
       } else {
         setFormData({ location: "", schoolName: "" });
@@ -119,7 +120,10 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-sm p-6 max-w-md w-full border border-gray-400">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add New School</h3>
 
@@ -148,12 +152,13 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({
                   <option value="">
                     {prefillLocation ? "" : "Select Location"}
                   </option>
-                  {locations.map((location) => (
-                    <option key={location.value} value={location.value}>
-                      {location.label}
+                  {centers?.map((center) => (
+                    <option key={center.id} value={center.id}>
+                      {center.name}
                     </option>
                   ))}
                 </select>
+
                 {!prefillLocation && !isSubmitting && (
                   <ChevronDown
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"

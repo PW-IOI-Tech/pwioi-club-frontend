@@ -14,7 +14,6 @@ interface Certification {
   link: string;
 }
 
-// Modal Component
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -43,7 +42,6 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   );
 };
 
-// Add Certification Modal
 interface AddCertificationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -254,7 +252,6 @@ const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
   );
 };
 
-// Edit Certification Modal
 interface EditCertificationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -462,7 +459,6 @@ const EditCertificationModal: React.FC<EditCertificationModalProps> = ({
   );
 };
 
-// Delete Confirmation Modal
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;

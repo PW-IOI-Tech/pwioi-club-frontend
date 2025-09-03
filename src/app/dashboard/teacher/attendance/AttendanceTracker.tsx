@@ -77,7 +77,6 @@ interface TeachingDetailsResponse {
   };
 }
 
-// Overall Attendance Types
 interface OverallStudentDetail {
   enrollmentId: string;
   name: string;
@@ -116,7 +115,6 @@ interface OverallDetailsResponse {
   data: OverallData;
 }
 
-// Daily Attendance Types
 interface DailyStudentDetail {
   enrollmentId: string;
   name: string;
@@ -150,7 +148,7 @@ interface DailyDetailsResponse {
     center: { id: string; name: string };
   };
   summary: DailySummary;
-  classDetails: any[]; // can refine if API returns details later
+  classDetails: any[];
   studentDetails: DailyStudentDetail[];
 }
 
@@ -870,7 +868,6 @@ const AttendanceTracker: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Daily Insights */}
                   <div className="bg-gradient-to-br from-white to-indigo-50 rounded-lg shadow-sm border border-gray-400">
                     <div className="px-6 py-4 border-b border-gray-400">
                       <h3 className="text-lg font-semibold text-gray-900">
@@ -946,7 +943,6 @@ const AttendanceTracker: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Daily Students Table */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-900">

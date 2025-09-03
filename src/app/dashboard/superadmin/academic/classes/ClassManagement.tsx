@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { ChevronDown, Plus, X } from "lucide-react";
+import { ChevronDown, Edit2, Plus, X } from "lucide-react";
 import axios from "axios";
 
 interface SavedClass {
@@ -21,9 +21,9 @@ function getUpcomingWeeks() {
   const today = new Date();
   for (let i = 0; i < 4; i++) {
     const startDate = new Date(today);
-    startDate.setDate(today.getDate() + i * 7 - today.getDay()); // Monday
+    startDate.setDate(today.getDate() + i * 7 - today.getDay());
     const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 4); // Friday
+    endDate.setDate(startDate.getDate() + 4);
 
     weeks.push({
       id: i + 1,
@@ -37,7 +37,6 @@ function getUpcomingWeeks() {
   return weeks;
 }
 
-// 👉 helper: is the given "day name" today?
 function isToday(day: string) {
   const today = new Date();
   const days = [
@@ -52,7 +51,6 @@ function isToday(day: string) {
   return days[today.getDay()] === day;
 }
 
-// 👉 helper: get current time string "HH:mm"
 function getCurrentTimeString() {
   const now = new Date();
   return now.toTimeString().slice(0, 5);
@@ -84,6 +82,15 @@ export default function ClassManagement() {
   });
 
   const [savedClasses, setSavedClasses] = useState<SavedClass[]>([]);
+  const [editingClass, setEditingClass] = useState<SavedClass | null>(null);
+
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [loadingBatches, setLoadingBatches] = useState(false);
+  const [loadingDivisions, setLoadingDivisions] = useState(false);
+  const [loadingSemesters, setLoadingSemesters] = useState(false);
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+  const [loadingClasses, setLoadingClasses] = useState(false);
 
   const weeks = useMemo(() => getUpcomingWeeks(), []);
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -106,8 +113,7 @@ export default function ClassManagement() {
 
   const minTime = getCurrentTimeString();
 
-
-    useEffect(() => {
+  useEffect(() => {
     const fetchCenters = async () => {
       try {
         const res = await axios.get(
@@ -125,72 +131,105 @@ export default function ClassManagement() {
   }, []);
 
   useEffect(() => {
-    if (!selectedCenter) return;
+    if (!selectedCenter) {
+      setSchools([]);
+      setSelectedSchool("");
+      return;
+    }
+    setLoadingSchools(true);
+    setSchools([]);
     axios
       .get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${selectedCenter}`,
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       )
       .then((res) => setSchools(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch schools"));
+      .catch(() => console.error("Failed to fetch schools"))
+      .finally(() => setLoadingSchools(false));
   }, [selectedCenter]);
 
   useEffect(() => {
-    if (!selectedSchool) return;
+    if (!selectedSchool) {
+      setBatches([]);
+      setSelectedBatch("");
+      return;
+    }
+    setLoadingBatches(true);
+    setBatches([]);
     axios
       .get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       )
       .then((res) => setBatches(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch batches"));
+      .catch(() => console.error("Failed to fetch batches"))
+      .finally(() => setLoadingBatches(false));
   }, [selectedSchool]);
 
   useEffect(() => {
-    if (!selectedBatch) return;
+    if (!selectedBatch) {
+      setDivisions([]);
+      setSelectedDivision("");
+      return;
+    }
+    setLoadingDivisions(true);
+    setDivisions([]);
     axios
       .get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/by-batch/${selectedBatch}`,
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       )
       .then((res) => setDivisions(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch divisions"));
+      .catch(() => console.error("Failed to fetch divisions"))
+      .finally(() => setLoadingDivisions(false));
   }, [selectedBatch]);
 
   useEffect(() => {
-    if (!selectedDivision) return;
+    if (!selectedDivision) {
+      setSemesters([]);
+      setSelectedSemester("");
+      return;
+    }
+    setLoadingSemesters(true);
+    setSemesters([]);
     axios
       .get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${selectedDivision}`,
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       )
       .then((res) => setSemesters(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch semesters"));
+      .catch(() => console.error("Failed to fetch semesters"))
+      .finally(() => setLoadingSemesters(false));
   }, [selectedDivision]);
 
   useEffect(() => {
-    if (!selectedSemester) return;
+    if (!selectedSemester) {
+      setSubjects([]);
+      setSelectedSubject("");
+      return;
+    }
+    setLoadingSubjects(true);
+    setSubjects([]);
     axios
       .get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/semesters/${selectedSemester}`,
         { withCredentials: true }
       )
       .then((res) => setSubjects(res.data?.data || []))
-      .catch(() => console.error("Failed to fetch subjects"));
+      .catch(() => console.error("Failed to fetch subjects"))
+      .finally(() => setLoadingSubjects(false));
   }, [selectedSemester]);
 
   useEffect(() => {
-    if (!selectedCenter) return;
+    if (!selectedCenter) {
+      setRooms([]);
+      setSelectedRoom("");
+      return;
+    }
 
     const fetchRooms = async () => {
+      setLoadingRooms(true);
+      setRooms([]);
       try {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rooms`,
@@ -205,80 +244,150 @@ export default function ClassManagement() {
         }
       } catch (err: any) {
         console.error(err.response?.data?.message || "Failed to fetch rooms");
+      } finally {
+        setLoadingRooms(false);
       }
     };
 
     fetchRooms();
   }, [selectedCenter]);
 
-
   useEffect(() => {
     if (!allFiltersSelected || !selectedWeek) return;
+
     const fetchClasses = async () => {
+      setLoadingClasses(true);
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class`, {
-          params: {
-            centerId: selectedCenter,
-            schoolId: selectedSchool,
-            batchId: selectedBatch,
-            divisionId: selectedDivision,
-            semesterId: selectedSemester,
-            week: selectedWeek
-          },
-          withCredentials: true,
-        });
-        if (res.data.success) setSavedClasses(res.data.data);
+        const weekObj = weeks.find((w) => w.id === selectedWeek);
+        if (!weekObj) return;
+
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class`,
+          {
+            params: {
+              centerId: selectedCenter,
+              schoolId: selectedSchool,
+              batchId: selectedBatch,
+              divisionId: selectedDivision,
+              semesterId: selectedSemester,
+            },
+            withCredentials: true,
+          }
+        );
+
+        if (res.data.success) {
+          const mapped = res.data.data
+            .map((cls: any) => {
+              const start = new Date(cls.start_date);
+              const end = new Date(cls.end_date);
+
+              const days = [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+              ];
+
+              return {
+                id: cls.id,
+                subjectId: cls.subject_id,
+                roomId: cls.room_id,
+                day: days[start.getDay()],
+                startTime: start.toTimeString().slice(0, 5),
+                endTime: end.toTimeString().slice(0, 5),
+                lectureNumber: cls.lecture_number,
+                subjectName: cls.subject?.name || "",
+                roomName: cls.room?.name || "",
+                startDate: start,
+                endDate: end,
+              } as SavedClass & { startDate: Date; endDate: Date };
+            })
+            .filter(
+              (cls: any) =>
+                cls.startDate >= weekObj.start && cls.startDate <= weekObj.end
+            );
+
+          setSavedClasses(mapped);
+        }
       } catch (err) {
         console.error("Failed to fetch classes", err);
+      } finally {
+        setLoadingClasses(false);
       }
     };
+
     fetchClasses();
-  }, [allFiltersSelected, selectedWeek]);
+  }, [allFiltersSelected, selectedWeek, weeks]);
 
   const handleSubmit = async () => {
-    if (!selectedSubjectObj || !selectedRoomObj) return;
-
     try {
+      const weekObj = weeks.find((w) => w.id === selectedWeek);
+      if (!weekObj) return;
+
       const payload = {
-        subjectId: selectedSubjectObj.id,
-        roomId: selectedRoomObj.id,
-        day: currentDay,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-        lectureNumber: formData.lectureNumber,
-        week: selectedWeek
+        subject_id: selectedSubjectObj.id,
+        room_id: selectedRoomObj.id,
+        start_date: weekObj.start.toISOString(),
+        end_date: weekObj.end.toISOString(),
+        schedule_items: [
+          {
+            day_of_week: currentDay,
+            start_time: formData.startTime,
+            end_time: formData.endTime,
+            lecture_number: Number(formData.lectureNumber),
+          },
+        ],
       };
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/schedule`, payload, { withCredentials: true });
-      if (res.data.success) {
-        setSavedClasses(prev => [...prev, res.data.data]);
-        setIsModalOpen(false);
-      }
+
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/schedule`,
+        payload,
+        { withCredentials: true }
+      );
     } catch (err) {
-      console.error("Failed to schedule class", err);
+      console.error("❌ API Error:", err);
     }
   };
 
   const handleDelete = async (classId: string) => {
     try {
-      const res = await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/${classId}`, { withCredentials: true });
+      const res = await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/${classId}`,
+        { withCredentials: true }
+      );
       if (res.data.success) {
-        setSavedClasses(prev => prev.filter(c => c.id !== classId));
+        setSavedClasses((prev) => prev.filter((c) => c.id !== classId));
       }
     } catch (err) {
       console.error("Failed to delete class", err);
     }
   };
 
-  const handleUpdate = async (classId: string, updatedData: Partial<SavedClass>) => {
+  const handleUpdate = async (
+    classId: string,
+    updatedData: Partial<SavedClass>
+  ) => {
     try {
-      const res = await axios.patch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/${classId}`, updatedData, { withCredentials: true });
+      const res = await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/${classId}`,
+        updatedData,
+        { withCredentials: true }
+      );
       if (res.data.success) {
-        setSavedClasses(prev => prev.map(c => (c.id === classId ? res.data.data : c)));
+        setSavedClasses((prev) =>
+          prev.map((c) => (c.id === classId ? res.data.data : c))
+        );
       }
     } catch (err) {
       console.error("Failed to update class", err);
     }
   };
+
+  const showShimmer =
+    !allFiltersSelected || selectedWeek === null || loadingClasses;
 
   return (
     <div className="p-6">
@@ -296,6 +405,7 @@ export default function ClassManagement() {
               options: centers,
               setter: setSelectedCenter,
               disabled: false,
+              loading: false,
             },
             {
               label: "School",
@@ -303,14 +413,15 @@ export default function ClassManagement() {
               options: schools,
               setter: setSelectedSchool,
               disabled: !selectedCenter,
+              loading: loadingSchools,
             },
-
             {
               label: "Batch",
               value: selectedBatch,
               options: batches,
               setter: setSelectedBatch,
               disabled: !selectedSchool,
+              loading: loadingBatches,
             },
             {
               label: "Division",
@@ -318,6 +429,7 @@ export default function ClassManagement() {
               options: divisions,
               setter: setSelectedDivision,
               disabled: !selectedBatch,
+              loading: loadingDivisions,
             },
             {
               label: "Semester",
@@ -325,16 +437,15 @@ export default function ClassManagement() {
               options: semesters,
               setter: setSelectedSemester,
               disabled: !selectedDivision,
+              loading: loadingSemesters,
             },
             {
               label: "Subject",
               value: selectedSubject,
-              options: subjects.map((s) => s.name),
-              setter: (val: string) => {
-                const subj = subjects.find((s) => s.name === val);
-                setSelectedSubject(subj?.id || "");
-              },
+              options: subjects,
+              setter: setSelectedSubject,
               disabled: !selectedSemester,
+              loading: loadingSubjects,
             },
             {
               label: "Room",
@@ -345,6 +456,7 @@ export default function ClassManagement() {
                 setSelectedRoom(room?.id || "");
               },
               disabled: !selectedSubject || !selectedCenter,
+              loading: loadingRooms,
             },
           ].map((filter, idx) => (
             <div key={idx} className="relative min-w-36">
@@ -355,28 +467,38 @@ export default function ClassManagement() {
                 <select
                   value={filter.value}
                   onChange={(e) => filter.setter(e.target.value)}
-                  disabled={filter.disabled}
-                  className={`w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none bg-white cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                  disabled={filter.disabled || filter.loading}
+                  className={`
+                    w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none
+                    ${
+                      filter.disabled || filter.loading
+                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                        : "bg-white text-gray-900"
+                    }
+                  `}
                 >
-                  <option value="">{`Select ${filter.label}`}</option>
-                  {filter.options.map((opt: any) => {
-                    const value = opt.id || opt;
-                    const label =
-                      typeof opt === "string"
-                        ? opt
-                        : opt.name ||
-                          opt.division ||
-                          opt.number ||
-                          opt.code ||
-                          opt.id ||
-                          "Unknown";
+                  <option value="">
+                    {filter.loading ? "Loading..." : `Select ${filter.label}`}
+                  </option>
+                  {!filter.loading &&
+                    filter.options.map((opt: any) => {
+                      const value = opt.id || opt;
+                      const label =
+                        typeof opt === "string"
+                          ? opt
+                          : opt.name ||
+                            opt.division ||
+                            opt.number ||
+                            opt.code ||
+                            opt.id ||
+                            "Unknown";
 
-                    return (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    );
-                  })}
+                      return (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      );
+                    })}
                 </select>
                 <ChevronDown className="absolute right-2 top-1/2 w-4 h-4 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
@@ -393,7 +515,7 @@ export default function ClassManagement() {
 
       {allFiltersSelected && (
         <div>
-          <h3 className="text-lg font-medium text-slate-800 mb-3">
+          <h3 className="text-lg font-medium text-slate-800 my-3">
             Select Week
           </h3>
           <div className="flex flex-wrap gap-2 mb-6">
@@ -414,7 +536,7 @@ export default function ClassManagement() {
         </div>
       )}
 
-      {!allFiltersSelected || selectedWeek === null ? (
+      {showShimmer ? (
         <div className="animate-pulse space-y-4">
           <div className="h-10 bg-gray-200 rounded"></div>
           <div className="space-y-3">
@@ -460,14 +582,49 @@ export default function ClassManagement() {
                       classesForDay.map((cls) => (
                         <div
                           key={cls.id}
-                          className="flex-shrink-0 bg-blue-500 text-white px-3 py-2 rounded-sm text-xs min-w-max shadow-sm"
+                          className="flex-shrink-0 bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 rounded-lg p-3 text-xs w-48 relative"
                         >
-                          <div className="font-medium">{cls.subjectName}</div>
-                          <div className="text-indigo-100">
-                            {cls.startTime}–{cls.endTime} | L{cls.lectureNumber}
+                          <div className="font-semibold text-slate-800 mb-1 truncate">
+                            {cls.subjectName}
                           </div>
-                          <div className="text-indigo-200 text-xs">
-                            {cls.roomName}
+
+                          <div className="text-slate-600 space-y-1">
+                            <div className="flex justify-between">
+                              <span className="font-medium">
+                                {cls.startTime} – {cls.endTime}
+                              </span>
+                              <span className="bg-slate-100 text-slate-700 px-1.5 rounded">
+                                L{cls.lectureNumber}
+                              </span>
+                            </div>
+                            <div className="text-slate-500">{cls.roomName}</div>
+                          </div>
+
+                          <div className="flex gap-1.5 mt-2 pt-2 border-t border-gray-100">
+                            <button
+                              onClick={() => {
+                                setCurrentDay(cls.day);
+                                setFormData({
+                                  startTime: cls.startTime,
+                                  endTime: cls.endTime,
+                                  lectureNumber: cls.lectureNumber,
+                                });
+                                setIsModalOpen(true);
+                                setEditingClass(cls);
+                              }}
+                              className="flex-1 flex items-center justify-center gap-1 text-blue-600 hover:bg-blue-50 text-xs p-1.5 rounded transition-colors duration-150"
+                            >
+                              <Edit2 size={14} />
+                              Edit
+                            </button>
+
+                            <button
+                              onClick={() => handleDelete(cls.id)}
+                              className="flex-1 flex items-center justify-center gap-1 text-red-600 hover:bg-red-50 text-xs p-1.5 rounded transition-colors duration-150"
+                            >
+                              <X size={14} />
+                              Delete
+                            </button>
                           </div>
                         </div>
                       ))
@@ -485,7 +642,7 @@ export default function ClassManagement() {
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">
-                Add Class - {currentDay}
+                {editingClass ? "Edit Class" : `Add Class - ${currentDay}`}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -560,10 +717,22 @@ export default function ClassManagement() {
                 Cancel
               </button>
               <button
-                onClick={handleSubmit}
+                onClick={() => {
+                  if (editingClass) {
+                    handleUpdate(editingClass.id, {
+                      startTime: formData.startTime,
+                      endTime: formData.endTime,
+                      lectureNumber: formData.lectureNumber,
+                    });
+                    setEditingClass(null);
+                  } else {
+                    handleSubmit();
+                  }
+                  setIsModalOpen(false);
+                }}
                 className="flex-1 px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-700 cursor-pointer font-medium"
               >
-                Save
+                {editingClass ? "Update" : "Save"}
               </button>
             </div>
           </div>

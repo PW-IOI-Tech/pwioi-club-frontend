@@ -47,8 +47,8 @@ export default function SchoolManagement() {
               location:
                 centers.find((c) => c.id === selectedLocation)?.name || "",
               schoolName: school.name,
-              divisionsCount: stats.divisions,
               batchesCount: stats.batches,
+              divisionsCount: stats.divisions,
               stdCount: stats.students,
               teachersCount: stats.teachers,
             };
@@ -221,10 +221,8 @@ export default function SchoolManagement() {
           </div>
         </div>
 
-        {!selectedLocation || !showContent ? (
+        {!selectedLocation || !showContent || loading ? (
           <ShimmerSkeleton />
-        ) : loading ? (
-          <p className="p-6">Loading schools...</p>
         ) : (
           <>
             {/* Stats */}
@@ -291,6 +289,7 @@ export default function SchoolManagement() {
           onClose={handleCloseAddModal}
           onSchoolCreated={handleAddSchool}
           prefillLocation={selectedLocation}
+          centers={centers}
         />
       </div>
     </div>

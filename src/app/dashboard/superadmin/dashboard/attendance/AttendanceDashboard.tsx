@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -9,11 +9,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 import {
   Calendar,
@@ -24,15 +19,9 @@ import {
   MapPin,
   ChevronRight,
   RefreshCw,
+  ChevronDown,
 } from "lucide-react";
-
-interface AttendanceData {
-  date: string;
-  present: number;
-  absent: number;
-  total: number;
-  percentage: number;
-}
+import axios from "axios";
 
 interface FilterState {
   center: string;
@@ -46,17 +35,9 @@ interface FilterState {
 interface DashboardStats {
   totalStudents: number;
   averageAttendance: number;
-  presentToday: number;
-  absentToday: number;
+  presentYesterday: number;
+  absentYesterday: number;
 }
-
-// Deterministic pseudo-random generator with seed
-const createSeededRandom = (seed: number) => {
-  return () => {
-    const x = Math.sin(seed++) * 10000;
-    return x - Math.floor(x); // returns float between 0 and 1
-  };
-};
 
 const AttendanceDashboard: React.FC = () => {
   const [filters, setFilters] = useState<FilterState>({
@@ -68,319 +49,151 @@ const AttendanceDashboard: React.FC = () => {
     subject: "",
   });
 
-  const [timeRange, setTimeRange] = useState<
-    "daily" | "weekly" | "monthly" | "overall"
-  >("weekly");
+  const [timeRange, setTimeRange] = useState<"daily" | "weekly" | "monthly">(
+    "weekly"
+  );
+  const [centers, setCenters] = useState<any[]>([]);
+  const [schools, setSchools] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
+  const [divisions, setDivisions] = useState<any[]>([]);
+  const [semesters, setSemesters] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [attendanceData, setAttendanceData] = useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
+    null
+  );
 
-  const centers = ["bangalore", "noida", "pune", "lucknow"];
-  const schools = ["SOT", "SOH", "SOM"];
-  const batches = ["23", "24", "25"];
-  const divisions = ["B1", "B2"];
-  const semesters = ["1", "2", "3", "4", "5", "6", "7", "8"];
-  const subjectData = {
-    SOT: {
-      1: [
-        "Programming Fundamentals",
-        "Mathematics I",
-        "Physics",
-        "English Communication",
-        "Engineering Graphics",
-      ],
-      2: [
-        "Data Structures",
-        "Mathematics II",
-        "Chemistry",
-        "Environmental Science",
-        "Workshop Practice",
-      ],
-      3: [
-        "Object Oriented Programming",
-        "Database Management",
-        "Computer Networks",
-        "Digital Electronics",
-        "Technical Writing",
-      ],
-      4: [
-        "Software Engineering",
-        "Operating Systems",
-        "Web Technologies",
-        "Computer Architecture",
-        "Project Management",
-      ],
-      5: [
-        "Machine Learning",
-        "Cloud Computing",
-        "Mobile App Development",
-        "Cybersecurity",
-        "Research Methodology",
-      ],
-      6: [
-        "Artificial Intelligence",
-        "Big Data Analytics",
-        "DevOps",
-        "Blockchain Technology",
-        "Industry Project I",
-      ],
-      7: [
-        "Advanced AI",
-        "IoT Systems",
-        "Quantum Computing",
-        "Capstone Project I",
-        "Professional Ethics",
-      ],
-      8: [
-        "Dissertation",
-        "Industry Internship",
-        "Capstone Project II",
-        "Entrepreneurship",
-        "Career Development",
-      ],
-    },
-    SOH: {
-      1: [
-        "Human Anatomy",
-        "Medical Terminology",
-        "Healthcare Fundamentals",
-        "Communication Skills",
-        "Basic Sciences",
-      ],
-      2: [
-        "Physiology",
-        "Pathology",
-        "Pharmacology",
-        "Medical Ethics",
-        "Healthcare Systems",
-      ],
-      3: [
-        "Clinical Medicine",
-        "Diagnostic Techniques",
-        "Patient Care",
-        "Medical Technology",
-        "Healthcare Management",
-      ],
-      4: [
-        "Advanced Clinical Practice",
-        "Specialized Medicine",
-        "Research Methods",
-        "Healthcare Policy",
-        "Quality Assurance",
-      ],
-      5: [
-        "Clinical Specialization",
-        "Advanced Diagnostics",
-        "Healthcare Innovation",
-        "Medical Research",
-        "Leadership Skills",
-      ],
-      6: [
-        "Clinical Internship I",
-        "Advanced Patient Care",
-        "Medical Informatics",
-        "Healthcare Analytics",
-        "Project Work",
-      ],
-      7: [
-        "Clinical Internship II",
-        "Specialized Practice",
-        "Healthcare Consulting",
-        "Medical Writing",
-        "Thesis Work I",
-      ],
-      8: [
-        "Final Internship",
-        "Comprehensive Care",
-        "Healthcare Leadership",
-        "Professional Practice",
-        "Thesis Work II",
-      ],
-    },
-    SOM: {
-      1: [
-        "Business Fundamentals",
-        "Financial Accounting",
-        "Economics",
-        "Business Communication",
-        "Mathematics for Business",
-      ],
-      2: [
-        "Management Principles",
-        "Cost Accounting",
-        "Statistics",
-        "Organizational Behavior",
-        "Business Law",
-      ],
-      3: [
-        "Marketing Management",
-        "Financial Management",
-        "Operations Management",
-        "Human Resource Management",
-        "Business Analytics",
-      ],
-      4: [
-        "Strategic Management",
-        "International Business",
-        "Digital Marketing",
-        "Supply Chain Management",
-        "Entrepreneurship",
-      ],
-      5: [
-        "Advanced Strategy",
-        "Investment Analysis",
-        "Consumer Behavior",
-        "Business Intelligence",
-        "Innovation Management",
-      ],
-      6: [
-        "Corporate Finance",
-        "Global Markets",
-        "Brand Management",
-        "Project Management",
-        "Industry Analysis",
-      ],
-      7: [
-        "Management Consulting",
-        "Mergers & Acquisitions",
-        "Leadership Development",
-        "Business Ethics",
-        "Capstone Project I",
-      ],
-      8: [
-        "Strategic Consulting",
-        "Corporate Governance",
-        "Change Management",
-        "Thesis Work",
-        "Capstone Project II",
-      ],
-    },
-  };
-
-  const getSubjectsForSchoolAndSemester = (
-    school: string,
-    semester: string
-  ) => {
-    if (!school || !semester) return [];
+  const getLabel = (list: any[], value: string, fallback = "") => {
+    if (!value) return fallback;
+    const found = list.find(
+      (opt: any) => opt.id === value || opt._id === value || opt.code === value
+    );
     return (
-      subjectData[school as keyof typeof subjectData]?.[
-        parseInt(semester) as keyof typeof subjectData.SOT
-      ] || []
+      found?.name ||
+      found?.division ||
+      found?.number ||
+      found?.code ||
+      found?.id ||
+      value
     );
   };
 
-  const getFilteredOptions = (type: string) => {
-    switch (type) {
-      case "batch":
-        return filters.school
-          ? batches.map((b) => `${filters.school}${b}`)
-          : [];
-      case "division":
-        return filters.school && filters.batch
-          ? divisions.map(
-              (d) => `${filters.school}${filters.batch.slice(-2)}${d}`
-            )
-          : [];
-      default:
-        return [];
-    }
-  };
-
-  // Generate deterministic attendance data using seeded random
-  const generateAttendanceData = useMemo(() => {
-    const seededRandom = createSeededRandom(42); // fixed seed → consistent across renders
-
-    const baseData: AttendanceData[] = [];
-    const now = new Date();
-    let days = 30;
-    let step = 1;
-
-    switch (timeRange) {
-      case "daily":
-        days = 7;
-        break;
-      case "weekly":
-        days = 12;
-        step = 7;
-        break;
-      case "monthly":
-      case "overall":
-        days = 24;
-        step = 30;
-        break;
-    }
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now);
-      if (timeRange === "weekly") {
-        date.setDate(date.getDate() - i * 7);
-      } else if (timeRange === "monthly" || timeRange === "overall") {
-        date.setMonth(date.getMonth() - i);
-      } else {
-        date.setDate(date.getDate() - i);
+  // Fetch Centers
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+          { withCredentials: true }
+        );
+        if (res.data.success) setCenters(res.data.data);
+      } catch (err: any) {
+        console.error(err.response?.data?.message || "Failed to fetch centers");
       }
-
-      let totalStudents = 1000;
-      if (filters.center) totalStudents = Math.floor(totalStudents * 0.25);
-      if (filters.school) totalStudents = Math.floor(totalStudents * 0.33);
-      if (filters.batch) totalStudents = Math.floor(totalStudents * 0.33);
-      if (filters.division) totalStudents = Math.floor(totalStudents * 0.5);
-      if (filters.semester) totalStudents = Math.floor(totalStudents * 0.12);
-      if (filters.subject) totalStudents = Math.floor(totalStudents * 0.8);
-
-      // Deterministic random value
-      const randomValue = seededRandom();
-      const attendanceRate = 0.75 + randomValue * 0.2;
-      const present = Math.floor(totalStudents * attendanceRate);
-      const absent = totalStudents - present;
-
-      let dateLabel = "";
-      if (timeRange === "daily") {
-        dateLabel = date.toLocaleDateString("en-US", { weekday: "short" });
-      } else if (timeRange === "weekly") {
-        dateLabel = `Week ${i + 1}`;
-      } else if (timeRange === "monthly") {
-        dateLabel = date.toLocaleDateString("en-US", { month: "short" });
-      } else {
-        dateLabel = date.toLocaleDateString("en-US", {
-          month: "short",
-          year: "2-digit",
-        });
-      }
-
-      baseData.push({
-        date: dateLabel,
-        present,
-        absent,
-        total: totalStudents,
-        percentage: Math.round((present / totalStudents) * 100),
-      });
-    }
-
-    return baseData;
-  }, [filters, timeRange]); // ✅ Now safe: deterministic
-
-  const dashboardStats = useMemo((): DashboardStats => {
-    if (generateAttendanceData.length === 0) {
-      return {
-        totalStudents: 0,
-        averageAttendance: 0,
-        presentToday: 0,
-        absentToday: 0,
-      };
-    }
-
-    const latestData =
-      generateAttendanceData[generateAttendanceData.length - 1];
-    const avgAttendance = Math.round(
-      generateAttendanceData.reduce((acc, data) => acc + data.percentage, 0) /
-        generateAttendanceData.length
-    );
-
-    return {
-      totalStudents: latestData.total,
-      averageAttendance: avgAttendance,
-      presentToday: latestData.present,
-      absentToday: latestData.absent,
     };
-  }, [generateAttendanceData]);
+    fetchCenters();
+  }, []);
+
+  // Fetch Schools
+  useEffect(() => {
+    if (!filters.center) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${filters.center}`,
+        { withCredentials: true }
+      )
+      .then((res) => setSchools(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch schools"));
+  }, [filters.center]);
+
+  // Fetch Batches
+  useEffect(() => {
+    if (!filters.school) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${filters.school}`,
+        { withCredentials: true }
+      )
+      .then((res) => setBatches(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch batches"));
+  }, [filters.school]);
+
+  // Fetch Divisions
+  useEffect(() => {
+    if (!filters.batch) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/by-batch/${filters.batch}`,
+        { withCredentials: true }
+      )
+      .then((res) => setDivisions(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch divisions"));
+  }, [filters.batch]);
+
+  // Fetch Semesters
+  useEffect(() => {
+    if (!filters.division) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${filters.division}`,
+        { withCredentials: true }
+      )
+      .then((res) => setSemesters(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch semesters"));
+  }, [filters.division]);
+
+  // Fetch Subjects
+  useEffect(() => {
+    if (!filters.semester) return;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/semesters/${filters.semester}`,
+        { withCredentials: true }
+      )
+      .then((res) => setSubjects(res.data?.data || []))
+      .catch(() => console.error("Failed to fetch subjects"));
+  }, [filters.semester]);
+
+  // Fetch Attendance Analytics
+  useEffect(() => {
+    const fetchAttendanceAnalytics = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/attendance-analytics`,
+          {
+            params: {
+              center: filters.center || undefined,
+              school: filters.school || undefined,
+              batch: filters.batch || undefined,
+              division: filters.division || undefined,
+              semester: filters.semester || undefined,
+              subject: filters.subject || undefined,
+            },
+            withCredentials: true,
+          }
+        );
+
+        if (res.data.success) {
+          const { overview, trends } = res.data.data;
+
+          setDashboardStats(overview);
+
+          const mappedData = (trends[timeRange] || []).map((t: any) => ({
+            date: t.period,
+            percentage: t.percentage,
+          }));
+
+          setAttendanceData(mappedData);
+        }
+      } catch (err: any) {
+        console.error(
+          err.response?.data?.message || "Failed to fetch attendance analytics"
+        );
+      }
+    };
+
+    fetchAttendanceAnalytics();
+  }, [filters, timeRange]);
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters((prev) => {
@@ -425,20 +238,10 @@ const AttendanceDashboard: React.FC = () => {
   const hasAnyFilterSelected = () =>
     Object.values(filters).some((val) => val !== "");
 
-  const pieData = [
-    { name: "Present", value: dashboardStats.presentToday, color: "#0f172a" },
-    { name: "Absent", value: dashboardStats.absentToday, color: "#3730a3" },
-  ];
-
-  const renderPieLabel = (props: any) => {
-    const { name, value, percent } = props;
-    if (!percent || !name || value === undefined) return "";
-    return `${name}: ${Math.round(percent * 100)}%`;
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-900 rounded-lg shadow-sm border border-slate-700 p-6 py-8 mb-6">
           <h1 className="text-2xl md:text-3xl text-white font-semibold mb-2">
             Attendance Dashboard
@@ -449,39 +252,39 @@ const AttendanceDashboard: React.FC = () => {
           </p>
         </div>
 
+        {/* Active Filters */}
         <div className="bg-white rounded-lg border border-gray-300 p-4 mb-6 shadow-sm">
           <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
             {hasAnyFilterSelected() ? (
               <>
                 {filters.center && (
                   <span className="px-3 py-1 bg-slate-100 text-slate-800 rounded-full font-medium">
-                    {filters.center.charAt(0).toUpperCase() +
-                      filters.center.slice(1)}
+                    {getLabel(centers, filters.center)}
                   </span>
                 )}
                 {filters.school && (
                   <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full font-medium">
-                    {filters.school}
+                    {getLabel(schools, filters.school)}
                   </span>
                 )}
                 {filters.batch && (
                   <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
-                    Batch {filters.batch}
+                    Batch {getLabel(batches, filters.batch)}
                   </span>
                 )}
                 {filters.division && (
                   <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full font-medium">
-                    {filters.division}
+                    {getLabel(divisions, filters.division)}
                   </span>
                 )}
                 {filters.semester && (
                   <span className="px-3 py-1 bg-violet-100 text-violet-800 rounded-full font-medium">
-                    Sem {filters.semester}
+                    Sem {getLabel(semesters, filters.semester)}
                   </span>
                 )}
                 {filters.subject && (
                   <span className="px-3 py-1 bg-cyan-100 text-cyan-800 rounded-full font-medium">
-                    {filters.subject}
+                    {getLabel(subjects, filters.subject)}
                   </span>
                 )}
               </>
@@ -501,6 +304,7 @@ const AttendanceDashboard: React.FC = () => {
           )}
         </div>
 
+        {/* Filters */}
         <section className="bg-white rounded-lg border border-gray-300 p-5 shadow-sm mb-8">
           <div className="flex items-center space-x-3 mb-4">
             <MapPin className="h-5 w-5 text-slate-900" />
@@ -520,119 +324,129 @@ const AttendanceDashboard: React.FC = () => {
               {
                 label: "School",
                 key: "school",
-                options: filters.center ? schools : [],
+                options: schools,
                 disabled: !filters.center,
               },
               {
                 label: "Batch",
                 key: "batch",
-                options: getFilteredOptions("batch"),
+                options: batches,
                 disabled: !filters.school,
               },
               {
                 label: "Division",
                 key: "division",
-                options: getFilteredOptions("division"),
+                options: divisions,
                 disabled: !filters.batch,
               },
               {
                 label: "Semester",
                 key: "semester",
-                options: filters.division ? semesters : [],
+                options: semesters,
                 disabled: !filters.division,
               },
               {
                 label: "Subject",
                 key: "subject",
-                options: filters.semester
-                  ? getSubjectsForSchoolAndSemester(
-                      filters.school,
-                      filters.semester
-                    )
-                  : [],
+                options: subjects,
                 disabled: !filters.semester,
               },
-            ].map((filter) => (
-              <div key={filter.key} className="cursor-pointer">
+            ].map((filter, idx) => (
+              <div key={idx} className="relative min-w-36">
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   {filter.label}
                 </label>
-                <select
-                  value={filters[filter.key as keyof FilterState]}
-                  onChange={(e) =>
-                    handleFilterChange(
-                      filter.key as keyof FilterState,
-                      e.target.value
-                    )
-                  }
-                  disabled={filter.disabled}
-                  className="w-full p-2 border border-gray-300 rounded text-sm bg-white focus:ring-2 focus:ring-slate-500 focus:border-slate-500 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <option value="">
-                    {filter.disabled
-                      ? `Select ${filter.label} First`
-                      : `Select ${filter.label}`}
-                  </option>
-                  {filter.options.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={filters[filter.key as keyof FilterState]}
+                    onChange={(e) =>
+                      handleFilterChange(
+                        filter.key as keyof FilterState,
+                        e.target.value
+                      )
+                    }
+                    disabled={filter.disabled}
+                    className="w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none bg-white cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">{`Select ${filter.label}`}</option>
+                    {filter.options.map((opt: any) => {
+                      const value = opt.id || opt._id || opt;
+                      const label =
+                        typeof opt === "string"
+                          ? opt
+                          : opt.name ||
+                            opt.division ||
+                            opt.number ||
+                            opt.code ||
+                            opt.id ||
+                            "Unknown";
+                      return (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 w-4 h-4 text-gray-400 pointer-events-none -translate-y-1/2" />
+                </div>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {[
-            {
-              label: "Total Students",
-              value: dashboardStats.totalStudents.toLocaleString(),
-              icon: Users,
-              color: "bg-slate-100",
-              textColor: "text-slate-800",
-            },
-            {
-              label: "Avg Attendance",
-              value: `${dashboardStats.averageAttendance}%`,
-              icon: TrendingUp,
-              color: "bg-indigo-100",
-              textColor: "text-indigo-800",
-            },
-            {
-              label: "Present Today",
-              value: dashboardStats.presentToday.toLocaleString(),
-              icon: Calendar,
-              color: "bg-blue-100",
-              textColor: "text-blue-800",
-            },
-            {
-              label: "Absent Today",
-              value: dashboardStats.absentToday.toLocaleString(),
-              icon: Clock,
-              color: "bg-red-100",
-              textColor: "text-red-800",
-            },
-          ].map((stat, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-lg border border-gray-300 p-5 shadow-sm hover:shadow-md transition-all duration-200 cursor-default"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className={`p-2 rounded ${stat.color}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.textColor}`} />
+        {/* Stats */}
+        {dashboardStats && (
+          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[
+              {
+                label: "Total Students",
+                value: dashboardStats.totalStudents.toLocaleString(),
+                icon: Users,
+                color: "bg-slate-100",
+                textColor: "text-slate-800",
+              },
+              {
+                label: "Avg Attendance",
+                value: `${dashboardStats.averageAttendance}%`,
+                icon: TrendingUp,
+                color: "bg-indigo-100",
+                textColor: "text-indigo-800",
+              },
+              {
+                label: "Present Yesterday",
+                value: dashboardStats.presentYesterday.toLocaleString(),
+                icon: Calendar,
+                color: "bg-blue-100",
+                textColor: "text-blue-800",
+              },
+              {
+                label: "Absent Yesterday",
+                value: dashboardStats.absentYesterday.toLocaleString(),
+                icon: Clock,
+                color: "bg-red-100",
+                textColor: "text-red-800",
+              },
+            ].map((stat, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-lg border border-gray-300 p-5 shadow-sm hover:shadow-md transition-all duration-200 cursor-default"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`p-2 rounded ${stat.color}`}>
+                    <stat.icon className={`h-5 w-5 ${stat.textColor}`} />
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-gray-300" />
                 </div>
-                <ChevronRight className="h-4 w-4 text-gray-300" />
+                <h3 className="text-sm font-medium text-gray-600">
+                  {stat.label}
+                </h3>
+                <p className="text-xl font-bold text-gray-900">{stat.value}</p>
               </div>
-              <h3 className="text-sm font-medium text-gray-600">
-                {stat.label}
-              </h3>
-              <p className="text-xl font-bold text-gray-900">{stat.value}</p>
-            </div>
-          ))}
-        </section>
+            ))}
+          </section>
+        )}
 
+        {/* Attendance Trends */}
         <section className="bg-white rounded-lg border border-gray-300 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
@@ -642,50 +456,40 @@ const AttendanceDashboard: React.FC = () => {
               </h2>
             </div>
             <div className="flex space-x-2">
-              {(["daily", "weekly", "monthly", "overall"] as const).map(
-                (range) => (
-                  <button
-                    key={range}
-                    onClick={() => setTimeRange(range)}
-                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
-                      timeRange === range
-                        ? "bg-slate-900 text-white"
-                        : "bg-slate-100 text-slate-800 hover:bg-slate-200"
-                    }`}
-                  >
-                    {range.charAt(0).toUpperCase() + range.slice(1)}
-                  </button>
-                )
-              )}
+              {(["daily", "weekly", "monthly"] as const).map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setTimeRange(range)}
+                  className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
+                    timeRange === range
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-100 text-slate-800 hover:bg-slate-200"
+                  }`}
+                >
+                  {range.charAt(0).toUpperCase() + range.slice(1)}
+                </button>
+              ))}
             </div>
           </div>
-
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                data={generateAttendanceData}
+                data={attendanceData}
                 margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="6 6" stroke="#e2e8f0" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} unit="%" />
                 <Tooltip
-                  formatter={(value) => [`${value} students`]}
-                  labelFormatter={(label) => `Date: ${label}`}
+                  formatter={(value) => [`${value}%`, "Attendance"]}
+                  labelFormatter={(label) => `Period: ${label}`}
                 />
                 <Line
                   type="monotone"
-                  dataKey="present"
+                  dataKey="percentage"
                   stroke="#0f172a"
                   strokeWidth={2}
                   dot={{ fill: "#0f172a", r: 3 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="absent"
-                  stroke="#3730a3"
-                  strokeWidth={2}
-                  dot={{ fill: "#3730a3", r: 3 }}
                 />
               </LineChart>
             </ResponsiveContainer>

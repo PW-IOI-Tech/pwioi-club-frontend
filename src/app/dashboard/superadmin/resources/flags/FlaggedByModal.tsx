@@ -64,7 +64,7 @@ const FlaggedByModal: React.FC<FlaggedByModalProps> = ({
             </h3>
             <div className="mt-2 space-y-2">
               <p className="text-sm text-gray-600">
-                Post ID: {post.postId} • {post.flagCount} flag
+                {post.flagCount} flag
                 {post.flagCount !== 1 ? "s" : ""}
               </p>
               <p className="text-sm font-medium text-gray-800">
@@ -100,7 +100,6 @@ const FlaggedByModal: React.FC<FlaggedByModalProps> = ({
             <div className="flex justify-between items-start mb-3">
               <div>
                 <p className="font-medium text-gray-800">{post.postAuthor}</p>
-                <p className="text-sm text-gray-600">{post.postAuthorEmail}</p>
               </div>
               <div className="text-right text-sm text-gray-500">
                 <p>Posted: {formatDate(post.postCreatedAt)}</p>
@@ -151,9 +150,7 @@ const FlaggedByModal: React.FC<FlaggedByModalProps> = ({
                           <p className="font-medium text-gray-800">
                             {flag.userName}
                           </p>
-                          <p className="text-sm text-gray-600">
-                            {flag.userEmail}
-                          </p>
+                          
                         </div>
                         <div className="text-right">
                           <div className="flex items-center text-sm text-gray-500">

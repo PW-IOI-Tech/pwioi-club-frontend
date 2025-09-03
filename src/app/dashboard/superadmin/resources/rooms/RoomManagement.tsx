@@ -5,6 +5,7 @@ import { Users, Plus } from "lucide-react";
 import Table from "../../Table";
 import AddRoomModal from "./AddRoomModal";
 import axios from "axios";
+import { ManagementShimmer } from "../../people/admins/AdminManagement";
 
 interface TableRoom {
   id: string;
@@ -18,7 +19,6 @@ interface AddRoomModalProps {
   onRoomCreated: (roomData: { center_id: string; roomName: string }) => void;
 }
 
-
 export default function RoomManagement() {
   const [rooms, setRooms] = useState<TableRoom[]>([]);
   const [error, setError] = useState("");
@@ -26,13 +26,15 @@ export default function RoomManagement() {
   const [isAddRoomModalOpen, setIsAddRoomModalOpen] = useState(false);
   const [centers, setCenters] = useState<any[]>([]);
 
-
   const fetchRooms = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rooms`, {
-        withCredentials:true,
-      });
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rooms`,
+        {
+          withCredentials: true,
+        }
+      );
 
       const mappedRooms: TableRoom[] = res.data.data.map((room: any) => ({
         id: room.id,
@@ -52,22 +54,21 @@ export default function RoomManagement() {
     fetchRooms();
   }, [fetchRooms]);
 
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+          { withCredentials: true }
+        );
+        setCenters(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch centers:", err);
+      }
+    };
 
-useEffect(() => {
-  const fetchCenters = async () => {
-    try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
-        {withCredentials:true }
-      );
-      setCenters(res.data.data); 
-    } catch (err) {
-      console.error("Failed to fetch centers:", err);
-    }
-  };
-
-  fetchCenters();
-}, []);
+    fetchCenters();
+  }, []);
 
   const statistics = useMemo(
     () => ({
@@ -88,7 +89,7 @@ useEffect(() => {
       await axios.put(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rooms/${roomItem.id}`,
         { name: roomItem.roomName },
-        {withCredentials:true}
+        { withCredentials: true }
       );
 
       setRooms((prev) =>
@@ -105,8 +106,10 @@ useEffect(() => {
   const handleDeleteRoom = useCallback(async (id: string | number) => {
     try {
       const deleteId = typeof id === "number" ? id.toString() : id;
-      await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rooms/${deleteId}`,         {withCredentials:true}
-);
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rooms/${deleteId}`,
+        { withCredentials: true }
+      );
 
       setRooms((prev) => prev.filter((room) => room.id !== deleteId));
     } catch (err: any) {
@@ -114,30 +117,32 @@ useEffect(() => {
     }
   }, []);
 
-const handleAddRoom = useCallback(
-  async (newRoomData: { center_id: any; roomName: string;}) => {
-    try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rooms`,
-        { name: newRoomData.roomName, center_id: newRoomData.center_id || "" },
-        {withCredentials:true}
-      );
+  const handleAddRoom = useCallback(
+    async (newRoomData: { center_id: any; roomName: string }) => {
+      try {
+        const res = await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rooms`,
+          {
+            name: newRoomData.roomName,
+            center_id: newRoomData.center_id || "",
+          },
+          { withCredentials: true }
+        );
 
-      const newRoom: TableRoom = {
-        id: res.data.data.id,
-        center: res.data.data.center.name,
-        roomName: res.data.data.name,
-      };
+        const newRoom: TableRoom = {
+          id: res.data.data.id,
+          center: res.data.data.center.name,
+          roomName: res.data.data.name,
+        };
 
-      setRooms((prev) => [...prev, newRoom]);
-      setIsAddRoomModalOpen(false);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to add room");
-    }
-  },
-  []
-);
-
+        setRooms((prev) => [...prev, newRoom]);
+        setIsAddRoomModalOpen(false);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to add room");
+      }
+    },
+    []
+  );
 
   const handleOpenAddModal = useCallback(() => {
     setIsAddRoomModalOpen(true);
@@ -148,7 +153,7 @@ const handleAddRoom = useCallback(
   }, []);
 
   if (loading) {
-    return <p className="text-center mt-8">Loading rooms...</p>;
+    return <ManagementShimmer />;
   }
 
   if (error) {
@@ -206,7 +211,9 @@ const handleAddRoom = useCallback(
           filterField="center"
           badgeFields={["center"]}
           selectFields={{
-            center: Array.from(new Set(rooms.map((room) => room.center.toLowerCase()))),
+            center: Array.from(
+              new Set(rooms.map((room) => room.center.toLowerCase()))
+            ),
           }}
           nonEditableFields={["id", "center"]}
           onDelete={handleDeleteRoom}

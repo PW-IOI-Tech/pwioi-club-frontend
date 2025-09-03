@@ -8,26 +8,34 @@ import Qualifications from "./Components/Qualifications";
 import Experience from "./Components/Experience";
 import About from "./Components/About";
 import ResearchPapers from "./Components/ResearchPapers";
+import TeacherProfileShimmer from "./TeacherProfileShimmer";
 
 const TeacherProfileBuilder = () => {
-const [aboutDetails, setAboutDetails] = useState<any>(null);
+  const [aboutDetails, setAboutDetails] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-
-const getAboutDetails = async () => {
+  const getAboutDetails = async () => {
+    setLoading(true);
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/profile/basic-details`,
         { withCredentials: true }
       );
-      setAboutDetails(response?.data?.data); 
+      setAboutDetails(response?.data?.data);
     } catch (error) {
       console.error("Error fetching about details:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     getAboutDetails();
   }, []);
+
+  if (loading) {
+    return <TeacherProfileShimmer />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">

@@ -6,7 +6,7 @@ interface AddRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
   onRoomCreated: (roomData: { center_id: string; roomName: string }) => void;
-  centers:any;
+  centers: any;
 }
 
 interface FormData {
@@ -18,7 +18,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
   isOpen,
   onClose,
   onRoomCreated,
-  centers
+  centers,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     center_id: "",
@@ -26,6 +26,12 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
 
   React.useEffect(() => {
     if (isOpen) {
@@ -99,9 +105,11 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
 
   if (!isOpen) return null;
 
-
   return (
-    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-sm p-6 max-w-md w-full border border-gray-400">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Add New Room</h3>
 
@@ -128,7 +136,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
                   disabled={isSubmitting}
                 >
                   <option value="">Select Center</option>
-                  {centers.map((center:any) => (
+                  {centers.map((center: any) => (
                     <option key={center?.location} value={center?.id}>
                       {center?.location}
                     </option>

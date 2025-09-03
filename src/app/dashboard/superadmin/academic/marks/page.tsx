@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import UploadSection from "./UploadSection";
 
 export const metadata: Metadata = {
-  title: "Upload Marks",
+  title: "Marks Management",
   description: "Upload xls file for student marks",
 };
 

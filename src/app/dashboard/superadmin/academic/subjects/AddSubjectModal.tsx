@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
+import axios from "axios";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 interface AddSubjectModalProps {
   isOpen: boolean;
@@ -9,12 +12,14 @@ interface AddSubjectModalProps {
     credits: string;
     subjectCode: string;
     teacher: string;
+    teacherId?: string;
   }) => void;
   selectedSchool: string;
   selectedBatch: string;
   selectedDivision: string;
   selectedSemester: string;
   selectedCenter: string;
+  selectedCenterId: string;
 }
 
 interface FormData {
@@ -26,57 +31,25 @@ interface FormData {
   teacher: string;
 }
 
-const teachersData: Record<
-  string,
-  Record<string, Array<{ value: string; label: string }>>
-> = {
-  bangalore: {
-    SOT: [
-      { value: "dr-john-smith", label: "Dr. John Smith" },
-      { value: "prof-alice-brown", label: "Prof. Alice Brown" },
-      { value: "mr-david-wilson", label: "Mr. David Wilson" },
-    ],
-    SOM: [
-      { value: "prof-sarah-johnson", label: "Prof. Sarah Johnson" },
-      { value: "dr-michael-davis", label: "Dr. Michael Davis" },
-      { value: "ms-lisa-anderson", label: "Ms. Lisa Anderson" },
-    ],
-    SOD: [
-      { value: "ms-emily-davis", label: "Ms. Emily Davis" },
-      { value: "prof-robert-taylor", label: "Prof. Robert Taylor" },
-    ],
-  },
-  lucknow: {
-    SOT: [
-      { value: "dr-rajesh-kumar", label: "Dr. Rajesh Kumar" },
-      { value: "prof-priya-sharma", label: "Prof. Priya Sharma" },
-    ],
-    SOM: [
-      { value: "dr-amit-singh", label: "Dr. Amit Singh" },
-      { value: "prof-neha-gupta", label: "Prof. Neha Gupta" },
-    ],
-    SOD: [{ value: "ms-kavya-patel", label: "Ms. Kavya Patel" }],
-  },
-  pune: {
-    SOT: [
-      { value: "dr-suresh-reddy", label: "Dr. Suresh Reddy" },
-      { value: "prof-anita-joshi", label: "Prof. Anita Joshi" },
-    ],
-    SOM: [{ value: "dr-vikram-shah", label: "Dr. Vikram Shah" }],
-    SOD: [
-      { value: "ms-pooja-mehta", label: "Ms. Pooja Mehta" },
-      { value: "prof-ravi-nair", label: "Prof. Ravi Nair" },
-    ],
-  },
-  noida: {
-    SOT: [{ value: "dr-ashok-verma", label: "Dr. Ashok Verma" }],
-    SOM: [
-      { value: "prof-deepa-agarwal", label: "Prof. Deepa Agarwal" },
-      { value: "dr-rohit-malhotra", label: "Dr. Rohit Malhotra" },
-    ],
-    SOD: [{ value: "ms-sneha-kapoor", label: "Ms. Sneha Kapoor" }],
-  },
-};
+interface School {
+  id: string;
+  name: string;
+}
+
+interface Teacher {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  pwId: string;
+  gender: string;
+  role: string;
+  designation: string;
+  linkedin: string;
+  github_link: string;
+  personal_mail: string;
+  createdAt: string;
+}
 
 const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   isOpen,
@@ -87,6 +60,7 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   selectedDivision,
   selectedSemester,
   selectedCenter,
+  selectedCenterId,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     subjectName: "",
@@ -98,11 +72,70 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [schools, setSchools] = useState<School[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [loadingTeachers, setLoadingTeachers] = useState(false);
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
 
   const normalizedCenter = selectedCenter.toLowerCase();
 
+  // Fetch schools data
+
+  const fetchSchools = async (centerId: string) => {
+    try {
+      setLoadingSchools(true);
+      const response = await axios.get(
+        `${BACKEND_URL}/api/schools/${centerId}`,
+        {
+          withCredentials: true,
+        }
+      );
+      if (response.data.success) {
+        setSchools(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching schools:", error);
+      setSchools([]);
+    } finally {
+      setLoadingSchools(false);
+    }
+  };
+
+  // Fetch teachers data
+  const fetchTeachers = async (schoolId: string) => {
+    try {
+      setLoadingTeachers(true);
+      const response = await axios.get(
+        `${BACKEND_URL}/api/teachers/school/${schoolId}`,
+        {
+          withCredentials: true,
+        }
+      );
+      if (response.data.success) {
+        setTeachers(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching teachers:", error);
+      setTeachers([]);
+    } finally {
+      setLoadingTeachers(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
+      console.log(
+        "AddSubjectModal opened with center:",
+        selectedCenter,
+        "and school:",
+        selectedSchool
+      );
       setFormData({
         subjectName: "",
         credits: "",
@@ -112,8 +145,31 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
         teacher: "",
       });
       setFormErrors({});
+
+      // Fetch schools when modal opens
+      if (selectedCenter) {
+        console.log("Fetching schools for center:", selectedCenter);
+        fetchSchools(selectedCenterId);
+      }
     }
-  }, [isOpen, normalizedCenter, selectedSchool]);
+  }, [isOpen, normalizedCenter, selectedSchool, selectedCenterId]);
+
+  // Fetch teachers when school changes
+  useEffect(() => {
+    if (formData.teacherSchool && formData.teacherSchool !== selectedSchool) {
+      fetchTeachers(formData.teacherSchool);
+      // Reset teacher selection when school changes
+      setFormData((prev) => ({ ...prev, teacher: "" }));
+    } else if (selectedSchool) {
+      // Fetch teachers for the initially selected school
+      const currentSchool = schools.find(
+        (school) => school.name === selectedSchool
+      );
+      if (currentSchool) {
+        fetchTeachers(currentSchool.id);
+      }
+    }
+  }, [formData.teacherSchool, schools, selectedSchool]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -126,6 +182,18 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
         setFormErrors((prev) => {
           const newErrors = { ...prev };
           delete newErrors.teacher;
+          return newErrors;
+        });
+      }
+    } else if (name === "teacherSchool") {
+      setFormData((prev) => ({ ...prev, teacherSchool: value, teacher: "" }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      // Clear error for the field being updated
+      if (formErrors[name]) {
+        setFormErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[name];
           return newErrors;
         });
       }
@@ -180,6 +248,7 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
       credits: formData.credits,
       subjectCode: formData.subjectCode,
       teacher: teacherName,
+      teacherId: formData.teacher,
     });
 
     setFormData({
@@ -200,21 +269,27 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
     }
   };
 
-  const getTeacherName = (teacherValue: string): string => {
-    const teachers =
-      teachersData[formData.teacherCenter]?.[formData.teacherSchool] || [];
-    const teacher = teachers.find((t) => t.value === teacherValue);
-    return teacher ? teacher.label : "";
+  const getTeacherName = (teacherId: string): string => {
+    const teacher = teachers.find((t) => t.id === teacherId);
+    return teacher ? teacher.name : "";
   };
 
-  const getAvailableTeachers = () => {
-    return teachersData[formData.teacherCenter]?.[formData.teacherSchool] || [];
+  const getSchoolDisplayName = (schoolName: string): string => {
+    const schoolMap: Record<string, string> = {
+      SOT: "School of Technology",
+      SOM: "School of Management",
+      SOD: "School of Design",
+    };
+    return schoolMap[schoolName] || schoolName;
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-sm p-6 max-w-lg w-full border border-gray-400 max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-gray-800 mb-4">
           Add New Subject
@@ -241,12 +316,7 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
                 type="text"
                 name="subjectName"
                 value={formData.subjectName}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    subjectName: e.target.value,
-                  }))
-                }
+                onChange={handleInputChange}
                 placeholder="e.g., Data Structures and Algorithms"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.subjectName ? "border-red-500" : "border-gray-300"
@@ -269,9 +339,7 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
                 type="text"
                 name="credits"
                 value={formData.credits}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, credits: e.target.value }))
-                }
+                onChange={handleInputChange}
                 placeholder="e.g., 4"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.credits ? "border-red-500" : "border-gray-300"
@@ -297,12 +365,7 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
                 type="text"
                 name="subjectCode"
                 value={formData.subjectCode}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    subjectCode: e.target.value,
-                  }))
-                }
+                onChange={handleInputChange}
                 placeholder="e.g., CS201"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.subjectCode ? "border-red-500" : "border-gray-300"
@@ -331,25 +394,34 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
               </div>
             </div>
 
-            {/* Teacher School (Auto-filled, non-editable) */}
+            {/* Teacher School Dropdown */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Teacher School
+                Teacher School *
               </label>
               <div className="relative">
-                <input
-                  type="text"
-                  value={
-                    {
-                      SOT: "School of Technology",
-                      SOM: "School of Management",
-                      SOD: "School of Design",
-                    }[selectedSchool] || selectedSchool
-                  }
-                  readOnly
-                  className="w-full px-3 py-2 border border-gray-300 bg-gray-100 rounded-md cursor-not-allowed text-gray-700"
+                <select
+                  name="teacherSchool"
+                  value={formData.teacherSchool}
+                  onChange={handleInputChange}
+                  className="w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer"
+                  disabled={isSubmitting || loadingSchools}
+                >
+                  <option value="">Select School</option>
+                  {schools.map((school) => (
+                    <option key={school.id} value={school.id}>
+                      {getSchoolDisplayName(school.name)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500"
+                  size={18}
                 />
               </div>
+              {loadingSchools && (
+                <p className="mt-1 text-xs text-blue-600">Loading schools...</p>
+              )}
             </div>
 
             {/* Teacher Dropdown */}
@@ -365,18 +437,23 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
                   className={`w-full pl-3 pr-10 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] appearance-none cursor-pointer ${
                     formErrors.teacher ? "border-red-500" : "border-gray-300"
                   }`}
-                  disabled={isSubmitting || getAvailableTeachers().length === 0}
+                  disabled={
+                    isSubmitting || loadingTeachers || !formData.teacherSchool
+                  }
                 >
-                  <option value="">Select Teacher</option>
-                  {getAvailableTeachers().map((teacher) => (
-                    <option key={teacher.value} value={teacher.value}>
-                      {teacher.label}
+                  <option value="">
+                    {loadingTeachers ? "Loading teachers..." : "Select Teacher"}
+                  </option>
+                  {teachers.map((teacher) => (
+                    <option key={teacher.id} value={teacher.id}>
+                      {teacher.name}{" "}
+                      {teacher.designation && `- ${teacher.designation}`}
                     </option>
                   ))}
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    getAvailableTeachers().length === 0
+                    !formData.teacherSchool || loadingTeachers
                       ? "text-gray-300"
                       : "text-gray-500"
                   }`}
@@ -388,9 +465,16 @@ const AddSubjectModal: React.FC<AddSubjectModalProps> = ({
                   {formErrors.teacher}
                 </p>
               )}
-              <p className="mt-1 text-xs text-gray-500">
-                Teachers from {selectedCenter} - {selectedSchool}
-              </p>
+              {!formData.teacherSchool && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Please select a school first
+                </p>
+              )}
+              {formData.teacherSchool && !loadingTeachers && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Teachers from selected school
+                </p>
+              )}
             </div>
           </div>
 

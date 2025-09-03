@@ -11,6 +11,7 @@ import DegreePartnerCard from "./Components/DegreePartnerCard";
 import PersonalDetailsCard from "./Components/PersonalDetailsCard";
 import ProjectsCard from "./Components/ProjectsCard";
 import SocialLinksCard from "./Components/SocialLinksCard";
+import { ProfileBuilderShimmer } from "./ProfileBuilderShimmer";
 
 const StudentProfileDashboard = () => {
   const [contactData, setContactData] = useState<any>(null);
@@ -39,7 +40,28 @@ const StudentProfileDashboard = () => {
     fetchContactInfo();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  const handleUpdateContact = async (field: string, value: string) => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      const student = storedUser ? JSON.parse(storedUser) : null;
+      if (!student) return;
+
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${student.id}/${field}`,
+        { [field]: value },
+        { withCredentials: true }
+      );
+
+      setContactData((prev: any) => ({
+        ...prev,
+        [field]: value,
+      }));
+    } catch (err) {
+      console.error(`Failed to update ${field}`, err);
+    }
+  };
+
+  if (loading) return <ProfileBuilderShimmer />;
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">
@@ -57,7 +79,10 @@ const StudentProfileDashboard = () => {
             <SocialLinksCard />
             <DegreePartnerCard />
             <ContactCard contactData={contactData} />
-            <OtherDetailsCard contactData={contactData} />
+            <OtherDetailsCard
+              contactData={contactData}
+              onUpdateContact={handleUpdateContact}
+            />
             <PersonalDetailsCard />
           </div>
         </div>

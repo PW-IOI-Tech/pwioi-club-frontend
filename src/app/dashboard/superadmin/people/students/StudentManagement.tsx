@@ -21,76 +21,28 @@ interface Student {
   phoneNumber: string;
 }
 
-const initialStudents: Student[] = [
-  {
-    id: "1",
-    name: "Arjun Mehta",
-    email: "arjun.sot@edu.com",
-    rollNo: "SOT24B1-001",
-    center: "Bangalore",
-    school: "SOT",
-    division: "24",
-    batch: "SOT24B1",
-    phoneNumber: "9876543210",
-  },
-  {
-    id: "2",
-    name: "Priya Nair",
-    email: "priya.som@edu.com",
-    rollNo: "SOM24B2-023",
-    center: "Pune",
-    school: "SOM",
-    division: "24",
-    batch: "SOM24B2",
-    phoneNumber: "9876501234",
-  },
-  {
-    id: "3",
-    name: "Vikram Singh",
-    email: "vikram.soh@edu.com",
-    rollNo: "SOH25B1-011",
-    center: "Noida",
-    school: "SOH",
-    division: "25",
-    batch: "SOH25B1",
-    phoneNumber: "9988776655",
-  },
-  {
-    id: "4",
-    name: "Anjali Patel",
-    email: "anjali.sot@edu.com",
-    rollNo: "SOT23B2-007",
-    center: "Lucknow",
-    school: "SOT",
-    division: "23",
-    batch: "SOT23B2",
-    phoneNumber: "8877665544",
-  },
-];
-
 export default function StudentManagement() {
   const [centers, setCenters] = useState<any[]>([]);
   const [schools, setSchools] = useState<any[]>([]);
   const [batches, setBatches] = useState<any[]>([]);
   const [divisions, setDivisions] = useState<any[]>([]);
-    const [semesters, setSemesters] = useState<any[]>([]);
   const [selectedCenter, setSelectedCenter] = useState<string>("");
   const [selectedSchool, setSelectedSchool] = useState<string>("");
   const [selectedBatch, setSelectedBatch] = useState<string>("");
   const [selectedDivision, setSelectedDivision] = useState<string>("");
-    const [selectedSemester, setSelectedSemester] = useState<string>("");
-  const [students] = useState<Student[]>(initialStudents);
-  const [isUploading, setIsUploading] = useState(false);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [_isUploading, setIsUploading] = useState(false);
+
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [loadingBatches, setLoadingBatches] = useState(false);
+  const [loadingDivisions, setLoadingDivisions] = useState(false);
 
   useEffect(() => {
     const fetchCenters = async () => {
       try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
-          {
-            withCredentials: true,
-          }
-        );
+        const res = await axios.get(`${backendUrl}/api/center/all`, {
+          withCredentials: true,
+        });
         if (res.data.success) {
           setCenters(
             res.data.data.map((c: any) => ({
@@ -108,100 +60,184 @@ export default function StudentManagement() {
     fetchCenters();
   }, []);
 
-  // ✅ Fetch Schools when Center selected
   useEffect(() => {
-    if (!selectedCenter) return;
+    if (!selectedCenter) {
+      setSchools([]);
+      setSelectedSchool("");
+      setBatches([]);
+      setSelectedBatch("");
+      setDivisions([]);
+      setSelectedDivision("");
+      return;
+    }
+
     const fetchSchools = async () => {
+      setLoadingSchools(true);
+      setSchools([]);
       try {
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${selectedCenter}`,
-          { withCredentials: true }
+          `${backendUrl}/api/schools/${selectedCenter}`,
+          {
+            withCredentials: true,
+          }
         );
         setSchools(res.data?.data || []);
       } catch (err) {
-        console.error("Failed to fetch schools");
+        console.error("Failed to fetch schools", err);
+        setSchools([]);
+      } finally {
+        setLoadingSchools(false);
       }
     };
     fetchSchools();
   }, [selectedCenter]);
 
-  // ✅ Fetch Batches when School selected
   useEffect(() => {
-    if (!selectedSchool) return;
+    if (!selectedSchool) {
+      setBatches([]);
+      setSelectedBatch("");
+      setDivisions([]);
+      setSelectedDivision("");
+      return;
+    }
+
     const fetchBatches = async () => {
+      setLoadingBatches(true);
+      setBatches([]);
       try {
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
-          { withCredentials: true }
+          `${backendUrl}/api/batches/${selectedSchool}`,
+          {
+            withCredentials: true,
+          }
         );
         setBatches(res.data?.data || []);
-      } catch {
-        console.error("Failed to fetch batches");
+      } catch (err) {
+        console.error("Failed to fetch batches", err);
+        setBatches([]);
+      } finally {
+        setLoadingBatches(false);
       }
     };
     fetchBatches();
   }, [selectedSchool]);
 
-  // ✅ Fetch Divisions when Batch selected
   useEffect(() => {
-    if (!selectedBatch) return;
+    if (!selectedBatch) {
+      setDivisions([]);
+      setSelectedDivision("");
+      return;
+    }
+
     const fetchDivisions = async () => {
+      setLoadingDivisions(true);
+      setDivisions([]);
       try {
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/by-batch/${selectedBatch}`,
+          `${backendUrl}/api/division/by-batch/${selectedBatch}`,
           { withCredentials: true }
         );
         setDivisions(res.data?.data || []);
-      } catch {
-        console.error("Failed to fetch divisions");
+      } catch (err) {
+        console.error("Failed to fetch divisions", err);
+        setDivisions([]);
+      } finally {
+        setLoadingDivisions(false);
       }
     };
     fetchDivisions();
   }, [selectedBatch]);
 
-    useEffect(() => {
-    if (!selectedDivision) return;
-    const fetchSemesters = async () => {
+  useEffect(() => {
+    if (!selectedDivision) {
+      setStudents([]);
+      return;
+    }
+
+    const fetchStudents = async () => {
       try {
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${selectedDivision}`,
+          `${backendUrl}/api/students/division/${selectedDivision}`,
           { withCredentials: true }
         );
-        setSemesters(res.data?.data || []);
-      } catch {
-        console.error("Failed to fetch semesters");
+        if (res.data?.success) {
+          setStudents(res.data.data || []);
+        } else {
+          setStudents([]);
+        }
+      } catch (err: any) {
+        console.error(
+          err.response?.data?.message || "Failed to fetch students"
+        );
+        setStudents([]);
       }
     };
-    fetchSemesters();
+    fetchStudents();
   }, [selectedDivision]);
 
   const allFiltersSelected =
     !!selectedCenter &&
     !!selectedSchool &&
     !!selectedDivision &&
-    !!selectedBatch &&
-    !!selectedSemester
-
-  const filteredStudents = useMemo(() => {
-    if (!allFiltersSelected) return [];
-    return students.filter(
-      (s) => s.batch === selectedBatch && s.center === selectedCenter
-    );
-  }, [students, selectedBatch, selectedCenter, allFiltersSelected]);
+    !!selectedBatch;
 
   const statistics = useMemo(() => {
     return {
-      totalStudents: filteredStudents.length,
+      totalStudents: students.length,
     };
-  }, [filteredStudents]);
+  }, [students]);
 
-  const handleUpdateStudent = useCallback((updatedItem: any) => {
-    console.log("Updating student:", updatedItem);
-  }, []);
+  const handleUpdateStudent = useCallback(
+    async (updatedItem: any) => {
+      try {
+        const res = await axios.patch(
+          `${backendUrl}/api/students/${updatedItem.id}`,
+          updatedItem,
+          { withCredentials: true }
+        );
 
-  const handleDeleteStudent = useCallback((id: string | number) => {
-    console.log("Deleting student with id:", id);
-  }, []);
+        if (res.data.success) {
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === updatedItem.id ? { ...s, ...updatedItem } : s
+            )
+          );
+          alert("Student updated successfully!");
+        }
+      } catch (err: any) {
+        console.error(
+          err.response?.data?.message || "Failed to update student"
+        );
+        alert(err.response?.data?.message || "Failed to update student");
+      }
+    },
+    [backendUrl]
+  );
+
+  const handleDeleteStudent = useCallback(
+    async (id: string | number) => {
+      if (!confirm("Are you sure you want to delete this student permanently?"))
+        return;
+
+      try {
+        const res = await axios.delete(
+          `${backendUrl}/api/students/${id}/permanent`,
+          { withCredentials: true }
+        );
+
+        if (res.data.success) {
+          setStudents((prev) => prev.filter((s) => s.id !== id));
+          alert("Student deleted permanently!");
+        }
+      } catch (err: any) {
+        console.error(
+          err.response?.data?.message || "Failed to delete student"
+        );
+        alert(err.response?.data?.message || "Failed to delete student");
+      }
+    },
+    [backendUrl]
+  );
 
   const handleUploadComplete = () => setIsUploading(false);
 
@@ -217,6 +253,7 @@ export default function StudentManagement() {
             Filter Students
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Center Dropdown */}
             <div className="relative">
               <label
                 htmlFor="center"
@@ -231,8 +268,8 @@ export default function StudentManagement() {
                   onChange={(e) => {
                     setSelectedCenter(e.target.value);
                     setSelectedSchool("");
-                    setSelectedDivision("");
                     setSelectedBatch("");
+                    setSelectedDivision("");
                   }}
                   className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm"
                 >
@@ -243,11 +280,11 @@ export default function StudentManagement() {
                     </option>
                   ))}
                 </select>
-
                 <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>
 
+            {/* School Dropdown */}
             <div className="relative">
               <label
                 htmlFor="school"
@@ -261,24 +298,27 @@ export default function StudentManagement() {
                   value={selectedSchool}
                   onChange={(e) => {
                     setSelectedSchool(e.target.value);
-                    setSelectedDivision("");
                     setSelectedBatch("");
+                    setSelectedDivision("");
                   }}
-                  disabled={!selectedCenter}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  disabled={!selectedCenter || loadingSchools}
+                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select School</option>
-                  {schools.map((sch) => (
-                    <option key={sch.id} value={sch.id}>
-                      {sch.name}
-                    </option>
-                  ))}
+                  <option value="">
+                    {loadingSchools ? "Loading..." : "Select School"}
+                  </option>
+                  {!loadingSchools &&
+                    schools.map((sch) => (
+                      <option key={sch.id} value={sch.id}>
+                        {sch.name}
+                      </option>
+                    ))}
                 </select>
-
                 <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>
 
+            {/* Batch Dropdown */}
             <div className="relative">
               <label
                 htmlFor="batch"
@@ -294,21 +334,24 @@ export default function StudentManagement() {
                     setSelectedBatch(e.target.value);
                     setSelectedDivision("");
                   }}
-                  disabled={!selectedSchool || batches.length === 0}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  disabled={!selectedSchool || loadingBatches}
+                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select Batch</option>
-                  {batches.map((batch) => (
-                    <option key={batch.id} value={batch.id}>
-                      {batch.name}
-                    </option>
-                  ))}
+                  <option value="">
+                    {loadingBatches ? "Loading..." : "Select Batch"}
+                  </option>
+                  {!loadingBatches &&
+                    batches.map((batch) => (
+                      <option key={batch.id} value={batch.id}>
+                        {batch.name}
+                      </option>
+                    ))}
                 </select>
-
                 <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>
 
+            {/* Division Dropdown */}
             <div className="relative">
               <label
                 htmlFor="division"
@@ -323,46 +366,19 @@ export default function StudentManagement() {
                   onChange={(e) => {
                     setSelectedDivision(e.target.value);
                   }}
-                  disabled={!selectedBatch}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  disabled={!selectedBatch || loadingDivisions}
+                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select Division</option>
-                  {divisions.map((div) => (
-                    <option key={div.id} value={div.id}>
-                      {div.code}
-                    </option>
-                  ))}
+                  <option value="">
+                    {loadingDivisions ? "Loading..." : "Select Division"}
+                  </option>
+                  {!loadingDivisions &&
+                    divisions.map((div) => (
+                      <option key={div.id} value={div.id}>
+                        {div.code}
+                      </option>
+                    ))}
                 </select>
-
-                <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
-              </div>
-            </div>
-
-               <div className="relative">
-              <label
-                htmlFor="division"
-                className="block text-xs font-medium text-gray-100 mb-2"
-              >
-                Semester
-              </label>
-              <div className="relative">
-                <select
-                  id="semster"
-                  value={selectedSemester}
-                  onChange={(e) => {
-                    setSelectedSemester(e.target.value);
-                  }}
-                  disabled={!selectedDivision}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">Select Semester</option>
-                  {semesters.map((sem) => (
-                    <option key={sem.id} value={sem.id}>
-                      {sem.number}
-                    </option>
-                  ))}
-                </select>
-
                 <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
               </div>
             </div>
@@ -392,20 +408,18 @@ export default function StudentManagement() {
 
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 flex items-center justify-center">
                 <UploadSection
-  onSuccess={handleUploadComplete}
-  uploadUrl={`${backendUrl}/api/students/bulk-excel`}
-  schemaInfo={studentSchemaInfo}
-  extraData={{
-    divisionId: selectedDivision,
-    semesterId: selectedSemester,
-  }}
-/>
-
+                  onSuccess={handleUploadComplete}
+                  uploadUrl={`${backendUrl}/api/students/bulk-excel`}
+                  schemaInfo={studentSchemaInfo}
+                  extraData={{
+                    divisionId: selectedDivision,
+                  }}
+                />
               </div>
             </div>
 
             <Table
-              data={filteredStudents}
+              data={students}
               title={`Students - Batch ${selectedBatch}`}
               filterField="school"
               badgeFields={["school"]}
@@ -415,7 +429,7 @@ export default function StudentManagement() {
               nonEditableFields={["id", "center", "batch"]}
               onDelete={handleDeleteStudent}
               onEdit={handleUpdateStudent}
-              hiddenColumns={["id"]}
+              hiddenColumns={["id", "createdAt", "is_active"]}
             />
           </>
         )}

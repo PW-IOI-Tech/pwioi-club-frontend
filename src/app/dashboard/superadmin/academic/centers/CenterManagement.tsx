@@ -5,6 +5,7 @@ import { Users, Plus } from "lucide-react";
 import axios from "axios";
 import Table from "../../Table";
 import AddCenterModal from "./AddCenterModal";
+import { ManagementShimmer } from "../../people/admins/AdminManagement";
 
 interface TableCenter {
   id: string;
@@ -23,9 +24,12 @@ export default function CenterManagement() {
     const fetchCenters = async () => {
       try {
         setLoading(true);
-        const res = await axios.get("http://localhost:8000/api/center/all", {
-          withCredentials: true,
-        });
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
+          {
+            withCredentials: true,
+          }
+        );
 
         if (res.data.success) {
           const mappedCenters: TableCenter[] = res.data.data.map((c: any) => ({
@@ -53,19 +57,53 @@ export default function CenterManagement() {
     }),
     [centers]
   );
-
-  const handleUpdateCenter = useCallback((updatedItem: any) => {
+  const handleUpdateCenter = useCallback(async (updatedItem: any) => {
     const centerItem = updatedItem as TableCenter;
-    setCenters((prev) =>
-      prev.map((center) =>
-        center.id === centerItem.id ? { ...center, ...centerItem } : center
-      )
-    );
+
+    try {
+      const res = await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/${centerItem.id}`,
+        {
+          name: centerItem.centerName,
+          location: centerItem.location,
+          code: centerItem.code,
+        },
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+        setCenters((prev) =>
+          prev.map((center) =>
+            center.id === centerItem.id ? { ...center, ...centerItem } : center
+          )
+        );
+      }
+    } catch (err: any) {
+      console.error(
+        "Failed to update center:",
+        err.response?.data || err.message
+      );
+    }
   }, []);
 
-  const handleDeleteCenter = useCallback((id: string | number) => {
+  const handleDeleteCenter = useCallback(async (id: string | number) => {
     const deleteId = typeof id === "number" ? id.toString() : id;
-    setCenters((prev) => prev.filter((center) => center.id !== deleteId));
+
+    try {
+      const res = await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/${deleteId}`,
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+        setCenters((prev) => prev.filter((center) => center.id !== deleteId));
+      }
+    } catch (err: any) {
+      console.error(
+        "Failed to delete center:",
+        err.response?.data || err.message
+      );
+    }
   }, []);
 
   const handleAddCenter = useCallback(
@@ -92,7 +130,7 @@ export default function CenterManagement() {
   }, []);
 
   if (loading) {
-    return <p className="text-center text-gray-600 mt-6">Loading centers...</p>;
+    return <ManagementShimmer />;
   }
 
   if (error) {

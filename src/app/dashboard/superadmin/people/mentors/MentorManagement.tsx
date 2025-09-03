@@ -5,6 +5,7 @@ import { Users, Plus } from "lucide-react";
 import Table from "../../Table";
 import AddMentorModal from "./AddMentorModal";
 import axios from "axios";
+import { ManagementShimmer } from "../admins/AdminManagement";
 
 interface TableMentor {
   id: string;
@@ -31,19 +32,18 @@ export default function MentorManagement() {
           { withCredentials: true }
         );
 
-         if (res.data.success) {
+        if (res.data.success) {
           const mappedMentors: TableMentor[] = res.data.data.map((c: any) => ({
             id: c.id,
-            centerName: c.name,
-            email:c.email,
-            phone:c.phone,
-            linkedin:c.linkedin,
-            designation:c.designation,
-            company:c.company,
+            mentorName: c.name,
+            email: c.email,
+            phone: c.phone,
+            linkedin: c.linkedin,
+            designation: c.designation,
+            company: c.company,
           }));
           setMentors(mappedMentors);
         }
-
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to fetch mentors");
       } finally {
@@ -116,7 +116,9 @@ export default function MentorManagement() {
     );
   }
 
-  return (
+  return loading ? (
+    <ManagementShimmer />
+  ) : (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
@@ -150,45 +152,24 @@ export default function MentorManagement() {
           </div>
         </div>
 
-        {loading ? (
-          <p className="text-center text-gray-600">Loading mentors...</p>
-        ) : (
-          <Table
-            data={mentors}
-            title="Mentors Overview"
-            filterField="company"
-            badgeFields={["company"]}
-            selectFields={{
-              company: [
-                "TechCorp",
-                "Innovate Solutions",
-                "DataTech Analytics",
-                "Microsoft",
-                "Google",
-                "Amazon",
-                "Meta",
-                "Apple",
-              ],
-              designation: [
-                "Software Engineer",
-                "Senior Software Engineer",
-                "Product Manager",
-                "Data Scientist",
-                "Engineering Manager",
-                "Tech Lead",
-                "Architect",
-              ],
-            }}
-            nonEditableFields={["id"]}
-            onDelete={handleDeleteMentor}
-            onEdit={handleUpdateMentor}
-            hiddenColumns={["id"]}
-          />
-        )}
+        <Table
+          data={mentors}
+          title="Mentors Overview"
+          filterField="company"
+          badgeFields={["company"]}
+          selectFields={{}}
+          nonEditableFields={["id"]}
+          onDelete={handleDeleteMentor}
+          onEdit={handleUpdateMentor}
+          hiddenColumns={["id", "createdAt", "updatedAt"]}
+        />
 
         <AddMentorModal
           isOpen={isAddMentorModalOpen}
           onClose={handleCloseAddModal}
+          onMentorAdded={(newMentor) => {
+            setMentors((prev) => [...prev, newMentor]);
+          }}
         />
       </div>
     </div>

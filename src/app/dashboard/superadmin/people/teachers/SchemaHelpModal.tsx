@@ -2,20 +2,7 @@
 
 import React from "react";
 import { Download, X } from "lucide-react";
-
-interface ColumnDescription {
-  key: string;
-  description: string;
-}
-
-interface SchemaInfo {
-  title: string;
-  columns: string[];
-  sampleRow: string[];
-  columnDescriptions: ColumnDescription[];
-  guidelines: string[];
-  commonIssues: string[];
-}
+import { SchemaInfo } from "./TeacherSchemaInfo";
 
 interface SchemaHelpModalProps {
   setShowSchemaHelp: (show: boolean) => void;
@@ -26,7 +13,7 @@ interface SchemaHelpModalProps {
 const downloadSampleFile = (downloadLink: string) => {
   const link = document.createElement("a");
   link.href = downloadLink;
-  link.download = "sample_test_data.xlsx";
+  link.download = "sample_teacher_data.xlsx";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -58,8 +45,8 @@ const SchemaHelpModal: React.FC<SchemaHelpModalProps> = ({
               <h1 className="text-2xl font-semibold text-gray-800">
                 Download Sample
               </h1>
-              <h4 className="text-xs">
-                Click the button below to download the excel file format
+              <h4 className="text-xs text-gray-600">
+                Click the button below to download the Excel file format
               </h4>
             </div>
             <button
@@ -68,12 +55,12 @@ const SchemaHelpModal: React.FC<SchemaHelpModalProps> = ({
             >
               <div className="flex items-center justify-center bg-[#1B3A6A] w-fit text-white py-2 px-4 rounded-lg gap-2 shadow-lg">
                 <Download />
-                Download
+                Download Sample File
               </div>
             </button>
           </div>
 
-          {/* Column Structure */}
+          {/* Required Columns */}
           <div>
             <h3 className="text-lg font-semibold text-gray-800 mb-3">
               Required Columns
@@ -89,11 +76,11 @@ const SchemaHelpModal: React.FC<SchemaHelpModalProps> = ({
               ))}
             </div>
             <p className="text-sm text-gray-600">
-              These columns must appear in the first row of your Excel file
+              These columns must appear in the first row of your Excel file.
             </p>
           </div>
 
-          {/* Sample Data */}
+          {/* Sample Data Row */}
           <div>
             <h3 className="text-lg font-semibold text-gray-800 mb-3">
               Sample Data Row

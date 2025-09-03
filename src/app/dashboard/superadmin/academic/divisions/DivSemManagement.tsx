@@ -34,7 +34,7 @@ export default function DivSemManagement() {
   const [batches, setBatches] = useState<any[]>([]);
 
   const [divisions, setDivisions] = useState<Division[]>([]);
-  const [semesters, setSemesters] = useState<Semester[]>([]);
+  const [_semesters, setSemesters] = useState<Semester[]>([]);
 
   const [filteredDivisions, setFilteredDivisions] = useState<Division[]>([]);
   const [filteredSemesters, setFilteredSemesters] = useState<Semester[]>([]);
@@ -46,34 +46,41 @@ export default function DivSemManagement() {
   const [selectedCenter, setSelectedCenter] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("");
   const [selectedBatch, setSelectedBatch] = useState("");
+
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [loadingBatches, setLoadingBatches] = useState(false);
+  const [loadingDivisions, setLoadingDivisions] = useState(false);
+
   const [filtersComplete, setFiltersComplete] = useState(false);
 
-const fetchSemesters = useCallback(async (divisionId: string) => {
-  try {
-    const res = await axios.get(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${divisionId}`,
-      { withCredentials: true }
-    );
-    if (res.data.success) {
-     const mapped = res.data.data.map((sem: any) => {
-  const division = divisions.find((d) => d.id === sem.division_id);
-  return {
-    id: sem.id,
-    division: division ? division.code : sem.division_id,
-    number: sem.number, // ✅ instead of sem.semester_number
-    startDate: new Date(sem.start_date).toLocaleDateString(),
-    endDate: new Date(sem.end_date).toLocaleDateString(),
-  };
-});
+  const fetchSemesters = useCallback(
+    async (divisionId: string) => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/semester/all/${divisionId}`,
+          { withCredentials: true }
+        );
+        if (res.data.success) {
+          const mapped = res.data.data.map((sem: any) => {
+            const division = divisions.find((d) => d.id === sem.division_id);
+            return {
+              id: sem.id,
+              division: division ? division.code : sem.division_id,
+              number: sem.number,
+              startDate: new Date(sem.start_date).toLocaleDateString(),
+              endDate: new Date(sem.end_date).toLocaleDateString(),
+            };
+          });
 
-      setSemesters((prev) => [...prev, ...mapped]);
-      setFilteredSemesters((prev) => [...prev, ...mapped]);
-    }
-  } catch (err: any) {
-    setError(err.response?.data?.message || "Failed to fetch semesters");
-  }
-}, [divisions]);
-
+          setSemesters((prev) => [...prev, ...mapped]);
+          setFilteredSemesters((prev) => [...prev, ...mapped]);
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to fetch semesters");
+      }
+    },
+    [divisions]
+  );
 
   const handleAddSemester = useCallback(
     async (semesterData: {
@@ -94,17 +101,19 @@ const fetchSemesters = useCallback(async (divisionId: string) => {
           { withCredentials: true }
         );
 
-if (res.data.success) {
-  const division = divisions.find((d) => d.id === res.data.data.division_id);
-  const newSemester: Semester = {
-    id: res.data.data.id,
-    division: division ? division.code : res.data.data.division_id, // ✅
-    number: res.data.data.number,
-    startDate: new Date(res.data.data.start_date).toLocaleDateString(),
-    endDate: new Date(res.data.data.end_date).toLocaleDateString(),
-  };
-  setSemesters((prev) => [...prev, newSemester]);
-  setFilteredSemesters((prev) => [...prev, newSemester]);
+        if (res.data.success) {
+          const division = divisions.find(
+            (d) => d.id === res.data.data.division_id
+          );
+          const newSemester: Semester = {
+            id: res.data.data.id,
+            division: division ? division.code : res.data.data.division_id,
+            number: res.data.data.number,
+            startDate: new Date(res.data.data.start_date).toLocaleDateString(),
+            endDate: new Date(res.data.data.end_date).toLocaleDateString(),
+          };
+          setSemesters((prev) => [...prev, newSemester]);
+          setFilteredSemesters((prev) => [...prev, newSemester]);
 
           setDivisions((prev) =>
             prev.map((d) =>
@@ -126,7 +135,7 @@ if (res.data.success) {
         setError(err.response?.data?.message || "Failed to add semester");
       }
     },
-    []
+    [divisions]
   );
 
   const handleUpdateSemester = useCallback(async (updated: any) => {
@@ -196,7 +205,6 @@ if (res.data.success) {
     }
   }, []);
 
-  // ---- FILTERS ----
   const handleCenterChange = (center: string) => {
     setSelectedCenter(center);
     setSelectedSchool("");
@@ -219,6 +227,10 @@ if (res.data.success) {
     setFiltersComplete(isComplete);
 
     if (isComplete) {
+      setLoadingDivisions(true);
+      setFilteredDivisions([]);
+      setFilteredSemesters([]);
+
       const fetchDivisions = async () => {
         try {
           const res = await axios.get(
@@ -239,8 +251,11 @@ if (res.data.success) {
                 schools.find((s) => s.id === div.school_id)?.name ||
                 div.school_id,
               batch:
-                batches.find((b) => b.id === div.batch_id)?.name || div.batch_id,
-              currentSemester: div.current_semester || null,
+                batches.find((b) => b.id === div.batch_id)?.name ||
+                div.batch_id,
+              currentSemester: div.currentSemester
+                ? div.currentSemester.number
+                : "N/A",
               semesterCount: 0,
               studentCount: 0,
               teacherCount: 0,
@@ -249,22 +264,30 @@ if (res.data.success) {
             setDivisions(mapped);
             setFilteredDivisions(mapped);
 
-            // fetch semesters for each division
-            mapped.forEach((d:any) => fetchSemesters(d.id));
+            setSemesters([]);
+            setFilteredSemesters([]);
+            mapped.forEach((d: any) => fetchSemesters(d.id));
           }
         } catch (err: any) {
           setError(err.response?.data?.message || "Failed to fetch divisions");
+        } finally {
+          setLoadingDivisions(false);
         }
       };
 
       fetchDivisions();
     } else {
-      setFilteredDivisions([]);
+      setLoadingDivisions(false);
     }
-    setFilteredSemesters([]);
-  }, [selectedCenter, selectedSchool, selectedBatch]);
+  }, [
+    selectedCenter,
+    selectedSchool,
+    selectedBatch,
+    centers,
+    schools,
+    batches,
+  ]);
 
-  // ---- CENTERS/SCHOOLS/BATCHES ----
   useEffect(() => {
     const fetchCenters = async () => {
       try {
@@ -290,8 +313,15 @@ if (res.data.success) {
   }, []);
 
   useEffect(() => {
-    if (!selectedCenter) return;
+    if (!selectedCenter) {
+      setSchools([]);
+      setSelectedSchool("");
+      return;
+    }
+
     const fetchSchools = async () => {
+      setLoadingSchools(true);
+      setSchools([]);
       try {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/schools/${selectedCenter}`,
@@ -299,29 +329,43 @@ if (res.data.success) {
         );
         setSchools(res.data?.data || []);
       } catch (err) {
-        console.error("Failed to fetch schools");
+        console.error("Failed to fetch schools", err);
+        setSchools([]);
+      } finally {
+        setLoadingSchools(false);
       }
     };
+
     fetchSchools();
   }, [selectedCenter]);
 
   useEffect(() => {
-    if (!selectedSchool) return;
+    if (!selectedSchool) {
+      setBatches([]);
+      setSelectedBatch("");
+      return;
+    }
+
     const fetchBatches = async () => {
+      setLoadingBatches(true);
+      setBatches([]);
       try {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedSchool}`,
           { withCredentials: true }
         );
         setBatches(res.data?.data || []);
-      } catch {
-        console.error("Failed to fetch batches");
+      } catch (err) {
+        console.error("Failed to fetch batches", err);
+        setBatches([]);
+      } finally {
+        setLoadingBatches(false);
       }
     };
+
     fetchBatches();
   }, [selectedSchool]);
 
-  // ---- DIVISION HANDLERS ----
   const handleUpdateDivision = useCallback(async (updated: any) => {
     const div = updated as Division;
     try {
@@ -393,8 +437,7 @@ if (res.data.success) {
     [selectedCenter, selectedSchool, selectedBatch]
   );
 
-  // ---- MODAL HANDLERS ----
-  const canAddSemester = filtersComplete && filteredDivisions.length > 0;
+  const canAddSemester = filtersComplete && divisions.length > 0;
 
   const handleOpenAddDivisionModal = useCallback(() => {
     if (filtersComplete) {
@@ -431,6 +474,8 @@ if (res.data.success) {
     );
   }
 
+  const showShimmer = !filtersComplete || loadingDivisions;
+
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -440,94 +485,93 @@ if (res.data.success) {
 
         {/* Filters */}
         <div className="bg-gradient-to-br from-white to-indigo-50 p-6 rounded-sm border border-gray-400">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
             Select Filters
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Center Dropdown */}
             <div className="relative">
-              <label
-                htmlFor="center"
-                className="block text-xs font-medium text-gray-100 mb-2"
+              <select
+                id="center"
+                value={selectedCenter}
+                onChange={(e) => handleCenterChange(e.target.value)}
+                className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm"
               >
-                Center
-              </label>
-              <div className="relative">
-                <select
-                  id="center"
-                  value={selectedCenter}
-                  onChange={(e) => handleCenterChange(e.target.value)}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm"
-                >
-                  <option value="">Select Center</option>
-                  {centers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-
-                <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
-              </div>
+                <option value="">Select Center</option>
+                {centers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
             </div>
 
+            {/* School Dropdown */}
             <div className="relative">
-              <label
-                htmlFor="school"
-                className="block text-xs font-medium text-gray-100 mb-2"
+              <select
+                id="school"
+                value={selectedSchool}
+                onChange={(e) => handleSchoolChange(e.target.value)}
+                disabled={!selectedCenter || loadingSchools}
+                className={`
+                  w-full p-3 pr-10 border border-gray-300 rounded-md
+                  focus:ring-2 focus:ring-blue-500 appearance-none text-sm
+                  ${
+                    !selectedCenter || loadingSchools
+                      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                      : "bg-white text-gray-900"
+                  }
+                `}
               >
-                School
-              </label>
-              <div className="relative">
-                <select
-                  id="school"
-                  value={selectedSchool}
-                  onChange={(e) => handleSchoolChange(e.target.value)}
-                  disabled={!selectedCenter}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">Select School</option>
-                  {schools.map((sch) => (
+                <option value="">
+                  {loadingSchools ? "Loading..." : "Select School"}
+                </option>
+                {!loadingSchools &&
+                  schools.map((sch) => (
                     <option key={sch.id} value={sch.id}>
                       {sch.name}
                     </option>
                   ))}
-                </select>
-
-                <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
-              </div>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
             </div>
 
+            {/* Batch Dropdown */}
             <div className="relative">
-              <label
-                htmlFor="batch"
-                className="block text-xs font-medium text-gray-100 mb-2"
+              <select
+                id="batch"
+                value={selectedBatch}
+                onChange={(e) => setSelectedBatch(e.target.value)}
+                disabled={!selectedSchool || loadingBatches}
+                className={`
+                  w-full p-3 pr-10 border border-gray-300 rounded-md
+                  focus:ring-2 focus:ring-blue-500 appearance-none text-sm
+                  ${
+                    !selectedSchool || loadingBatches
+                      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                      : "bg-white text-gray-900"
+                  }
+                `}
               >
-                Batch
-              </label>
-              <div className="relative">
-                <select
-                  id="batch"
-                  value={selectedBatch}
-                  onChange={(e) => setSelectedBatch(e.target.value)}
-                  disabled={!selectedSchool || batches.length === 0}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">Select Batch</option>
-                  {batches.map((batch) => (
+                <option value="">
+                  {loadingBatches ? "Loading..." : "Select Batch"}
+                </option>
+                {!loadingBatches &&
+                  batches.map((batch) => (
                     <option key={batch.id} value={batch.id}>
                       {batch.name}
                     </option>
                   ))}
-                </select>
-
-                <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
-              </div>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 w-5 h-5 text-gray-400 pointer-events-none -translate-y-1/2" />
             </div>
           </div>
         </div>
 
-        {!filtersComplete ? (
-          <div className="h-64 bg-gray-200 rounded-sm animate-pulse"></div>
+        {/* Content */}
+        {showShimmer ? (
+          <ShimmerTableSkeleton />
         ) : (
           <>
             {/* Add Division Button */}
@@ -541,15 +585,28 @@ if (res.data.success) {
               </button>
             </div>
 
-{/* Table: Divisions */}
             <Table
               data={filteredDivisions}
               title="Divisions"
               filterField="code"
-              nonEditableFields={["id", "semesterCount", "studentCount", "teacherCount"]}
+              nonEditableFields={[
+                "id",
+                "semesterCount",
+                "studentCount",
+                "teacherCount",
+              ]}
               onDelete={handleDeleteDivision}
               onEdit={handleUpdateDivision}
-              hiddenColumns={["id"]}
+              hiddenColumns={[
+                "id",
+                "centerId",
+                "schoolId",
+                "batchId",
+                "startDate",
+                "endDate",
+                "createdAt",
+                "updatedAt",
+              ]}
               columns={[
                 { accessorKey: "code", header: "Code" },
                 { accessorKey: "center", header: "Center" },
@@ -557,6 +614,7 @@ if (res.data.success) {
                 { accessorKey: "batch", header: "Batch" },
                 { accessorKey: "startDate", header: "Start Date" },
                 { accessorKey: "endDate", header: "End Date" },
+                { accessorKey: "currentSemester", header: "Current Semester" },
               ]}
             />
 
@@ -573,26 +631,31 @@ if (res.data.success) {
               </div>
             )}
 
-            {/* Table: Semesters */}
             {canAddSemester && (
               <Table
-  data={filteredSemesters.filter((sem) =>
-    filteredDivisions.some((div) => div.code === sem.division)
-  )}
-  title="Semesters"
-  filterField="division"
-  nonEditableFields={["id"]}
-  onDelete={handleDeleteSemester}
-  onEdit={handleUpdateSemester}
-  hiddenColumns={["id"]}
-  columns={[
-    { accessorKey: "division", header: "Division" },
-    { accessorKey: "number", header: "Number" },
-    { accessorKey: "startDate", header: "Start Date" },
-    { accessorKey: "endDate", header: "End Date" },
-  ]}
-/>
-
+                data={filteredSemesters
+                  .filter((sem) =>
+                    filteredDivisions.some((div) => div.id === sem.division)
+                  )
+                  .map((sem) => ({
+                    ...sem,
+                    division:
+                      filteredDivisions.find((d) => d.id === sem.division)
+                        ?.code || sem.division,
+                  }))}
+                title="Semesters"
+                filterField="division"
+                nonEditableFields={["id"]}
+                onDelete={handleDeleteSemester}
+                onEdit={handleUpdateSemester}
+                hiddenColumns={["id"]}
+                columns={[
+                  { accessorKey: "division", header: "Division" },
+                  { accessorKey: "number", header: "Number" },
+                  { accessorKey: "startDate", header: "Start Date" },
+                  { accessorKey: "endDate", header: "End Date" },
+                ]}
+              />
             )}
           </>
         )}
@@ -612,6 +675,32 @@ if (res.data.success) {
           onSemesterCreated={handleAddSemester}
           divisions={filteredDivisions}
         />
+      </div>
+    </div>
+  );
+}
+
+function ShimmerTableSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      {/* Division Table Skeleton */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-300">
+        <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-14 bg-gray-100 rounded"></div>
+          ))}
+        </div>
+      </div>
+
+      {/* Semester Table Skeleton */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-300">
+        <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+        <div className="space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-14 bg-gray-100 rounded"></div>
+          ))}
+        </div>
       </div>
     </div>
   );
