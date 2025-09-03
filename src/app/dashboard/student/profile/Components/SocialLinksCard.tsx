@@ -11,7 +11,6 @@ import {
   Github,
   Instagram,
   Facebook,
-  Youtube,
   Globe,
   LucideIcon,
   ChevronDown,

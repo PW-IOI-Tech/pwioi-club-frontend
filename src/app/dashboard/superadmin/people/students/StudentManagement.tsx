@@ -31,7 +31,7 @@ export default function StudentManagement() {
   const [selectedBatch, setSelectedBatch] = useState<string>("");
   const [selectedDivision, setSelectedDivision] = useState<string>("");
   const [students, setStudents] = useState<Student[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
+  const [_isUploading, setIsUploading] = useState(false);
 
   const [loadingSchools, setLoadingSchools] = useState(false);
   const [loadingBatches, setLoadingBatches] = useState(false);

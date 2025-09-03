@@ -314,7 +314,7 @@ function formatDate(dateStr: string): string {
 export default function CPRManagement() {
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [cprData, setCprData] = useState<CPRRow[]>([]);
-  const [originalCprData, setOriginalCprData] = useState<CPRRow[]>([]);
+  const [_originalCprData, setOriginalCprData] = useState<CPRRow[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());

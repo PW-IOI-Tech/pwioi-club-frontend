@@ -17,13 +17,6 @@ interface FormData {
   schoolName: string;
 }
 
-const locations = [
-  { value: "bangalore", label: "Bangalore" },
-  { value: "lucknow", label: "Lucknow" },
-  { value: "pune", label: "Pune" },
-  { value: "noida", label: "Noida" },
-];
-
 const schoolNames = [
   { value: "SOT", label: "SOT - School of Technology" },
   { value: "SOM", label: "SOM - School of Management" },

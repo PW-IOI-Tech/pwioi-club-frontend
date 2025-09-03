@@ -43,10 +43,6 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
   isOpen,
   onClose,
   onExamCreated,
-  selectedSchool,
-  selectedBatch,
-  selectedDivision,
-  selectedSemester,
   selectedSubject,
 }) => {
   const [formData, setFormData] = useState<FormData>({

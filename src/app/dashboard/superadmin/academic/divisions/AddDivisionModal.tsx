@@ -20,9 +20,6 @@ const AddDivisionModal: React.FC<AddDivisionModalProps> = ({
   isOpen,
   onClose,
   onDivisionCreated,
-  selectedCenter,
-  selectedSchool,
-  selectedBatch,
 }) => {
   const [formData, setFormData] = useState({
     division: "",

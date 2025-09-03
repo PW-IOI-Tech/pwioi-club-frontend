@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 const examTypeOptions = ["Fortnightly", "Internal", "Interview"] as const;
 type ExamType = (typeof examTypeOptions)[number];

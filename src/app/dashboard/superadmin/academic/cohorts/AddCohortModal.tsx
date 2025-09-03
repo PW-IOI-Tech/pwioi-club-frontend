@@ -56,14 +56,6 @@ interface FormData {
   selectedTeachers: string[];
 }
 
-const teachersData: Record<
-  string,
-  Record<string, Array<{ value: string; label: string }>>
-> = {
-  // This is now replaced by dynamic API calls, keeping for reference
-  // Remove this object if not needed elsewhere
-};
-
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const AddCohortModal: React.FC<AddCohortModalProps> = ({
