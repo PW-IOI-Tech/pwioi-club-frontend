@@ -863,7 +863,7 @@ const Feed: React.FC<FeedProps> = ({
 
   return (
     <div className="space-y-6">
-      {posts.map((post,index) => (
+      {posts.map((post, index) => (
         <Post
           key={index}
           post={post}
@@ -1091,10 +1091,8 @@ const AdminFeed: React.FC<any> = () => {
       );
 
       console.log("Report submitted:", res.data);
-      alert("Report submitted successfully!");
     } catch (err: any) {
       console.error("Error reporting:", err.response?.data || err.message);
-      alert(err.response?.data?.message || "Failed to submit report");
     } finally {
       handleReportClose();
     }

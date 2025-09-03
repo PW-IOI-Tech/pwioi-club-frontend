@@ -611,7 +611,6 @@ const PostActions: React.FC<PostActionsProps> = ({
       setNewComment("");
     } catch (error: any) {
       console.error("Error posting comment:", error.response?.data || error);
-      alert(error.response?.data?.message || "Failed to post comment");
     }
   };
 
@@ -640,7 +639,6 @@ const PostActions: React.FC<PostActionsProps> = ({
       setAllComments(response.data.data);
     } catch (error: any) {
       console.error("Error fetching comment:", error.response?.data || error);
-      alert(error.response?.data?.message || "Failed to fetch comment");
     }
   };
 
@@ -1185,7 +1183,6 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
       );
 
       console.log("Report submitted:", res.data);
-      alert("Report submitted successfully!");
     } catch (err: any) {
       console.error("Error reporting:", err.response?.data || err.message);
       alert(err.response?.data?.message || "Failed to submit report");

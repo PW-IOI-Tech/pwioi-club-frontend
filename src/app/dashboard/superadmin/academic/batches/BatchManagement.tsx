@@ -12,7 +12,7 @@ interface TableBatch {
   id: string;
   name: string;
   department: string;
-  center: string; 
+  center: string;
 }
 
 interface Center {
@@ -55,30 +55,38 @@ export default function BatchManagement() {
   }, []);
 
   // Fetch batches for selected center
-  const fetchBatches = useCallback(async (centerId: string, centerName: string) => {
-    if (!centerId) return;
-    
-    setLoading(true);
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/batches/center/${centerId}`, {
-        withCredentials: true,
-      });
+  const fetchBatches = useCallback(
+    async (centerId: string, centerName: string) => {
+      if (!centerId) return;
 
-      const fetchedBatches: TableBatch[] = res.data.data.map((batch: any) => ({
-        id: batch.id,
-        name: batch.name,
-        department: batch.school.name, 
-        center: centerName, 
-      }));
+      setLoading(true);
+      try {
+        const res = await axios.get(
+          `${BACKEND_URL}/api/batches/center/${centerId}`,
+          {
+            withCredentials: true,
+          }
+        );
 
-      setBatches(fetchedBatches);
-    } catch (err) {
-      console.error("Error fetching batches:", err);
-      setBatches([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        const fetchedBatches: TableBatch[] = res.data.data.map(
+          (batch: any) => ({
+            id: batch.id,
+            name: batch.name,
+            department: batch.school.name,
+            center: centerName,
+          })
+        );
+
+        setBatches(fetchedBatches);
+      } catch (err) {
+        console.error("Error fetching batches:", err);
+        setBatches([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   // Filter batches by selected center (since we're already fetching by center, just return all batches)
   const filteredBatches = useMemo(() => {
@@ -92,7 +100,7 @@ export default function BatchManagement() {
 
   const handleUpdateBatch = useCallback(async (updatedItem: any) => {
     const batchItem = updatedItem as TableBatch;
-    
+
     try {
       await axios.patch(
         `${BACKEND_URL}/api/batches/${batchItem.id}`,
@@ -113,7 +121,7 @@ export default function BatchManagement() {
 
   const handleDeleteBatch = useCallback(async (id: string | number) => {
     const deleteId = typeof id === "number" ? id.toString() : id;
-    
+
     try {
       await axios.delete(`${BACKEND_URL}/api/batches/${deleteId}`, {
         withCredentials: true,
@@ -127,11 +135,16 @@ export default function BatchManagement() {
   }, []);
 
   const handleAddBatch = useCallback(
-    async (newBatchData: { centerName: string; depName: string; batchName: string; schoolId: string }) => {
+    async (newBatchData: {
+      centerName: string;
+      depName: string;
+      batchName: string;
+      schoolId: string;
+    }) => {
       if (!selectedCenter) return;
 
       try {
-         await axios.post(
+        await axios.post(
           `${BACKEND_URL}/api/batches/create`,
           {
             schoolId: newBatchData.schoolId,
@@ -152,10 +165,6 @@ export default function BatchManagement() {
   );
 
   const handleOpenAddModal = useCallback(() => {
-    if (!selectedCenter) {
-      alert("Please select a center location first.");
-      return;
-    }
     setIsAddBatchModalOpen(true);
   }, [selectedCenter]);
 
@@ -200,7 +209,7 @@ export default function BatchManagement() {
               <option value="">Select Location to Proceed</option>
               {centers.map((center) => (
                 <option key={center.id} value={center.id}>
-                  {center.name} 
+                  {center.name}
                 </option>
               ))}
             </select>
@@ -256,12 +265,12 @@ export default function BatchManagement() {
             />
           </>
         )}
-       
+
         <AddBatchModal
           isOpen={isAddBatchModalOpen}
           onClose={handleCloseAddModal}
           onBatchCreated={handleAddBatch}
-          prefillLocation={selectedCenter?.location ||""}
+          prefillLocation={selectedCenter?.location || ""}
           centerId={selectedCenter?.id || ""}
         />
       </div>

@@ -166,19 +166,18 @@ export default function CPRDashboard() {
     });
   }, [subjects]);
 
-const handleDeleteSubject = async (id: string | number) => {
-  try {
-    await axios.delete(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/subject/${id}`,
-      { withCredentials: true }
-    );
+  const handleDeleteSubject = async (id: string | number) => {
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/subject/${id}`,
+        { withCredentials: true }
+      );
 
-    setSubjects((prev) => prev.filter((s) => s.id !== id));
-  } catch (err) {
-    console.error("Error deleting subject:", err);
-    alert("Failed to delete subject. Please try again.");
-  }
-};
+      setSubjects((prev) => prev.filter((s) => s.id !== id));
+    } catch (err) {
+      console.error("Error deleting subject:", err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">

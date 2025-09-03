@@ -1081,11 +1081,6 @@ const StudentHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
   };
 
   const handleReportSubmit = async (): Promise<void> => {
-    if (!reportModal.postId || !reportReason.trim()) {
-      alert("Please provide a reason for reporting.");
-      return;
-    }
-
     try {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flags`,
@@ -1097,10 +1092,8 @@ const StudentHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
       );
 
       console.log("Report submitted:", res.data);
-      alert("Report submitted successfully!");
     } catch (err: any) {
       console.error("Error reporting:", err.response?.data || err.message);
-      alert(err.response?.data?.message || "Failed to submit report");
     } finally {
       handleReportClose();
     }

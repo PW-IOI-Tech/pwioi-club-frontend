@@ -202,13 +202,11 @@ export default function StudentManagement() {
               s.id === updatedItem.id ? { ...s, ...updatedItem } : s
             )
           );
-          alert("Student updated successfully!");
         }
       } catch (err: any) {
         console.error(
           err.response?.data?.message || "Failed to update student"
         );
-        alert(err.response?.data?.message || "Failed to update student");
       }
     },
     [backendUrl]
@@ -227,13 +225,11 @@ export default function StudentManagement() {
 
         if (res.data.success) {
           setStudents((prev) => prev.filter((s) => s.id !== id));
-          alert("Student deleted permanently!");
         }
       } catch (err: any) {
         console.error(
           err.response?.data?.message || "Failed to delete student"
         );
-        alert(err.response?.data?.message || "Failed to delete student");
       }
     },
     [backendUrl]

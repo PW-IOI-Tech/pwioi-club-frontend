@@ -85,7 +85,6 @@ const Table: React.FC<TableProps> = ({
     };
   }, [searchTerm]);
 
-  // Auto-generate columns from data
   const columns = useMemo(() => {
     if (!data || data.length === 0) return [];
 
@@ -136,30 +135,25 @@ const Table: React.FC<TableProps> = ({
     columnConfig,
   ]);
 
-  // Get filter options from data
   const filterOptions = useMemo(() => {
     if (!filterField || !data) return [];
     const uniqueValues = [...new Set(data.map((item) => item[filterField]))];
     return uniqueValues.filter(Boolean).sort();
   }, [data, filterField]);
 
-  // Update local data when props change
   useEffect(() => {
     setListData(data);
   }, [data]);
 
-  // Get searchable columns
   const searchableColumns = columns.filter((col) => col.searchable !== false);
 
   const filteredList = useMemo(() => {
     return listData.filter((item) => {
-      // Filter logic
       const matchesFilter =
         !filterField ||
         selectedFilter === "All" ||
         item[filterField] === selectedFilter;
 
-      // Search logic using debounced term
       const matchesSearch =
         !debouncedSearchTerm ||
         searchableColumns.some((col) => {
@@ -656,7 +650,7 @@ const Table: React.FC<TableProps> = ({
                     setCurrentPage((prev) => Math.max(prev - 1, 1))
                   }
                   disabled={currentPage === 1}
-                  className="px-3 py-2 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed bg-[#1B3A6A] text-white hover:bg-[#2d4f7a] transition-colors duration-200 cursor-pointer"
+                  className="px-3 py-2 rounded-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed bg-[#1B3A6A] text-white hover:bg-[#2d4f7a] transition-colors duration-200 cursor-pointer"
                 >
                   Previous
                 </button>
@@ -665,7 +659,7 @@ const Table: React.FC<TableProps> = ({
                     setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                   }
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed bg-[#1B3A6A] text-white hover:bg-[#2d4f7a] transition-colors duration-200 cursor-pointer"
+                  className="px-3 py-2 rounded-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed bg-[#1B3A6A] text-white hover:bg-[#2d4f7a] transition-colors duration-200 cursor-pointer"
                 >
                   Next
                 </button>

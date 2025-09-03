@@ -283,34 +283,31 @@ export default function CPRManagement() {
     actual_end_date: string | null;
   };
 
-const saveChanges = async () => {
-  try {
-    if (!selectedSubject || changedRows.length === 0) return;
-    setIsSaving(true);
+  const saveChanges = async () => {
+    try {
+      if (!selectedSubject || changedRows.length === 0) return;
+      setIsSaving(true);
 
-    for (const row of changedRows) {
-      await axios.patch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/sub-topics/${row.id}/status`,
-        {
-          status: mapStatusToApi(row.status),
-          actual_start_date: row.actualStartDate,
-          actual_end_date: row.actualCompletionDate,
-        },
-        { withCredentials: true }
-      );
+      for (const row of changedRows) {
+        await axios.patch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/sub-topics/${row.id}/status`,
+          {
+            status: mapStatusToApi(row.status),
+            actual_start_date: row.actualStartDate,
+            actual_end_date: row.actualCompletionDate,
+          },
+          { withCredentials: true }
+        );
+      }
+
+      setOriginalCprData([...cprData]);
+      setHasChanges(false);
+    } catch (err) {
+      console.error("Error saving CPR changes:", err);
+    } finally {
+      setIsSaving(false);
     }
-
-    setOriginalCprData([...cprData]);
-    setHasChanges(false);
-    alert("CPR changes saved successfully!");
-  } catch (err) {
-    console.error("Error saving CPR changes:", err);
-    alert("Failed to save changes. Please try again.");
-  } finally {
-    setIsSaving(false);
-  }
-};
-
+  };
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => {
@@ -368,7 +365,9 @@ const saveChanges = async () => {
               disabled={subjectsLoading}
               className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer appearance-none text-sm disabled:opacity-60"
             >
-              <option value="">{subjectsLoading ? "Loading..." : "Select a Subject to Proceed"}</option>
+              <option value="">
+                {subjectsLoading ? "Loading..." : "Select a Subject to Proceed"}
+              </option>
               {subjects.map((subj) => (
                 <option key={subj.id} value={subj.id}>
                   {subj.name}
@@ -463,7 +462,9 @@ const saveChanges = async () => {
                         <div
                           key={row.id}
                           className={`border rounded-lg overflow-hidden ${
-                            isDelayed ? "border-red-200 bg-red-50" : "border-gray-200"
+                            isDelayed
+                              ? "border-red-200 bg-red-50"
+                              : "border-gray-200"
                           }`}
                         >
                           {/* Main Row */}
@@ -482,7 +483,8 @@ const saveChanges = async () => {
                                     checked={row.status === "Completed"}
                                     onChange={(e) => {
                                       e.stopPropagation();
-                                      const newStatus: NiceStatus = e.target.checked
+                                      const newStatus: NiceStatus = e.target
+                                        .checked
                                         ? "Completed"
                                         : "Pending";
                                       handleStatusChange(row.id, newStatus);
@@ -508,7 +510,9 @@ const saveChanges = async () => {
                             <div className="p-4 space-y-3 text-sm">
                               {row.showModuleCell && (
                                 <div>
-                                  <strong className="text-gray-700">Module:</strong>{" "}
+                                  <strong className="text-gray-700">
+                                    Module:
+                                  </strong>{" "}
                                   <span className="text-blue-900 font-medium">
                                     {row.module}
                                   </span>
@@ -516,7 +520,9 @@ const saveChanges = async () => {
                               )}
                               {row.showTopicCell && (
                                 <div>
-                                  <strong className="text-gray-700">Topic:</strong>{" "}
+                                  <strong className="text-gray-700">
+                                    Topic:
+                                  </strong>{" "}
                                   <span className="text-green-800 font-medium">
                                     {row.topic}
                                   </span>
@@ -525,23 +531,31 @@ const saveChanges = async () => {
 
                               {/* Status Buttons */}
                               <div>
-                                <strong className="text-gray-700">Status:</strong>
+                                <strong className="text-gray-700">
+                                  Status:
+                                </strong>
                                 <div className="flex gap-1 mt-2 flex-wrap">
-                                  {(["Pending", "In Progress", "Completed"] as const).map(
-                                    (status) => (
-                                      <button
-                                        key={status}
-                                        onClick={() => handleStatusChange(row.id, status)}
-                                        className={`px-3 py-1 text-xs rounded border min-w-[80px] ${
-                                          row.status === status
-                                            ? "bg-blue-100 border-blue-300 text-blue-800 font-medium"
-                                            : "bg-white border-gray-300 hover:bg-gray-50"
-                                        }`}
-                                      >
-                                        {status}
-                                      </button>
-                                    )
-                                  )}
+                                  {(
+                                    [
+                                      "Pending",
+                                      "In Progress",
+                                      "Completed",
+                                    ] as const
+                                  ).map((status) => (
+                                    <button
+                                      key={status}
+                                      onClick={() =>
+                                        handleStatusChange(row.id, status)
+                                      }
+                                      className={`px-3 py-1 text-xs rounded border min-w-[80px] ${
+                                        row.status === status
+                                          ? "bg-blue-100 border-blue-300 text-blue-800 font-medium"
+                                          : "bg-white border-gray-300 hover:bg-gray-50"
+                                      }`}
+                                    >
+                                      {status}
+                                    </button>
+                                  ))}
                                 </div>
                               </div>
 
@@ -565,27 +579,33 @@ const saveChanges = async () => {
                               {isDateExpanded && (
                                 <div className="text-xs text-gray-600 space-y-1 pt-2 border-t">
                                   <div>
-                                    <strong>Planned Start:</strong> {row.startDate}
+                                    <strong>Planned Start:</strong>{" "}
+                                    {row.startDate}
                                   </div>
                                   <div>
                                     <strong>Actual Start:</strong>{" "}
                                     {row.actualStartDate
-                                      ? new Date(row.actualStartDate).toLocaleString(
-                                          "en-IN",
-                                          { dateStyle: "short", timeStyle: "short" }
-                                        )
+                                      ? new Date(
+                                          row.actualStartDate
+                                        ).toLocaleString("en-IN", {
+                                          dateStyle: "short",
+                                          timeStyle: "short",
+                                        })
                                       : "-"}
                                   </div>
                                   <div>
-                                    <strong>Planned End:</strong> {row.completionDate}
+                                    <strong>Planned End:</strong>{" "}
+                                    {row.completionDate}
                                   </div>
                                   <div>
                                     <strong>Actual End:</strong>{" "}
                                     {row.actualCompletionDate
-                                      ? new Date(row.actualCompletionDate).toLocaleString(
-                                          "en-IN",
-                                          { dateStyle: "short", timeStyle: "short" }
-                                        )
+                                      ? new Date(
+                                          row.actualCompletionDate
+                                        ).toLocaleString("en-IN", {
+                                          dateStyle: "short",
+                                          timeStyle: "short",
+                                        })
                                       : "-"}
                                   </div>
                                 </div>
@@ -652,7 +672,9 @@ const saveChanges = async () => {
                           return (
                             <tr
                               key={row.id}
-                              className={`${isDelayed ? "bg-red-50" : "hover:bg-gray-50"} transition-colors`}
+                              className={`${
+                                isDelayed ? "bg-red-50" : "hover:bg-gray-50"
+                              } transition-colors`}
                             >
                               {row.showModuleCell && (
                                 <td
@@ -685,7 +707,9 @@ const saveChanges = async () => {
                                       checked={row.status === "Completed"}
                                       onChange={() => {
                                         const newStatus: NiceStatus =
-                                          row.status === "Completed" ? "Pending" : "Completed";
+                                          row.status === "Completed"
+                                            ? "Pending"
+                                            : "Completed";
                                         handleStatusChange(row.id, newStatus);
                                       }}
                                       className="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
@@ -697,7 +721,10 @@ const saveChanges = async () => {
                                   <select
                                     value={row.status}
                                     onChange={(e) =>
-                                      handleStatusChange(row.id, e.target.value as NiceStatus)
+                                      handleStatusChange(
+                                        row.id,
+                                        e.target.value as NiceStatus
+                                      )
                                     }
                                     className={`w-full px-2 py-1.5 text-xs border rounded focus:ring-1 focus:ring-blue-500 ${
                                       isDelayed
@@ -706,7 +733,9 @@ const saveChanges = async () => {
                                     }`}
                                   >
                                     <option value="Pending">Pending</option>
-                                    <option value="In Progress">In Progress</option>
+                                    <option value="In Progress">
+                                      In Progress
+                                    </option>
                                     <option value="Completed">Completed</option>
                                   </select>
                                 </td>
@@ -719,7 +748,9 @@ const saveChanges = async () => {
                                   </td>
                                   <td className="px-4 py-3 border-b text-xs">
                                     {row.actualStartDate
-                                      ? new Date(row.actualStartDate).toLocaleDateString("en-IN")
+                                      ? new Date(
+                                          row.actualStartDate
+                                        ).toLocaleDateString("en-IN")
                                       : "-"}
                                   </td>
                                   <td className="px-4 py-3 border-b text-xs text-gray-600">
@@ -727,7 +758,9 @@ const saveChanges = async () => {
                                   </td>
                                   <td className="px-4 py-3 border-b text-xs">
                                     {row.actualCompletionDate
-                                      ? new Date(row.actualCompletionDate).toLocaleDateString("en-IN")
+                                      ? new Date(
+                                          row.actualCompletionDate
+                                        ).toLocaleDateString("en-IN")
                                       : "-"}
                                   </td>
                                 </>
