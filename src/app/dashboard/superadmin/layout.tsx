@@ -243,8 +243,8 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
     };
   }, [isMobileMenuOpen]);
 
-const handleLogout = () => {
-    logout();
+  const handleLogout = () => {
+    logout("/auth/admin/login");
   };
 
   const goToFeed = () => {
@@ -252,12 +252,12 @@ const handleLogout = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-white">
       {/* Mobile Menu Button */}
       <button
         id="mobile-menu-button"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 right-4 z-50 p-3 bg-slate-900 text-white rounded-xl shadow-2xl hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all duration-200 border border-slate-700/50 cursor-pointer"
+        className="lg:hidden fixed top-4 right-4 z-50 p-3 bg-[#12294c] text-white rounded-xl shadow-lg hover:bg-[#12294c]/90 hover:scale-105 active:scale-95 transition-all duration-200 border border-[#12294c]/20 cursor-pointer"
         aria-label="Toggle menu"
       >
         {isMobileMenuOpen ? (
@@ -270,23 +270,23 @@ const handleLogout = () => {
       {/* Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 transition-all duration-300 cursor-pointer"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-all duration-300 cursor-pointer"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       {/* Desktop Sidebar */}
       <div
-        className={`hidden lg:flex sticky top-0 h-screen bg-slate-900 border-r border-slate-700/50 shadow-2xl transition-all duration-300 ease-in-out max-h-screen overflow-y-scroll ${
+        className={`hidden lg:flex sticky top-0 h-screen bg-gradient-to-br from-white to-indigo-50 border-r border-gray-200 shadow-lg transition-all duration-300 ease-in-out ${
           isSidebarExpanded ? "w-64" : "w-20"
         }`}
       >
         <div className="flex flex-col w-full">
           {/* Sidebar Header */}
-          <div className="p-5 border-b border-slate-700/50 flex items-center space-x-3 bg-slate-800/50">
+          <div className="p-5 border-b border-gray-200 flex items-center space-x-3 bg-gray-50">
             <button
               onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-              className="p-2.5 text-slate-300 hover:bg-slate-700/50 hover:text-white hover:scale-105 active:scale-95 rounded-xl transition-all duration-200 border border-transparent hover:border-slate-600/50 cursor-pointer"
+              className="p-2.5 text-gray-600 hover:bg-[#12294c]/10 hover:text-[#12294c] hover:scale-105 active:scale-95 rounded-xl transition-all duration-200 border border-transparent hover:border-[#12294c]/20 cursor-pointer"
               aria-label="Toggle sidebar"
             >
               <Menu className="w-5 h-5" />
@@ -295,7 +295,7 @@ const handleLogout = () => {
             {isSidebarExpanded && (
               <div className="flex-1 cursor-pointer hover:opacity-80 transition-opacity duration-200">
                 <Image
-                  src="/PWIOILogo.webp"
+                  src="/PWIOILogoBlack.png"
                   alt="PW IOI Logo"
                   width={130}
                   height={0}
@@ -306,22 +306,22 @@ const handleLogout = () => {
           </div>
 
           {/* Feed Button */}
-          <div className="p-5 border-b border-slate-700/50 bg-slate-800/30">
+          <div className="p-5 border-b border-gray-200 bg-gray-50">
             <button
               onClick={goToFeed}
               className={`w-full flex items-center hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer ${
                 isSidebarExpanded ? "space-x-3" : "justify-center"
               }`}
             >
-              <div className="p-3 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-xl shadow-lg border border-blue-500/20 hover:shadow-xl transition-all duration-200">
+              <div className="p-3 bg-[#12294c] rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
                 <MessageCircle className="w-5 h-5 text-white" />
               </div>
               {isSidebarExpanded && (
                 <div className="text-left">
-                  <p className="text-white font-semibold text-sm tracking-wide">
+                  <p className="text-gray-900 font-semibold text-sm tracking-wide">
                     Feed
                   </p>
-                  <p className="text-slate-400 text-xs font-medium">
+                  <p className="text-gray-500 text-xs font-medium">
                     Social Updates
                   </p>
                 </div>
@@ -335,7 +335,7 @@ const handleLogout = () => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
               const isExpanded = expandedItems.includes(item.id);
-              const hasSubItems = item.subItems && item.subItems.length > 0;
+              const hasSubItems = !!item.subItems?.length;
 
               if (hasSubItems) {
                 return (
@@ -344,19 +344,19 @@ const handleLogout = () => {
                       onClick={() => toggleExpanded(item.id)}
                       className={`w-full flex items-center justify-between px-3 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border hover:scale-105 active:scale-95 ${
                         isActive
-                          ? "bg-blue-600/20 text-blue-400 shadow-lg border-blue-500/30 backdrop-blur-sm"
-                          : "text-slate-300 hover:bg-slate-700/50 hover:text-white border-transparent hover:border-slate-600/30"
+                          ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
+                          : "text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] border-transparent hover:border-[#12294c]/10"
                       }`}
                       title={!isSidebarExpanded ? item.label : undefined}
                     >
                       <div className="flex items-center space-x-3">
                         <Icon
                           className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
-                            isActive ? "text-blue-400" : ""
+                            isActive ? "text-[#12294c]" : ""
                           }`}
                         />
                         {isSidebarExpanded && (
-                          <span className="font-medium text-sm whitespace-nowrap">
+                          <span className="font-medium text-sm whitespace-nowrap tracking-wide">
                             {item.label}
                           </span>
                         )}
@@ -369,23 +369,23 @@ const handleLogout = () => {
                         />
                       )}
                       {!isSidebarExpanded && (
-                        <div className="absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-2xl border border-slate-600/50 scale-95 group-hover:scale-100">
+                        <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-xl border border-gray-600/50 scale-95 group-hover:scale-100">
                           {item.label}
-                          <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-slate-800 border-l border-t border-slate-600/50 rotate-45"></div>
+                          <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-600/50 rotate-45"></div>
                         </div>
                       )}
                     </button>
 
-                    {isSidebarExpanded && isExpanded && (
-                      <div className="ml-6 space-y-1 border-l border-slate-700/50 pl-4">
+                    {isSidebarExpanded && isExpanded && item.subItems && (
+                      <div className="ml-6 space-y-1 border-l border-[#12294c]/10 pl-4">
                         {item.subItems.map((subItem) => (
                           <a
                             key={subItem.id}
                             href={subItem.href}
                             className={`block px-3 py-2.5 rounded-lg text-sm transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 ${
                               isSubItemActive(subItem.href)
-                                ? "bg-blue-600/30 text-blue-300 font-medium border border-blue-500/20"
-                                : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/30"
+                                ? "bg-[#12294c]/10 text-[#12294c] font-medium border border-[#12294c]/20"
+                                : "text-gray-600 hover:text-[#12294c] hover:bg-[#12294c]/5"
                             }`}
                           >
                             {subItem.label}
@@ -403,14 +403,14 @@ const handleLogout = () => {
                   href={item.href}
                   className={`flex items-center space-x-3 px-3 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border hover:scale-105 active:scale-95 ${
                     isActive
-                      ? "bg-blue-600/20 text-blue-400 shadow-lg border-blue-500/30 backdrop-blur-sm"
-                      : "text-slate-300 hover:bg-slate-700/50 hover:text-white border-transparent hover:border-slate-600/30"
+                      ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
+                      : "text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] border-transparent hover:border-[#12294c]/10"
                   }`}
                   title={!isSidebarExpanded ? item.label : undefined}
                 >
                   <Icon
                     className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
-                      isActive ? "text-blue-400" : ""
+                      isActive ? "text-[#12294c]" : ""
                     }`}
                   />
                   {isSidebarExpanded && (
@@ -419,9 +419,9 @@ const handleLogout = () => {
                     </span>
                   )}
                   {!isSidebarExpanded && (
-                    <div className="absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-2xl border border-slate-600/50 scale-95 group-hover:scale-100">
+                    <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-xl border border-gray-600/50 scale-95 group-hover:scale-100">
                       {item.label}
-                      <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-slate-800 border-l border-t border-slate-600/50 rotate-45"></div>
+                      <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-600/50 rotate-45"></div>
                     </div>
                   )}
                 </a>
@@ -429,28 +429,28 @@ const handleLogout = () => {
             })}
           </nav>
 
-          {/* Sidebar Footer - Logout */}
-          <div className="p-4 border-t border-slate-700/50 bg-gradient-to-r from-slate-800/30 to-slate-700/20">
+          {/* Logout */}
+          <div className="p-4 border-t border-gray-200 bg-gray-50">
             <button
               onClick={handleLogout}
-              className={`w-full flex items-center text-slate-300 hover:bg-slate-700/50 hover:text-white hover:scale-105 active:scale-95 py-2.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border border-transparent hover:border-slate-600/30 ${
-                isSidebarExpanded ? "space-x-3 px-3" : "justify-center"
+              className={`w-full flex items-center text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] hover:scale-105 active:scale-95 py-2.5 px-3 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border border-transparent hover:border-[#12294c]/10 ${
+                isSidebarExpanded ? "space-x-3" : "justify-center"
               }`}
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-500 via-red-600 to-red-700 flex items-center justify-center flex-shrink-0 shadow-lg border border-red-400/20 hover:shadow-xl transition-all duration-200">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200">
                 <LogOut className="w-4 h-4 text-white" />
               </div>
               {isSidebarExpanded && (
                 <div className="flex-1 text-left">
-                  <p className="font-semibold text-sm text-white tracking-wide">
+                  <p className="font-semibold text-sm text-gray-900 tracking-wide">
                     Sign Out
                   </p>
                 </div>
               )}
               {!isSidebarExpanded && (
-                <div className="absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-2xl border border-slate-600/50 scale-95 group-hover:scale-100">
+                <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-xl border border-gray-600/50 scale-95 group-hover:scale-100">
                   Sign Out
-                  <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-slate-800 border-l border-t border-slate-600/50 rotate-45"></div>
+                  <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-600/50 rotate-45"></div>
                 </div>
               )}
             </button>
@@ -461,11 +461,11 @@ const handleLogout = () => {
       {/* Mobile Sidebar */}
       <div
         id="mobile-sidebar"
-        className={`lg:hidden fixed inset-y-0 right-0 z-40 w-72 h-screen bg-slate-900 border-l border-slate-700/50 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`lg:hidden fixed inset-y-0 right-0 z-40 w-72 h-screen bg-white border-l border-gray-200 shadow-xl flex flex-col transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="p-6 border-b border-slate-700/50 bg-slate-800/50">
+        <div className="p-6 border-b border-gray-200 bg-gray-50">
           <div className="cursor-pointer hover:opacity-80 transition-opacity duration-200">
             <Image
               src="/PWIOILogo.webp"
@@ -476,20 +476,19 @@ const handleLogout = () => {
           </div>
         </div>
 
-        {/* Mobile Feed Button */}
-        <div className="p-5 border-b border-slate-700/50 bg-slate-800/30">
+        <div className="p-5 border-b border-gray-200 bg-gray-50">
           <button
             onClick={goToFeed}
-            className="w-full flex items-center space-x-3 hover:bg-slate-700/30 hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer"
+            className="w-full flex items-center space-x-3 hover:bg-[#12294c]/5 hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer"
           >
-            <div className="p-3 bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 rounded-xl shadow-lg border border-green-500/20 hover:shadow-xl transition-all duration-200">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
               <MessageCircle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-white font-semibold text-sm tracking-wide">
+              <p className="text-gray-900 font-semibold text-sm tracking-wide">
                 Feed
               </p>
-              <p className="text-slate-400 text-xs font-medium">
+              <p className="text-gray-500 text-xs font-medium">
                 Social Updates
               </p>
             </div>
@@ -501,7 +500,7 @@ const handleLogout = () => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
             const isExpanded = expandedItems.includes(item.id);
-            const hasSubItems = item.subItems && item.subItems.length > 0;
+            const hasSubItems = !!item.subItems?.length;
 
             if (hasSubItems) {
               return (
@@ -510,14 +509,14 @@ const handleLogout = () => {
                     onClick={() => toggleExpanded(item.id)}
                     className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer border hover:scale-105 active:scale-95 ${
                       isActive
-                        ? "bg-blue-600/20 text-blue-400 shadow-lg border-blue-500/30 backdrop-blur-sm"
-                        : "text-slate-300 hover:bg-slate-700/50 hover:text-white border-transparent hover:border-slate-600/30"
+                        ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
+                        : "text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] border-transparent hover:border-[#12294c]/10"
                     }`}
                   >
                     <div className="flex items-center space-x-3">
                       <Icon
                         className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
-                          isActive ? "text-blue-400" : ""
+                          isActive ? "text-[#12294c]" : ""
                         }`}
                       />
                       <span className="font-medium tracking-wide">
@@ -531,16 +530,16 @@ const handleLogout = () => {
                     />
                   </button>
 
-                  {isExpanded && (
-                    <div className="ml-8 space-y-1 border-l border-slate-700/50 pl-4">
+                  {isExpanded && item.subItems && (
+                    <div className="ml-8 space-y-1 border-l border-[#12294c]/10 pl-4">
                       {item.subItems.map((subItem) => (
                         <a
                           key={subItem.id}
                           href={subItem.href}
                           className={`block px-3 py-2.5 rounded-lg text-sm transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 ${
                             isSubItemActive(subItem.href)
-                              ? "bg-blue-600/30 text-blue-300 font-medium border border-blue-500/20"
-                              : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/30"
+                              ? "bg-[#12294c]/10 text-[#12294c] font-medium border border-[#12294c]/20"
+                              : "text-gray-600 hover:text-[#12294c] hover:bg-[#12294c]/5"
                           }`}
                         >
                           {subItem.label}
@@ -558,13 +557,13 @@ const handleLogout = () => {
                 href={item.href}
                 className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer border hover:scale-105 active:scale-95 ${
                   isActive
-                    ? "bg-blue-600/20 text-blue-400 shadow-lg border-blue-500/30 backdrop-blur-sm"
-                    : "text-slate-300 hover:bg-slate-700/50 hover:text-white border-transparent hover:border-slate-600/30"
+                    ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
+                    : "text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] border-transparent hover:border-[#12294c]/10"
                 }`}
               >
                 <Icon
                   className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
-                    isActive ? "text-blue-400" : ""
+                    isActive ? "text-[#12294c]" : ""
                   }`}
                 />
                 <span className="font-medium tracking-wide">{item.label}</span>
@@ -573,12 +572,12 @@ const handleLogout = () => {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-700/50 bg-gradient-to-r from-slate-800/30 to-slate-700/20">
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center space-x-3 text-slate-300 hover:bg-slate-700/50 hover:text-white hover:scale-105 active:scale-95 py-3.5 px-4 rounded-xl transition-all duration-200 ease-in-out cursor-pointer font-medium border border-transparent hover:border-slate-600/30"
+            className="w-full flex items-center space-x-3 text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] hover:scale-105 active:scale-95 py-3.5 px-4 rounded-xl transition-all duration-200 ease-in-out cursor-pointer font-medium border border-transparent hover:border-[#12294c]/10"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 via-red-600 to-red-700 flex items-center justify-center flex-shrink-0 shadow-lg border border-red-400/20 hover:shadow-xl transition-all duration-200">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200">
               <LogOut className="w-4 h-4 text-white" />
             </div>
             <span>Sign Out</span>
@@ -588,13 +587,7 @@ const handleLogout = () => {
 
       {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out">
-        <div
-          className={`p-1 lg:p-8 ${
-            isSidebarExpanded ? "max-w-5xl" : "max-w-6xl"
-          }`}
-        >
-          {children}
-        </div>
+        <div className="p-1 lg:p-8">{children}</div>
       </div>
     </div>
   );
