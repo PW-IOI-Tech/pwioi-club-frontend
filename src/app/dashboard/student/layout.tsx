@@ -134,7 +134,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
   }, [isMobileMenuOpen, isProfileSidebarOpen]);
 
   const handleLogout = () => {
-    logout();
+    logout("/auth/student/login");
   };
 
   const handleCodingPlatformRedirect = () => {

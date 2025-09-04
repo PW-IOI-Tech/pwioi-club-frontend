@@ -243,8 +243,8 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
     };
   }, [isMobileMenuOpen]);
 
-const handleLogout = () => {
-    logout();
+  const handleLogout = () => {
+    logout("/auth/admin/login");
   };
 
   const goToFeed = () => {

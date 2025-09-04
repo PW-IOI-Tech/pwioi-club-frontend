@@ -47,8 +47,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
 
   const pathname = usePathname();
   const router = useRouter();
-    const { logout } = useAuth();
-  
+  const { logout } = useAuth();
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -170,7 +169,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   }, [isMobileMenuOpen, isProfileSidebarOpen]);
 
   const handleLogout = () => {
-    logout(); 
+    logout("/auth/teacher/login");
   };
 
   const handleCodingPlatformRedirect = () => {

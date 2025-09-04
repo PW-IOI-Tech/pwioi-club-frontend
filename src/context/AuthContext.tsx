@@ -6,7 +6,7 @@ import axios from "axios";
 interface AuthContextType {
   accessToken: string | null;
   setAccessToken: React.Dispatch<React.SetStateAction<string | null>>;
-  logout: () => void;
+  logout: (redirectPath: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const intervalId = setInterval(() => {
       refreshTokenFn();
-    }, 55 * 60 * 1000); 
+    }, 55 * 60 * 1000);
 
     return () => clearInterval(intervalId);
   }, [refreshToken]);
@@ -52,30 +52,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem("accessToken", data.accessToken);
     } catch (err) {
       console.error("Token refresh failed", err);
-      logout();
     }
   };
 
-const logout = async () => {
-  try {
-    await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/logout`,
-      {},
-      { withCredentials: true }
-    );
+  const logout = async (redirectPath: string): Promise<void> => {
+    if (!redirectPath) {
+      console.error("Logout failed: redirectPath is required");
+      return;
+    }
 
-    setAccessToken(null);
-    setRefreshToken(null);
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-    localStorage.removeItem("userDetails");
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/logout`,
+        {},
+        { withCredentials: true }
+      );
+    } catch (err) {
+      console.error("Logout API failed:", err);
+    } finally {
+      // Clear auth state
+      setAccessToken(null);
+      setRefreshToken(null);
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      localStorage.removeItem("userDetails");
 
-    router.push("/");
-  } catch (err) {
-    console.error("Logout failed:", err);
-  }
-};
+      router.push(redirectPath);
+    }
+  };
 
   return (
     <AuthContext.Provider value={{ accessToken, setAccessToken, logout }}>
