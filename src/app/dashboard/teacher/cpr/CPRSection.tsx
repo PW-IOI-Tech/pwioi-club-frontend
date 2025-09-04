@@ -350,7 +350,7 @@ export default function CPRManagement() {
         </div>
 
         {/* Subject Dropdown */}
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-5 rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div className="bg-[#12294c] p-5 rounded-lg shadow-sm border border-gray-200 mb-6">
           <label
             htmlFor="subject"
             className="block text-sm font-medium text-gray-100 mb-2"

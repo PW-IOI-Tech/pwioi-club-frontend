@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import LoginPage from "./loginPage";
+import LoginPage from "../../LoginPage";
 
 export const metadata: Metadata = {
   title: "Teacher Login",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <LoginPage />;
+  return <LoginPage userType="teacher" />;
 }

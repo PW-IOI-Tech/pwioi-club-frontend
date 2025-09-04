@@ -30,7 +30,9 @@ function StudentCallbackContent() {
           setAccessToken(tokens.accessToken);
           localStorage.setItem("user", JSON.stringify(user));
 
-          router.push("/dashboard/student");
+          setTimeout(()=>{
+            router.push("/dashboard/student")
+          },10000)
         })
         .catch((err) => {
           console.error("Login failed:", err.response?.data || err.message);

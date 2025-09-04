@@ -8,7 +8,7 @@ export const ProfileBuilderShimmer = () => {
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Profile Header Shimmer */}
-            <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-sm border border-gray-400 p-4">
+            <div className="bg-[#12294c] rounded-sm shadow-sm border border-gray-400 p-4">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center">
                   <div className="w-8 h-8 bg-slate-600 rounded-full"></div>
@@ -177,7 +177,7 @@ export const ProfileBuilderShimmer = () => {
 
 export const ProfileHeaderShimmer = () => {
   return (
-    <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-lg border border-gray-200 p-6 mb-6 animate-pulse">
+    <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-200 p-6 mb-6 animate-pulse">
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-6">
           {/* Profile Image Placeholder */}

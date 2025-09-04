@@ -95,7 +95,7 @@ interface ReportModalProps {
 }
 
 const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ userName }) => (
-  <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-sm border border-gray-400 p-6 py-8">
+  <div className="bg-[#12294c] rounded-sm shadow-sm border border-gray-400 p-6 py-8">
     <h1 className="text-2xl md:text-3xl text-white mb-2">
       Welcome back, <br className="block sm:hidden" />
       <span className="font-bold">{userName}</span>!{" "}
@@ -230,7 +230,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
     <>
       <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 px-5 sm:py-5 py-4">
         <div className="flex items-center space-x-3 mb-4">
-          <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 bg-[#12294c] rounded-full flex items-center justify-center text-white font-semibold">
             {userInitial}
           </div>
           <div className="flex-1">
@@ -252,14 +252,14 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
           <div className="grid-cols-2 gap-2 hidden sm:grid">
             <button
               onClick={() => handleMediaSelect("image")}
-              className="flex items-center justify-center space-x-2 p-2 text-white bg-slate-900 rounded-sm transition-all duration-200 text-sm font-semibold cursor-pointer hover:bg-slate-800"
+              className="flex items-center justify-center space-x-2 p-2 text-white bg-[#12294c] rounded-sm transition-all duration-200 text-sm font-semibold cursor-pointer hover:bg-slate-800"
             >
               <FileImage className="w-4 h-4" />
               <span>Photo</span>
             </button>
             <button
               onClick={() => handleMediaSelect("video")}
-              className="flex items-center justify-center space-x-2 p-2 text-white rounded-sm transition-all duration-200 text-sm bg-slate-900 font-semibold cursor-pointer hover:bg-slate-800"
+              className="flex items-center justify-center space-x-2 p-2 text-white rounded-sm transition-all duration-200 text-sm bg-[#12294c] font-semibold cursor-pointer hover:bg-slate-800"
             >
               <Video className="w-4 h-4" />
               <span>Video</span>
@@ -307,7 +307,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
 
             <div className="p-4">
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white font-semibold">
+                <div className="w-10 h-10 bg-[#12294c] rounded-full flex items-center justify-center text-white font-semibold">
                   {userInitial}
                 </div>
                 <div>
@@ -355,14 +355,14 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleMediaSelect("image")}
-                      className="flex items-center space-x-2 px-3 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors text-sm cursor-pointer"
+                      className="flex items-center space-x-2 px-3 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 transition-colors text-sm cursor-pointer"
                     >
                       <FileImage className="w-4 h-4" />
                       <span>Photo</span>
                     </button>
                     <button
                       onClick={() => handleMediaSelect("video")}
-                      className="flex items-center space-x-2 px-3 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors text-sm cursor-pointer"
+                      className="flex items-center space-x-2 px-3 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 transition-colors text-sm cursor-pointer"
                     >
                       <Video className="w-4 h-4" />
                       <span>Video</span>
@@ -382,7 +382,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
               <button
                 onClick={handlePost}
                 disabled={!postText.trim() && previewFiles.length === 0}
-                className="px-6 py-2 bg-slate-900 text-white rounded-sm sm:rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
+                className="px-6 py-2 bg-[#12294c] text-white rounded-sm sm:rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
               >
                 Post
               </button>
@@ -393,7 +393,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
 
       {showToast && (
         <div className="fixed top-4 right-4 z-50">
-          <div className="bg-slate-900 text-white text-sm px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
+          <div className="bg-[#12294c] text-white text-sm px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
             <Check className="w-4 h-4" />
             <span>Posted Successfully!</span>
           </div>
@@ -407,7 +407,7 @@ const PostHeader: React.FC<any> = ({ post, getRoleBadgeColor }) => (
   <div className="p-4 pb-3">
     <div className="flex items-start justify-between">
       <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center">
+        <div className="w-10 h-10 bg-[#12294c] rounded-full flex items-center justify-center">
           <span className="text-white font-medium text-sm">
             {post?.userInfo?.name
               .split(" ")
@@ -595,7 +595,7 @@ const PostActions: React.FC<PostActionsProps> = ({
             {comments?.slice(0, 2)?.map((comment: any) => (
               <div key={comment.id} className="flex space-x-3">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm text-white">
+                  <div className="w-8 h-8 bg-[#12294c] rounded-full flex items-center justify-center text-sm text-white">
                     {comment.avatar ||
                       comment?.userInfo?.name?.charAt(0) ||
                       "👤"}
@@ -684,7 +684,7 @@ const PostActions: React.FC<PostActionsProps> = ({
               {AllComments?.map((comment: any) => (
                 <div key={comment.id} className="flex space-x-3">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-sm text-white">
+                    <div className="w-8 h-8 bg-[#12294c] rounded-full flex items-center justify-center text-sm text-white">
                       {comment?.avatar ||
                         comment?.userInfo?.name?.charAt(0) ||
                         "👤"}
@@ -734,7 +734,7 @@ const PostActions: React.FC<PostActionsProps> = ({
                 <button
                   type="submit"
                   disabled={!newComment.trim()}
-                  className="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors ease-in-out duration-200 cursor-pointer"
+                  className="px-4 py-2 bg-[#12294c] text-white rounded-md hover:bg-slate-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors ease-in-out duration-200 cursor-pointer"
                 >
                   Post
                 </button>
@@ -746,7 +746,7 @@ const PostActions: React.FC<PostActionsProps> = ({
 
       {showToast && (
         <div className="fixed top-4 right-4 z-50">
-          <div className="bg-slate-900 text-white test-sm px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
+          <div className="bg-[#12294c] text-white test-sm px-4 py-3 rounded-md shadow-lg flex items-center space-x-2">
             <Check className="w-4 h-4" />
             <span>Link copied to clipboard!</span>
           </div>
@@ -880,7 +880,7 @@ const Feed: React.FC<FeedProps> = ({
 const ProfileHeader: React.FC<any> = ({ user }) => (
   <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-5 overflow-hidden">
     <div className="flex items-center space-x-3 mb-3">
-      <div className="w-12 h-12 rounded-md bg-slate-900 flex items-center justify-center shadow-lg border border-white/20 transition-all duration-200">
+      <div className="w-12 h-12 rounded-md bg-[#12294c] flex items-center justify-center shadow-lg border border-white/20 transition-all duration-200">
         <span className="text-white font-bold text-lg">
           {user?.name?.charAt(0).toUpperCase()}
         </span>

@@ -79,7 +79,8 @@ const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
     if (!formData.title.trim()) newErrors.title = "Title is required";
     if (!formData.company_name.trim())
       newErrors.company_name = "Company name is required";
-    if (!formData.work_mode.trim()) newErrors.work_mode = "Work mode is required";
+    if (!formData.work_mode.trim())
+      newErrors.work_mode = "Work mode is required";
 
     if (!formData.start_date) newErrors.start_date = "Start date is required";
     if (
@@ -269,7 +270,7 @@ const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
           <button
             type="submit"
             onClick={handleSubmit}
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
+            className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
           >
             Add Experience
           </button>
@@ -512,7 +513,7 @@ const EditExperienceModal: React.FC<EditExperienceModalProps> = ({
           <button
             type="submit"
             onClick={handleSubmit}
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
+            className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
           >
             Update Experience
           </button>
@@ -561,7 +562,6 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
     </Modal>
   );
 };
-
 
 const Experience: React.FC = () => {
   const [experiences, setExperiences] = useState<TeacherExperience[]>([]);
@@ -706,7 +706,7 @@ const Experience: React.FC = () => {
               key={exp.id || index}
               className="flex items-start space-x-4 p-4 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 hover:shadow-md hover:border-blue-800"
             >
-              <div className="h-8 w-8 rounded-full bg-slate-900 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-[#12294c] flex items-center justify-center">
                 <Briefcase className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1">
@@ -720,10 +720,10 @@ const Experience: React.FC = () => {
                       <p className="text-sm text-slate-700">{exp.location}</p>
                     )}
                     <div className="flex items-center space-x-2 text-xs text-gray-500 mt-2 mb-3">
-                      <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
+                      <span className="px-4 py-1 bg-[#12294c] text-white rounded-full">
                         {exp.work_mode}
                       </span>
-                      <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
+                      <span className="px-4 py-1 bg-[#12294c] text-white rounded-full">
                         {formatDateRange(exp.start_date, exp.end_date)}
                       </span>
                     </div>
@@ -765,27 +765,6 @@ const Experience: React.FC = () => {
           )}
         </div>
       </div>
-      <AddExperienceModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onAdd={handleAddExperience}
-      />
-      <EditExperienceModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onEdit={handleEditExperience}
-        experience={selectedExperience}
-      />
-      <DeleteConfirmModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDeleteExperience}
-        experienceTitle={
-          selectedExperience
-            ? `${selectedExperience.title} at ${selectedExperience.company_name}`
-            : undefined
-        }
-      />
     </>
   );
 };

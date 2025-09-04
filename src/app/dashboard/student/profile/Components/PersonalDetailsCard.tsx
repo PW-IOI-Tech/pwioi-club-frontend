@@ -288,7 +288,7 @@ const PersonalDetailsCard = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-700 text-white rounded-sm text-sm font-medium transition cursor-pointer"
+                    className="px-4 py-2 bg-[#12294c] hover:bg-slate-700 text-white rounded-sm text-sm font-medium transition cursor-pointer"
                   >
                     Save
                   </button>
