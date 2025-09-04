@@ -6,7 +6,7 @@ const AcademicsShimmer = () => {
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
         {/* Header Section Shimmer */}
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm border border-gray-400 shadow-sm p-6">
+        <div className="bg-[#12294c] rounded-sm border border-gray-400 shadow-sm p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="h-8 w-64 bg-slate-700 rounded-sm mb-2 animate-pulse"></div>
@@ -70,7 +70,7 @@ const AcademicsShimmer = () => {
             >
               <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+                  <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
                     {i === 0 ? (
                       <Users className="w-4 h-4 text-white opacity-50" />
                     ) : (
@@ -110,7 +110,7 @@ const AcademicsShimmer = () => {
         <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
           <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 px-6 py-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
                 <BookOpen className="w-4 h-4 text-white opacity-50" />
               </div>
               <div className="h-5 w-48 bg-gray-200 rounded-sm animate-pulse"></div>
@@ -150,7 +150,7 @@ const AcademicsShimmer = () => {
           <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+                <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
                   <GraduationCap className="w-4 h-4 text-white opacity-50" />
                 </div>
                 <div className="h-5 w-36 bg-gray-200 rounded-sm animate-pulse"></div>
@@ -158,8 +158,8 @@ const AcademicsShimmer = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 text-slate-900 opacity-50"></div>
-                <div className="h-10 w-32 bg-slate-900 rounded-sm animate-pulse"></div>
-                <div className="h-10 w-20 bg-slate-900 rounded-sm animate-pulse"></div>
+                <div className="h-10 w-32 bg-[#12294c] rounded-sm animate-pulse"></div>
+                <div className="h-10 w-20 bg-[#12294c] rounded-sm animate-pulse"></div>
               </div>
             </div>
           </div>

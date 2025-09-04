@@ -30,7 +30,7 @@ const OtherDetailsCard = ({
       </div>
       <div className="space-y-4">
         <div className="flex items-start space-x-3 p-3 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
-          <div className="h-8 w-8 rounded-full bg-slate-900 p-1 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full bg-[#12294c] p-1 flex items-center justify-center">
             <FaLocationDot className="w-4 h-4 text-white" />
           </div>
           <div className="flex-1">
@@ -50,14 +50,14 @@ const OtherDetailsCard = ({
                 <div className="flex space-x-1">
                   <button
                     onClick={handleSaveAddress}
-                    className="p-1.5 bg-slate-900 text-white rounded hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="p-1.5 bg-[#12294c] text-white rounded hover:bg-slate-800 transition-colors cursor-pointer"
                     title="Save"
                   >
                     <Check className="w-3 h-3" />
                   </button>
                   <button
                     onClick={handleCancelEdit}
-                    className="p-1.5 bg-slate-900 text-white rounded hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="p-1.5 bg-[#12294c] text-white rounded hover:bg-slate-800 transition-colors cursor-pointer"
                     title="Cancel"
                   >
                     <X className="w-3 h-3" />
@@ -78,7 +78,7 @@ const OtherDetailsCard = ({
         </div>
 
         <div className="flex items-start space-x-3 p-3 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
-          <div className="h-8 w-8 rounded-full bg-slate-900 p-1 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full bg-[#12294c] p-1 flex items-center justify-center">
             <FaUser className="w-4 h-4 text-white" />
           </div>
           <div>
