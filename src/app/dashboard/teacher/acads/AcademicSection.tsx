@@ -69,64 +69,6 @@ interface SelectedFilters {
 type SortField = "enrollmentId" | "name" | "marks" | "percentage" | "rank";
 type SortOrder = "asc" | "desc";
 
-const mockStudentMarks: StudentMark[] = [
-  {
-    enrollmentId: "SOT23B1001",
-    name: "Aarav Sharma",
-    marks: 85,
-    percentage: 85,
-    rank: 1,
-  },
-  {
-    enrollmentId: "SOT23B1002",
-    name: "Priya Patel",
-    marks: 82,
-    percentage: 82,
-    rank: 2,
-  },
-  {
-    enrollmentId: "SOT23B1003",
-    name: "Rahul Kumar",
-    marks: 78,
-    percentage: 78,
-    rank: 3,
-  },
-  {
-    enrollmentId: "SOT23B1004",
-    name: "Ananya Singh",
-    marks: 75,
-    percentage: 75,
-    rank: 4,
-  },
-  {
-    enrollmentId: "SOT23B1005",
-    name: "Vikram Gupta",
-    marks: 88,
-    percentage: 88,
-    rank: 1,
-  },
-  {
-    enrollmentId: "SOT23B1006",
-    name: "Kavya Reddy",
-    marks: 72,
-    percentage: 72,
-    rank: 6,
-  },
-  {
-    enrollmentId: "SOT23B1007",
-    name: "Arjun Nair",
-    marks: 80,
-    percentage: 80,
-    rank: 5,
-  },
-  {
-    enrollmentId: "SOT23B1008",
-    name: "Shreya Joshi",
-    marks: 90,
-    percentage: 90,
-    rank: 1,
-  },
-];
 
 const DashboardHeader: React.FC = () => {
   return (
@@ -803,21 +745,28 @@ const PerformanceChart: React.FC<{ selectedFilters: SelectedFilters }> = ({
   const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
 
   useEffect(() => {
-    if (!selectedFilters.subject || !selectedFilters.testType) return;
+    if (!selectedFilters.testNumber) return;
 
     axios
       .get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teacher-courses/exam-type/average-marks`,
-        {
-          params: {
-            subjectId: selectedFilters.subject,
-            examType: selectedFilters.testType,
-          },
-          withCredentials: true,
-        }
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teacher-courses/exam-student-result/${selectedFilters.testNumber}`,
+        { withCredentials: true }
       )
-      .then((res) => setPerformanceData(res.data))
-      .catch((err) => console.error("Error fetching performance data:", err));
+      .then((res) => {
+        const exam = res.data.exam;
+        const summary = res.data.summary;
+
+        const transformed = [
+          {
+            test: exam.name,
+            percentage: summary.passPercentage,
+          },
+        ];
+        setPerformanceData(transformed);
+      })
+      .catch((err) =>
+        console.error("Error fetching exam performance:", err)
+      );
   }, [selectedFilters]);
 
   return (
@@ -836,6 +785,7 @@ const PerformanceChart: React.FC<{ selectedFilters: SelectedFilters }> = ({
   );
 };
 
+
 interface StudentMarksTableProps {
   selectedFilters: SelectedFilters;
 }
@@ -843,12 +793,39 @@ interface StudentMarksTableProps {
 const StudentMarksTable: React.FC<StudentMarksTableProps> = ({
   selectedFilters,
 }) => {
+  const [students, setStudents] = useState<StudentMark[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [sortBy, setSortBy] = useState<SortField>("rank");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
+  useEffect(() => {
+    if (!selectedFilters.testNumber) return;
+
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teacher-courses/exam-student-result/${selectedFilters.testNumber}`,
+        { withCredentials: true }
+      )
+      .then((res) => {
+        const exam = res.data.exam;
+        const mapped = res.data.students.map((s: any) => ({
+          enrollmentId: s.enrollmentId,
+          name: s.name,
+          marks: s.marksObtained ?? 0,
+          percentage: exam.full_marks
+            ? Math.round(((s.marksObtained ?? 0) / exam.full_marks) * 100)
+            : 0,
+          rank: s.rank ?? 0,
+        }));
+        setStudents(mapped);
+      })
+      .catch((err) =>
+        console.error("Error fetching student marks:", err)
+      );
+  }, [selectedFilters]);
+
   const getFilteredStudents = (): StudentMark[] => {
-    const filtered = mockStudentMarks.filter(
+    const filtered = students.filter(
       (student) =>
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.enrollmentId.toLowerCase().includes(searchTerm.toLowerCase())
@@ -891,15 +868,10 @@ const StudentMarksTable: React.FC<StudentMarksTableProps> = ({
               <Users className="w-4 h-4 text-white" />
             </div>
             <h3 className="text-lg font-semibold text-slate-900">
-              {/* Student Marks -{" "}
-              {
-                testTypes.find((t) => t.value === selectedFilters.testType)
-                  ?.label
-              }{" "} */}
-              {selectedFilters.testNumber}
+              Student Marks
             </h3>
             <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-              {mockStudentMarks.length} students
+              {students.length} students
             </span>
           </div>
 
@@ -1043,6 +1015,7 @@ const StudentMarksTable: React.FC<StudentMarksTableProps> = ({
     </div>
   );
 };
+
 
 const TeacherMarksDashboard: React.FC = () => {
   const [showMarksDetails, setShowMarksDetails] = useState<boolean>(false);
