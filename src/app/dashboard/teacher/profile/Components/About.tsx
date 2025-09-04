@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Plus, Edit3, Check, X } from "lucide-react";
 import axios from "axios";
 
-
 const About: React.FC<any> = ({ aboutDetails }) => {
   const [aboutText, setAboutText] = useState<string>("");
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -19,23 +18,22 @@ const About: React.FC<any> = ({ aboutDetails }) => {
     setIsEditing(true);
   };
 
-const handleSave = async () => {
-  try {
-    const trimmed = editText.trim();
-    setAboutText(trimmed);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      const trimmed = editText.trim();
+      setAboutText(trimmed);
+      setIsEditing(false);
 
-    await axios.patch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/profile/basic-details`,
-      { about: trimmed }, 
-      { withCredentials: true } 
-    );
-    console.log("About updated successfully!");
-  } catch (error) {
-    console.error("Error updating About section:", error);
-  }
-};
-
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/profile/basic-details`,
+        { about: trimmed },
+        { withCredentials: true }
+      );
+      console.log("About updated successfully!");
+    } catch (error) {
+      console.error("Error updating About section:", error);
+    }
+  };
 
   const handleCancel = () => {
     setEditText(aboutText);
@@ -90,7 +88,7 @@ const handleSave = async () => {
               </button>
               <button
                 onClick={handleSave}
-                className="flex items-center px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out text-sm"
+                className="flex items-center px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out text-sm"
               >
                 <Check className="w-4 h-4 mr-2" />
                 Save About

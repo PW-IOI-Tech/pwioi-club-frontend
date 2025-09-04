@@ -69,10 +69,9 @@ interface SelectedFilters {
 type SortField = "enrollmentId" | "name" | "marks" | "percentage" | "rank";
 type SortOrder = "asc" | "desc";
 
-
 const DashboardHeader: React.FC = () => {
   return (
-    <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-lg border border-gray-200 p-4 mb-6 py-6">
+    <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-200 p-4 mb-6 py-6">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-2">
         <div className="flex items-center gap-3">
           <div>
@@ -106,7 +105,7 @@ const OngoingCoursesTable: React.FC = () => {
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
       <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
             <BookOpen className="w-4 h-4 text-white" />
           </div>
           <h3 className="text-lg font-semibold text-slate-900">
@@ -191,7 +190,7 @@ const CompletedCoursesTable: React.FC = () => {
       <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
               <GraduationCap className="w-4 h-4 text-white" />
             </div>
             <h3 className="text-lg font-semibold text-slate-900">
@@ -203,7 +202,7 @@ const CompletedCoursesTable: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-3 bg-slate-900 text-white rounded-sm px-3 py-2 cursor-pointer group">
+            <div className="flex items-center gap-3 bg-[#12294c] text-white rounded-sm px-3 py-2 cursor-pointer group">
               <Filter className="w-4 h-4" />
               <select
                 className="text-sm appearance-none cursor-pointer"
@@ -221,7 +220,7 @@ const CompletedCoursesTable: React.FC = () => {
 
             <button
               onClick={() => setShowCompletedCourses(!showCompletedCourses)}
-              className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-sm text-sm font-medium transition-colors duration-200 cursor-pointer"
+              className="flex items-center gap-2 bg-[#12294c] hover:bg-slate-800 text-white px-4 py-2 rounded-sm text-sm font-medium transition-colors duration-200 cursor-pointer"
             >
               {showCompletedCourses ? (
                 <ChevronUp className="w-4 h-4" />
@@ -723,7 +722,7 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
         <button
           onClick={handleShowAnalysis}
           disabled={!canShowMarksDetails}
-          className="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-sm 
+          className="flex items-center gap-2 px-6 py-2 bg-[#12294c] text-white rounded-sm 
           transition-colors font-medium disabled:bg-gray-300 
           disabled:cursor-not-allowed cursor-pointer group"
         >
@@ -764,9 +763,7 @@ const PerformanceChart: React.FC<{ selectedFilters: SelectedFilters }> = ({
         ];
         setPerformanceData(transformed);
       })
-      .catch((err) =>
-        console.error("Error fetching exam performance:", err)
-      );
+      .catch((err) => console.error("Error fetching exam performance:", err));
   }, [selectedFilters]);
 
   return (
@@ -784,7 +781,6 @@ const PerformanceChart: React.FC<{ selectedFilters: SelectedFilters }> = ({
     </div>
   );
 };
-
 
 interface StudentMarksTableProps {
   selectedFilters: SelectedFilters;
@@ -819,9 +815,7 @@ const StudentMarksTable: React.FC<StudentMarksTableProps> = ({
         }));
         setStudents(mapped);
       })
-      .catch((err) =>
-        console.error("Error fetching student marks:", err)
-      );
+      .catch((err) => console.error("Error fetching student marks:", err));
   }, [selectedFilters]);
 
   const getFilteredStudents = (): StudentMark[] => {
@@ -864,7 +858,7 @@ const StudentMarksTable: React.FC<StudentMarksTableProps> = ({
       <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
               <Users className="w-4 h-4 text-white" />
             </div>
             <h3 className="text-lg font-semibold text-slate-900">
@@ -1015,7 +1009,6 @@ const StudentMarksTable: React.FC<StudentMarksTableProps> = ({
     </div>
   );
 };
-
 
 const TeacherMarksDashboard: React.FC = () => {
   const [showMarksDetails, setShowMarksDetails] = useState<boolean>(false);
