@@ -295,7 +295,7 @@ const AddAcademicHistoryModal: React.FC<AddAcademicHistoryModalProps> = ({
           </button>
           <button
             type="submit"
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
+            className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
           >
             Add Education
           </button>
@@ -545,7 +545,7 @@ const EditAcademicHistoryModal: React.FC<EditAcademicHistoryModalProps> = ({
           </button>
           <button
             type="submit"
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
+            className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
           >
             Update Education
           </button>
@@ -579,13 +579,13 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
         <div className="flex space-x-3 pt-2">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 text-sm"
+            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 text-sm cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 text-sm"
+            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 text-sm cursor-pointer"
           >
             Delete
           </button>
@@ -745,7 +745,7 @@ const AcademicHistoryCard: React.FC = () => {
           <h3 className="text-lg font-bold text-gray-900">Academic History</h3>
           <button
             onClick={() => setShowAddModal(true)}
-            className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm"
+            className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -757,7 +757,7 @@ const AcademicHistoryCard: React.FC = () => {
               key={index}
               className="flex items-start space-x-4 p-4 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 hover:shadow-md hover:border-blue-800"
             >
-              <div className="h-8 w-8 rounded-full bg-slate-900 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-[#12294c] flex items-center justify-center">
                 <GraduationCap className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1">
@@ -771,10 +771,10 @@ const AcademicHistoryCard: React.FC = () => {
                       {edu.fieldOfStudy}
                     </p>
                     <div className="flex items-center space-x-2 text-xs text-gray-500">
-                      <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
+                      <span className="px-4 py-1 bg-[#12294c] text-white rounded-full">
                         Grade: {edu.grade}%
                       </span>
-                      <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
+                      <span className="px-4 py-1 bg-[#12294c] text-white rounded-full">
                         {new Date(edu.startDate).getFullYear()} -{" "}
                         {new Date(edu.endDate).getFullYear()}
                       </span>
@@ -783,13 +783,13 @@ const AcademicHistoryCard: React.FC = () => {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => openEditModal(edu, index)}
-                      className="p-1 text-blue-600 hover:bg-blue-100 rounded-sm"
+                      className="p-1 text-blue-600 hover:bg-blue-100 rounded-sm cursor-pointer"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => openDeleteModal(edu, index)}
-                      className="p-1 text-red-600 hover:bg-red-100 rounded-sm"
+                      className="p-1 text-red-600 hover:bg-red-100 rounded-sm cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

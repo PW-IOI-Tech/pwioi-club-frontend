@@ -34,7 +34,9 @@ const ProjectsCard = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedProjectIndex, setSelectedProjectIndex] = useState<number | null>(null);
+  const [selectedProjectIndex, setSelectedProjectIndex] = useState<
+    number | null
+  >(null);
 
   const emptyForm = {
     name: "",
@@ -123,14 +125,19 @@ const ProjectsCard = () => {
         const res = await axios.patch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/projects/${project.id}`,
           payload,
-          { headers: { "Content-Type": "application/json" }, withCredentials: true }
+          {
+            headers: { "Content-Type": "application/json" },
+            withCredentials: true,
+          }
         );
         if (res.data.success) {
           const updated = [...projects];
           updated[selectedProjectIndex] = {
             ...res.data.data,
             technologies: res.data.data.technologies
-              ? res.data.data.technologies.split(",").map((t: string) => t.trim())
+              ? res.data.data.technologies
+                  .split(",")
+                  .map((t: string) => t.trim())
               : [],
           };
           setProjects(updated);
@@ -140,7 +147,10 @@ const ProjectsCard = () => {
         const res = await axios.post(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/projects`,
           payload,
-          { headers: { "Content-Type": "application/json" }, withCredentials: true }
+          {
+            headers: { "Content-Type": "application/json" },
+            withCredentials: true,
+          }
         );
         if (res.data.success) {
           setProjects([
@@ -148,7 +158,9 @@ const ProjectsCard = () => {
             {
               ...res.data.data,
               technologies: res.data.data.technologies
-                ? res.data.data.technologies.split(",").map((t: string) => t.trim())
+                ? res.data.data.technologies
+                    .split(",")
+                    .map((t: string) => t.trim())
                 : [],
             },
           ]);
@@ -219,7 +231,10 @@ const ProjectsCard = () => {
               <textarea
                 value={localFormData.description}
                 onChange={(e) =>
-                  setLocalFormData({ ...localFormData, description: e.target.value })
+                  setLocalFormData({
+                    ...localFormData,
+                    description: e.target.value,
+                  })
                 }
                 className="w-full p-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 rows={3}
@@ -235,7 +250,10 @@ const ProjectsCard = () => {
                 type="text"
                 value={localFormData.technologies}
                 onChange={(e) =>
-                  setLocalFormData({ ...localFormData, technologies: e.target.value })
+                  setLocalFormData({
+                    ...localFormData,
+                    technologies: e.target.value,
+                  })
                 }
                 className="w-full p-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="React, TypeScript, Node.js"
@@ -251,7 +269,10 @@ const ProjectsCard = () => {
                   type="date"
                   value={localFormData.start_date}
                   onChange={(e) =>
-                    setLocalFormData({ ...localFormData, start_date: e.target.value })
+                    setLocalFormData({
+                      ...localFormData,
+                      start_date: e.target.value,
+                    })
                   }
                   className="w-full p-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
                 />
@@ -264,7 +285,10 @@ const ProjectsCard = () => {
                   type="date"
                   value={localFormData.end_date || ""}
                   onChange={(e) =>
-                    setLocalFormData({ ...localFormData, end_date: e.target.value })
+                    setLocalFormData({
+                      ...localFormData,
+                      end_date: e.target.value,
+                    })
                   }
                   className="w-full p-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
                 />
@@ -279,7 +303,10 @@ const ProjectsCard = () => {
                 type="url"
                 value={localFormData.github_link || ""}
                 onChange={(e) =>
-                  setLocalFormData({ ...localFormData, github_link: e.target.value })
+                  setLocalFormData({
+                    ...localFormData,
+                    github_link: e.target.value,
+                  })
                 }
                 className="w-full p-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="https://github.com/username/repo"
@@ -294,7 +321,10 @@ const ProjectsCard = () => {
                 type="url"
                 value={localFormData.live_link || ""}
                 onChange={(e) =>
-                  setLocalFormData({ ...localFormData, live_link: e.target.value })
+                  setLocalFormData({
+                    ...localFormData,
+                    live_link: e.target.value,
+                  })
                 }
                 className="w-full p-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="https://yourproject.com"
@@ -305,13 +335,13 @@ const ProjectsCard = () => {
           <div className="flex justify-end space-x-3 mt-6">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 border rounded-sm"
+              className="px-4 py-2 text-gray-600 border rounded-sm cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={() => onSubmit(localFormData)}
-              className="px-4 py-2 bg-slate-900 text-white rounded-sm"
+              className="px-4 py-2 bg-[#12294c] text-white rounded-sm cursor-pointer"
             >
               {isEdit ? "Update Project" : "Add Project"}
             </button>
@@ -353,13 +383,13 @@ const ProjectsCard = () => {
           <div className="flex justify-end space-x-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 border rounded-sm"
+              className="px-4 py-2 text-gray-600 border rounded-sm cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={onConfirm}
-              className="px-4 py-2 bg-red-600 text-white rounded-sm"
+              className="px-4 py-2 bg-red-600 text-white rounded-sm cursor-pointer"
             >
               Delete
             </button>
@@ -402,7 +432,7 @@ const ProjectsCard = () => {
         </div>
         <button
           onClick={handleAddProject}
-          className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm"
+          className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -422,24 +452,26 @@ const ProjectsCard = () => {
                 <div className="flex items-center space-x-1">
                   <button
                     onClick={() => handleEditProject(index)}
-                    className="text-blue-600 hover:text-blue-900 p-1"
+                    className="text-blue-600 hover:text-blue-900 p-1 cursor-pointer"
                   >
                     <Edit3 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteProject(index)}
-                    className="text-red-600 hover:text-red-900 p-1"
+                    className="text-red-600 hover:text-red-900 p-1 cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              <p className="text-sm text-slate-700 mb-4">{project.description}</p>
+              <p className="text-sm text-slate-700 mb-4">
+                {project.description}
+              </p>
               <div className="flex flex-wrap gap-1 mb-3">
                 {project.technologies?.slice(0, 3).map((tech, i) => (
                   <span
                     key={i}
-                    className="px-2 py-1 bg-slate-900 text-white text-xs rounded"
+                    className="px-2 py-1 bg-[#12294c] text-white text-xs rounded"
                   >
                     {tech}
                   </span>
@@ -451,7 +483,8 @@ const ProjectsCard = () => {
                 )}
               </div>
               <div className="text-xs text-slate-600 mb-4">
-                {formatDate(project.start_date)} - {formatDate(project.end_date)}
+                {formatDate(project.start_date)} -{" "}
+                {formatDate(project.end_date)}
               </div>
               <div className="flex items-center space-x-2">
                 {project.github_link && (

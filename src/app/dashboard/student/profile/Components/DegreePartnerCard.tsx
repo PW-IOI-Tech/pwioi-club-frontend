@@ -131,7 +131,7 @@ const DegreePartnerCard = () => {
         <h3 className="text-lg font-bold text-gray-900">Degree Partner</h3>
         <button
           onClick={openModal}
-          className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
+          className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-300 cursor-pointer"
           aria-label="Edit degree partner"
         >
           <Edit3 className="w-4 h-4" />
@@ -140,7 +140,7 @@ const DegreePartnerCard = () => {
 
       {degreePartner ? (
         <div className="flex items-start space-x-4 p-4 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
-          <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center shadow-md">
+          <div className="w-12 h-12 bg-[#12294c] rounded-xl flex items-center justify-center shadow-md">
             <RiGraduationCapFill className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1">
@@ -174,7 +174,7 @@ const DegreePartnerCard = () => {
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
@@ -262,13 +262,13 @@ const DegreePartnerCard = () => {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-sm text-sm font-medium transition"
+                    className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-sm text-sm font-medium transition cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-700 text-white rounded-sm text-sm font-medium transition"
+                    className="px-4 py-2 bg-[#12294c] hover:bg-slate-700 text-white rounded-sm text-sm font-medium transition cursor-pointer"
                   >
                     Save
                   </button>

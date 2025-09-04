@@ -328,7 +328,7 @@ const AddSocialModal: React.FC<AddSocialModalProps> = ({
           </button>
           <button
             type="submit"
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-800 transition-all cursor-pointer duration-200 ease-in-out text-sm"
+            className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-800 transition-all cursor-pointer duration-200 ease-in-out text-sm"
           >
             Add Link
           </button>
@@ -407,10 +407,10 @@ const EditSocialModal: React.FC<EditSocialModalProps> = ({
           {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
         </div>
         <div className="flex space-x-3 pt-2">
-          <button type="button" onClick={handleClose} className="flex-1 border">
+          <button type="button" onClick={handleClose} className="flex-1 border cursor-pointer">
             Cancel
           </button>
-          <button type="submit" className="flex-1 bg-slate-900 text-white">
+          <button type="submit" className="flex-1 bg-[#12294c] text-white cursor-pointer">
             Update Link
           </button>
         </div>
@@ -435,12 +435,12 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   <Modal isOpen={isOpen} onClose={onClose} title="Delete Social Link">
     <p>Are you sure you want to delete the {platformName} link?</p>
     <div className="flex space-x-3 pt-2">
-      <button onClick={onClose} className="flex-1 border">
+      <button onClick={onClose} className="flex-1 border cursor-pointer">
         Cancel
       </button>
       <button
         onClick={onConfirm}
-        className="flex-1 bg-red-600 text-white rounded-sm"
+        className="flex-1 bg-red-600 text-white rounded-sm cursor-pointer"
       >
         Delete
       </button>
@@ -601,7 +601,7 @@ const SocialLinksCard: React.FC = () => {
               className="flex items-center justify-between p-3 bg-gradient-to-br from-white to-indigo-50 rounded-sm border-gray-400"
             >
               <div className="flex items-center space-x-3">
-                <div className="h-8 w-8 rounded-full bg-slate-900 p-1 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-[#12294c] p-1 flex items-center justify-center">
                   <IconComponent className="text-white w-4 h-4" />
                 </div>
                 <span className="text-sm font-semibold text-slate-900">

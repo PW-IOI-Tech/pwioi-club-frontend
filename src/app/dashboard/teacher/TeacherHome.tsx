@@ -1100,7 +1100,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
             <button
               onClick={onSubmit}
               disabled={!reportReason}
-              className="flex-1 px-4 py-2 bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 text-white rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:ring-slate-900 focus:border-slate-900 cursor-pointer font-semibold"
+              className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:ring-slate-900 focus:border-slate-900 cursor-pointer font-semibold"
             >
               Submit
             </button>

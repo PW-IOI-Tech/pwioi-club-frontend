@@ -62,7 +62,7 @@ export default function HelpSection() {
                   <p className="text-gray-600 mb-4">{item.description}</p>
                   <button
                     onClick={() => handleAction(item.action)}
-                    className="w-full bg-slate-900 hover:bg-slate-700 text-white py-2 px-4 rounded-sm font-medium transition-colors cursor-pointer ease-in-out duration-300"
+                    className="w-full bg-[#12294c] hover:bg-slate-700 text-white py-2 px-4 rounded-sm font-medium transition-colors cursor-pointer ease-in-out duration-300"
                   >
                     {item.action}
                   </button>
@@ -113,7 +113,7 @@ export default function HelpSection() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 bg-gray-50 rounded-sm flex items-center justify-center flex-col border border-slate-700/50">
-                <div className="h-12 w-12 rounded-full bg-slate-900 p-1 flex items-center justify-center mb-3">
+                <div className="h-12 w-12 rounded-full bg-[#12294c] p-1 flex items-center justify-center mb-3">
                   <Phone className="text-white w-5 h-5" />
                 </div>
                 <div className="text-sm text-gray-600">Support Hotline</div>
@@ -122,7 +122,7 @@ export default function HelpSection() {
                 </div>
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-sm flex items-center justify-center flex-col border border-slate-700/50">
-                <div className="h-12 w-12 rounded-full bg-slate-900 p-1 flex items-center justify-center mb-3">
+                <div className="h-12 w-12 rounded-full bg-[#12294c] p-1 flex items-center justify-center mb-3">
                   <Mail className="text-white w-5 h-5" />
                 </div>
                 <div className="text-sm text-gray-600">Email Support</div>
@@ -131,7 +131,7 @@ export default function HelpSection() {
                 </div>
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-sm flex items-center justify-center flex-col border border-slate-700/50">
-                <div className="h-12 w-12 rounded-full bg-slate-900 p-1 flex items-center justify-center mb-3">
+                <div className="h-12 w-12 rounded-full bg-[#12294c] p-1 flex items-center justify-center mb-3">
                   <MessageCircle className="text-white w-5 h-5" />
                 </div>
                 <div className="text-sm text-gray-600">Live Chat</div>

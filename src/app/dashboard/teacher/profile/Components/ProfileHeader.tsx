@@ -8,8 +8,8 @@ interface TeacherProfileData {
 }
 
 const TeacherProfileHeader = () => {
-        const storedUser = localStorage.getItem("user");
-      const user = storedUser ? JSON.parse(storedUser) : null;
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
 
   const [profileData] = useState<TeacherProfileData>({
     name: user?.name,
@@ -18,7 +18,7 @@ const TeacherProfileHeader = () => {
   });
 
   return (
-    <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-lg border border-gray-200 p-6 mb-6">
+    <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-200 p-6 mb-6">
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-6">
           <div className="w-24 h-24 bg-gradient-to-br from-blue-700 to-blue-800 rounded-xl flex items-center justify-center shadow-lg">

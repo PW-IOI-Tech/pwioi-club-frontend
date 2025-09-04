@@ -143,7 +143,7 @@ const EditSocialModal: React.FC<EditSocialModalProps> = ({
           <button
             type="button"
             onClick={handleSubmit}
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-800 transition-all cursor-pointer duration-200 ease-in-out text-sm"
+            className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-800 transition-all cursor-pointer duration-200 ease-in-out text-sm"
           >
             Update Link
           </button>
@@ -245,37 +245,36 @@ const SocialLinksCard: React.FC<any> = ({ aboutDetails }) => {
     }
   };
 
-const handleDeleteSocial = async () => {
-  if (!selectedSocial) return;
+  const handleDeleteSocial = async () => {
+    if (!selectedSocial) return;
 
-  // Optimistic UI update
-  setSocialLinks((prev) => prev.filter((s) => s.id !== selectedSocial.id));
-  setShowDeleteModal(false);
+    // Optimistic UI update
+    setSocialLinks((prev) => prev.filter((s) => s.id !== selectedSocial.id));
+    setShowDeleteModal(false);
 
-  // Map platform → backend field
-  const fieldMap: Record<string, string> = {
-    LinkedIn: "linkedin",
-    GitHub: "github",
+    // Map platform → backend field
+    const fieldMap: Record<string, string> = {
+      LinkedIn: "linkedin",
+      GitHub: "github",
+    };
+
+    const fieldName = fieldMap[selectedSocial.platform];
+    if (!fieldName) {
+      console.error("Unknown social platform:", selectedSocial.platform);
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/profile/basic-details?field=${fieldName}`,
+        { withCredentials: true }
+      );
+
+      console.log(`✅ ${fieldName} link deleted successfully!`);
+    } catch (error) {
+      console.error("❌ Error deleting social link:", error);
+    }
   };
-
-  const fieldName = fieldMap[selectedSocial.platform];
-  if (!fieldName) {
-    console.error("Unknown social platform:", selectedSocial.platform);
-    return;
-  }
-
-  try {
-    await axios.delete(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/profile/basic-details?field=${fieldName}`,
-      { withCredentials: true }
-    );
-
-    console.log(`✅ ${fieldName} link deleted successfully!`);
-  } catch (error) {
-    console.error("❌ Error deleting social link:", error);
-  }
-};
-
 
   const openEditModal = (social: SocialLink) => {
     setSelectedSocial(social);
@@ -285,7 +284,6 @@ const handleDeleteSocial = async () => {
   const openDeleteModal = (social: SocialLink) => {
     setSelectedSocial(social);
     setShowDeleteModal(true);
-
   };
 
   const handleExternalLinkClick = (link: string) => {
@@ -318,7 +316,7 @@ const handleDeleteSocial = async () => {
               className="flex items-center justify-between p-3 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400"
             >
               <div className="flex items-center space-x-3">
-                <div className="h-8 w-8 rounded-full bg-slate-900 p-1 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-[#12294c] p-1 flex items-center justify-center">
                   <IconComponent className="text-white w-4 h-4" />
                 </div>
                 <span className="text-sm font-semibold text-slate-900">

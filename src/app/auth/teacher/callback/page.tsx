@@ -30,7 +30,8 @@ function TeacherCallbackContent() {
           setAccessToken(tokens.accessToken);
           localStorage.setItem("user", JSON.stringify(user));
 
-          router.push("/dashboard/teacher");
+          const dashboardUrl = window.location.origin + "/dashboard/teacher";
+          window.location.href = dashboardUrl;
         })
         .catch((err) => {
           console.error("Login failed:", err.response?.data || err.message);
