@@ -242,7 +242,7 @@ const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
           </button>
           <button
             type="submit"
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer text-sm"
+            className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer text-sm"
           >
             Add Certification
           </button>
@@ -449,7 +449,7 @@ const EditCertificationModal: React.FC<EditCertificationModalProps> = ({
           </button>
           <button
             type="submit"
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer text-sm"
+            className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer text-sm"
           >
             Update Certification
           </button>
@@ -634,7 +634,7 @@ const CertificationsCard: React.FC = () => {
             className="flex items-center justify-between p-4 hover:shadow-md hover:border-blue-800 transition-all bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400"
           >
             <div className="flex items-center space-x-4">
-              <div className="h-12 w-12 rounded-full bg-slate-900 p-1 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-full bg-[#12294c] p-1 flex items-center justify-center">
                 <Award className="w-6 h-6 text-white" />
               </div>
               <div>

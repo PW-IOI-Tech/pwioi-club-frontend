@@ -84,7 +84,8 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
     if (formData.doi?.trim()) {
       const doiPattern = /^10\.\d{4,}\/[-._;()\/:a-zA-Z0-9]+$/;
       if (!doiPattern.test(formData.doi.trim())) {
-        newErrors.doi = "Please enter a valid DOI (e.g., 10.1000/journal.example)";
+        newErrors.doi =
+          "Please enter a valid DOI (e.g., 10.1000/journal.example)";
       }
     }
     setErrors(newErrors);
@@ -101,7 +102,7 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
         formData,
         { withCredentials: true }
       );
-      onAdd(res.data.data); 
+      onAdd(res.data.data);
       handleClose();
     } catch (err) {
       console.error("Error adding paper", err);
@@ -141,7 +142,6 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
             <p className="mt-1 text-sm text-red-600">{errors.title}</p>
           )}
         </div>
-
         <div>
           <label className="block text-sm font-semibold text-slate-900 mb-2">
             Abstract
@@ -159,7 +159,6 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
             <p className="mt-1 text-sm text-red-600">{errors.abstract}</p>
           )}
         </div>
-
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
@@ -189,7 +188,9 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
             <input
               type="text"
               value={formData.journal_name}
-              onChange={(e) => handleInputChange("journal_name", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("journal_name", e.target.value)
+              }
               placeholder="e.g., Journal of Educational Technology"
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
                 errors.journal_name ? "border-red-400" : "border-gray-400"
@@ -200,7 +201,6 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
             )}
           </div>
         </div>
-
         <div>
           <label className="block text-sm font-semibold text-slate-900 mb-2">
             DOI (Digital Object Identifier)
@@ -218,7 +218,6 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
             <p className="mt-1 text-sm text-red-600">{errors.doi}</p>
           )}
         </div>
-
         <div>
           <label className="block text-sm font-semibold text-slate-900 mb-2">
             URL/Link
@@ -236,22 +235,23 @@ const AddResearchPaperModal: React.FC<AddResearchPaperModalProps> = ({
             <p className="mt-1 text-sm text-red-600">{errors.url}</p>
           )}
         </div>
-      <div className="flex space-x-3 pt-2">
-        <button
-          type="button"
-          onClick={handleClose}
-          className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          onClick={handleSubmit}
-          className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700"
-        >
-          Add Research Paper
-        </button>
-        </div>      </div>
+        <div className="flex space-x-3 pt-2">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 cursor-pointer"
+          >
+            Add Research Paper
+          </button>
+        </div>{" "}
+      </div>
     </Modal>
   );
 };
@@ -275,14 +275,14 @@ const EditResearchPaperModal: React.FC<EditResearchPaperModalProps> = ({
     doi: "",
     url: "",
   });
-    const [errors, setErrors] = useState<
+  const [errors, setErrors] = useState<
     Partial<Record<keyof ResearchPaper, string>>
   >({});
 
   useEffect(() => {
     if (paper) setFormData(paper);
   }, [paper]);
-    const handleInputChange = (field: keyof ResearchPaper, value: string) => {
+  const handleInputChange = (field: keyof ResearchPaper, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -325,8 +325,6 @@ const EditResearchPaperModal: React.FC<EditResearchPaperModalProps> = ({
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -413,7 +411,9 @@ const EditResearchPaperModal: React.FC<EditResearchPaperModalProps> = ({
             <input
               type="text"
               value={formData.journal_name}
-              onChange={(e) => handleInputChange("journal_name", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("journal_name", e.target.value)
+              }
               placeholder="e.g., Journal of Educational Technology"
               className={`w-full p-3 border rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 ${
                 errors.journal_name ? "border-red-400" : "border-gray-400"
@@ -461,22 +461,21 @@ const EditResearchPaperModal: React.FC<EditResearchPaperModalProps> = ({
           )}
         </div>
 
-                <div className="flex space-x-3 pt-2">
-
-<button
-          type="button"
-          onClick={onClose}
-          className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          onClick={handleSubmit}
-          className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700"
-        >
-          Update Research Paper
-        </button>
+        <div className="flex space-x-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 cursor-pointer"
+          >
+            Update Research Paper
+          </button>
         </div>
       </div>
     </Modal>
@@ -499,10 +498,12 @@ const DeleteConfirmModal = ({
       Are you sure you want to delete <strong>{paperTitle}</strong>?
     </p>
     <div className="flex space-x-3 pt-2">
-      <button onClick={onClose} className="flex-1 px-4 py-2 border">Cancel</button>
+      <button onClick={onClose} className="flex-1 px-4 py-2 border cursor-pointer">
+        Cancel
+      </button>
       <button
         onClick={onConfirm}
-        className="flex-1 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700"
+        className="flex-1 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 cursor-pointer"
       >
         Delete
       </button>
@@ -513,12 +514,14 @@ const DeleteConfirmModal = ({
 const ResearchPapers: React.FC = () => {
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [loading, setLoading] = useState(true);
-    const [_editIndex, setEditIndex] = useState<number | null>(null);
+  const [_editIndex, setEditIndex] = useState<number | null>(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedPaper, setSelectedPaper] = useState<ResearchPaper | null>(null);
+  const [selectedPaper, setSelectedPaper] = useState<ResearchPaper | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchPapers = async () => {
@@ -558,7 +561,7 @@ const ResearchPapers: React.FC = () => {
   };
 
   if (loading) return <p>Loading papers...</p>;
-    const openEditModal = (paper: ResearchPaper, index: number) => {
+  const openEditModal = (paper: ResearchPaper, index: number) => {
     setSelectedPaper(paper);
     setEditIndex(index);
     setShowEditModal(true);
@@ -575,7 +578,6 @@ const ResearchPapers: React.FC = () => {
       window.open(url, "_blank", "noopener,noreferrer");
     }
   };
-
 
   return (
     <>
@@ -602,7 +604,7 @@ const ResearchPapers: React.FC = () => {
 
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-bold text-gray-900">Research Papers</h3>
-          <button onClick={() => setShowAddModal(true)}>
+          <button onClick={() => setShowAddModal(true)} className="cursor-pointer">
             <Plus className="w-4 h-4" />
           </button>
         </div>
@@ -613,7 +615,7 @@ const ResearchPapers: React.FC = () => {
               key={paper.id || index}
               className="flex items-start space-x-4 p-4 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 hover:shadow-md hover:border-blue-800"
             >
-              <div className="h-8 w-8 rounded-full bg-slate-900 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-[#12294c] flex items-center justify-center">
                 <FileText className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1">
@@ -642,11 +644,11 @@ const ResearchPapers: React.FC = () => {
                       </p>
                     )}
                     <div className="flex items-center flex-wrap gap-2 text-xs text-gray-500">
-                      <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
+                      <span className="px-4 py-1 bg-[#12294c] text-white rounded-full">
                         {new Date(paper.publicationDate).getFullYear()}
                       </span>
                       {paper.doi && (
-                        <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
+                        <span className="px-4 py-1 bg-[#12294c] text-white rounded-full">
                           DOI: {paper.doi}
                         </span>
                       )}

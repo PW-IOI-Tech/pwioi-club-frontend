@@ -30,7 +30,8 @@ function AdminCallbackContent() {
           setAccessToken(tokens.accessToken);
           localStorage.setItem("user", JSON.stringify(user));
 
-          router.push("/dashboard/superadmin");
+          const dashboardUrl = window.location.origin + "/dashboard/superadmin";
+          window.location.href = dashboardUrl;
         })
         .catch((err) => {
           console.error("Login failed:", err.response?.data || err.message);

@@ -589,7 +589,7 @@ export default function AcademicsSection() {
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm border border-gray-400 shadow-sm p-6">
+        <div className="bg-[#12294c] rounded-sm border border-gray-400 shadow-sm p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-white">
@@ -843,7 +843,7 @@ export default function AcademicsSection() {
                   pendingFilters.course &&
                   pendingFilters.testType &&
                   pendingFilters.testNumber
-                    ? "bg-slate-900 hover:bg-slate-700 text-white shadow-md hover:shadow-lg transform cursor-pointer duration-200"
+                    ? "bg-[#12294c] hover:bg-slate-700 text-white shadow-md hover:shadow-lg transform cursor-pointer duration-200"
                     : "bg-gray-200 text-gray-500 cursor-not-allowed"
                 }`}
               >
@@ -853,7 +853,7 @@ export default function AcademicsSection() {
 
               <button
                 onClick={handleResetFilters}
-                className="inline-flex items-center gap-2 px-4 py-3 rounded-sm text-sm font-medium text-gray-600 hover:bg-slate-900 hover:text-white transition-all border border-gray-400 duration-200 ease-in-out cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-3 rounded-sm text-sm font-medium text-gray-600 hover:bg-[#12294c] hover:text-white transition-all border border-gray-400 duration-200 ease-in-out cursor-pointer"
               >
                 <RotateCcw className="w-4 h-4" />
                 Reset Filters
@@ -930,7 +930,7 @@ export default function AcademicsSection() {
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+                <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
                   <Users className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">
@@ -1014,7 +1014,7 @@ export default function AcademicsSection() {
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+                <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
                   <Trophy className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">
@@ -1100,7 +1100,7 @@ export default function AcademicsSection() {
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400 overflow-hidden">
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+                <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
                   <BookOpen className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">
@@ -1159,7 +1159,7 @@ export default function AcademicsSection() {
             <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+                  <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
                     <GraduationCap className="w-4 h-4 text-white" />
                   </div>
                   <h3 className="text-lg font-semibold text-slate-900">
@@ -1174,7 +1174,7 @@ export default function AcademicsSection() {
                   <div className="flex items-center gap-3">
                     <Filter className="w-4 h-4 text-slate-900" />
                     <select
-                      className="bg-slate-900 text-white rounded-sm px-3 py-2 text-sm appearance-none cursor-pointer min-w-[100px]"
+                      className="bg-[#12294c] text-white rounded-sm px-3 py-2 text-sm appearance-none cursor-pointer min-w-[100px]"
                       value={semesterFilter}
                       onChange={(e) =>
                         setSemesterFilter(
@@ -1197,7 +1197,7 @@ export default function AcademicsSection() {
                     onClick={() =>
                       setShowCompletedCourses(!showCompletedCourses)
                     }
-                    className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-sm text-sm font-medium transition-colors duration-200 cursor-pointer"
+                    className="flex items-center gap-2 bg-[#12294c] hover:bg-slate-800 text-white px-4 py-2 rounded-sm text-sm font-medium transition-colors duration-200 cursor-pointer"
                   >
                     {showCompletedCourses ? (
                       <ChevronUp className="w-4 h-4" />
@@ -1277,7 +1277,7 @@ export default function AcademicsSection() {
         {isLeaderboardModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-              <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-blue-900 px-6 py-4">
+              <div className="bg-[#12294c] px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-white/20 rounded-sm flex items-center justify-center">

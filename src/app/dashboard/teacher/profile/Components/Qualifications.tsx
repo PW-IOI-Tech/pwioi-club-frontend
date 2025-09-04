@@ -267,13 +267,13 @@ const AddQualificationModal: React.FC<AddQualificationModalProps> = ({
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50"
+            className="flex-1 px-4 py-2 border border-gray-400 rounded-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700"
+            className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 cursor-pointer"
           >
             Add Qualification
           </button>
@@ -528,7 +528,7 @@ const EditQualificationModal: React.FC<EditQualificationModalProps> = ({
           <button
             type="submit"
             onClick={handleSubmit}
-            className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-all cursor-pointer duration-200 ease-in-out"
+            className="flex-1 px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 transition-all duration-200 ease-in-out cursor-pointer"
           >
             Update Qualification
           </button>
@@ -754,7 +754,7 @@ const Qualifications: React.FC = () => {
         <h3 className="text-lg font-bold text-gray-900">Qualifications</h3>
         <button
           onClick={() => setShowAddModal(true)}
-          className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm"
+          className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -767,7 +767,7 @@ const Qualifications: React.FC = () => {
               key={qual.id}
               className="flex items-start space-x-4 p-4 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400"
             >
-              <div className="h-8 w-8 rounded-full bg-slate-900 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-[#12294c] flex items-center justify-center">
                 <Award className="w-4 h-4 text-white" />
               </div>
 
@@ -779,10 +779,10 @@ const Qualifications: React.FC = () => {
                 </p>
 
                 <div className="flex items-center space-x-2 text-xs text-gray-500">
-                  <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
+                  <span className="px-4 py-1 bg-[#12294c] text-white rounded-full">
                     Grade: {qual.grade}%
                   </span>
-                  <span className="px-4 py-1 bg-slate-900 text-white rounded-full">
+                  <span className="px-4 py-1 bg-[#12294c] text-white rounded-full">
                     {new Date(qual.start_date).getFullYear()} -{" "}
                     {new Date(qual.end_date).getFullYear()}
                   </span>
@@ -809,7 +809,7 @@ const Qualifications: React.FC = () => {
         ) : (
           <button
             onClick={() => setShowAddModal(true)}
-            className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-blue-500 hover:bg-blue-50"
+            className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-blue-500 hover:bg-blue-50 cursor-pointer"
           >
             <Plus className="w-5 h-5 text-gray-400 mx-auto mb-1" />
             <span className="text-sm text-gray-600 font-medium">
@@ -817,7 +817,6 @@ const Qualifications: React.FC = () => {
             </span>
           </button>
         )}
-       
       </div>
     </div>
   );

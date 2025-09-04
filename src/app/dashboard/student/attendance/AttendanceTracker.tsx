@@ -234,7 +234,7 @@ const AttendanceTracker: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto space-y-4">
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-sm border border-gray-200 p-4">
+        <div className="bg-[#12294c] rounded-sm shadow-sm border border-gray-200 p-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-2">
             <div className="flex items-center gap-3">
               <div>
@@ -272,7 +272,7 @@ const AttendanceTracker: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-4">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-white" />
               </div>
               <span
@@ -309,7 +309,7 @@ const AttendanceTracker: React.FC = () => {
 
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-4">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
                 <CheckCircle className="w-4 h-4 text-white" />
               </div>
               <div className="text-right">
@@ -331,7 +331,7 @@ const AttendanceTracker: React.FC = () => {
 
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 p-4">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 bg-slate-900 rounded-sm flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
                 <BookOpen className="w-4 h-4 text-white" />
               </div>
               <div className="text-right">
@@ -454,7 +454,7 @@ const AttendanceTracker: React.FC = () => {
                 <AttendanceDetailsShimmer />
               ) : (
                 <>
-                  <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-blue-900 p-4 text-white">
+                  <div className="bg-[#12294c] p-4 text-white">
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="text-lg font-semibold mb-2">
@@ -489,7 +489,7 @@ const AttendanceTracker: React.FC = () => {
                         onClick={() => setModalView("monthly")}
                         className={`px-4 py-2 rounded-sm text-sm font-medium transition-all cursor-pointer ${
                           modalView === "monthly"
-                            ? "bg-slate-900 text-white shadow-lg"
+                            ? "bg-[#12294c] text-white shadow-lg"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
@@ -500,7 +500,7 @@ const AttendanceTracker: React.FC = () => {
                         onClick={() => setModalView("daily")}
                         className={`px-4 py-2 rounded-sm text-sm font-medium transition-all cursor-pointer ${
                           modalView === "daily"
-                            ? "bg-slate-900 text-white shadow-lg"
+                            ? "bg-[#12294c] text-white shadow-lg"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >

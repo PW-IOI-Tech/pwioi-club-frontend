@@ -407,7 +407,7 @@ const AttendanceTracker: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-lg border border-gray-400 mb-8 p-8">
+        <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-400 mb-8 p-8">
           <h1 className="text-3xl font-bold text-white mb-2">
             Class Attendance Insights
           </h1>
@@ -430,7 +430,7 @@ const AttendanceTracker: React.FC = () => {
                 <select
                   value={school}
                   onChange={(e) => setSchool(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent appearance-none bg-white cursor-pointer text-sm"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#12294c] focus:border-transparent appearance-none bg-white cursor-pointer text-sm"
                 >
                   <option value="">Select School</option>
                   {schoolOptions.map((option) => (
@@ -455,7 +455,7 @@ const AttendanceTracker: React.FC = () => {
                   value={batch}
                   onChange={(e) => setBatch(e.target.value)}
                   disabled={!school}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent disabled:bg-gray-100 cursor-pointer disabled:cursor-not-allowed appearance-none bg-white text-sm"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#12294c] focus:border-transparent disabled:bg-gray-100 cursor-pointer disabled:cursor-not-allowed appearance-none bg-white text-sm"
                 >
                   <option value="">Select Batch</option>
                   {getBatchOptions(school).map((option) => (
@@ -482,7 +482,7 @@ const AttendanceTracker: React.FC = () => {
                   value={division}
                   onChange={(e) => setDivision(e.target.value)}
                   disabled={!batch}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent disabled:bg-gray-100 cursor-pointer disabled:cursor-not-allowed appearance-none bg-white text-sm"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#12294c] focus:border-transparent disabled:bg-gray-100 cursor-pointer disabled:cursor-not-allowed appearance-none bg-white text-sm"
                 >
                   <option value="">Select Division</option>
                   {getDivisionOptions(school, batch).map((option) => (
@@ -509,7 +509,7 @@ const AttendanceTracker: React.FC = () => {
                   value={semester}
                   onChange={(e) => setSemester(e.target.value)}
                   disabled={!division}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent disabled:bg-gray-100 cursor-pointer disabled:cursor-not-allowed appearance-none bg-white text-sm"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#12294c] focus:border-transparent disabled:bg-gray-100 cursor-pointer disabled:cursor-not-allowed appearance-none bg-white text-sm"
                 >
                   <option value="">Select Semester</option>
                   {getSemesterOptions(school, batch, division).map((option) => (
@@ -536,7 +536,7 @@ const AttendanceTracker: React.FC = () => {
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   disabled={!semester}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent disabled:bg-gray-100 cursor-pointer disabled:cursor-not-allowed appearance-none bg-white text-sm"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#12294c] focus:border-transparent disabled:bg-gray-100 cursor-pointer disabled:cursor-not-allowed appearance-none bg-white text-sm"
                 >
                   <option value="">Select Subject</option>
                   {getSubjectOptions(school, batch, division, semester).map(
@@ -567,8 +567,8 @@ const AttendanceTracker: React.FC = () => {
                     onClick={() => setActiveTab("overview")}
                     className={`py-2 px-4 rounded-sm font-medium text-sm transition-all cursor-pointer ${
                       activeTab === "overview"
-                        ? "bg-slate-900 text-white shadow-md border"
-                        : "text-gray-600 hover:text-slate-900 hover:bg-slate-200 border border-gray-400"
+                        ? "bg-[#12294c] text-white shadow-md border"
+                        : "text-gray-600 hover:text-[#12294c] hover:bg-slate-200 border border-gray-400"
                     }`}
                   >
                     Overview
@@ -577,8 +577,8 @@ const AttendanceTracker: React.FC = () => {
                     onClick={() => setActiveTab("daily")}
                     className={`py-2 px-4 rounded-sm font-medium text-sm transition-all cursor-pointer ${
                       activeTab === "daily"
-                        ? "bg-slate-900 text-white shadow-md border"
-                        : "text-gray-600 hover:text-slate-900 hover:bg-slate-200 border border-gray-400"
+                        ? "bg-[#12294c] text-white shadow-md border"
+                        : "text-gray-600 hover:text-[#12294c] hover:bg-slate-200 border border-gray-400"
                     }`}
                   >
                     Daily Basis
@@ -596,12 +596,12 @@ const AttendanceTracker: React.FC = () => {
                         <p className="text-sm text-gray-600 mb-1">
                           Average Attendance
                         </p>
-                        <p className="text-3xl font-bold text-slate-900">
+                        <p className="text-3xl font-bold text-[#12294c]">
                           {overallDetails?.data?.averageAttendance || 0}
                         </p>
                       </div>
                       <div className="p-3 bg-slate-200 rounded-full border border-gray-400">
-                        <TrendingUp className="w-6 h-6 text-slate-900" />
+                        <TrendingUp className="w-6 h-6 text-[#12294c]" />
                       </div>
                     </div>
                   </div>
@@ -612,13 +612,13 @@ const AttendanceTracker: React.FC = () => {
                         <p className="text-sm text-gray-600 mb-1">
                           Total Students
                         </p>
-                        <p className="text-3xl font-bold text-slate-900">
+                        <p className="text-3xl font-bold text-[#12294c]">
                           {" "}
                           {overallDetails?.data?.totalStudents || 0}
                         </p>
                       </div>
                       <div className="p-3 bg-slate-200 rounded-full border border-gray-400">
-                        <Users className="w-6 h-6 text-slate-900" />
+                        <Users className="w-6 h-6 text-[#12294c]" />
                       </div>
                     </div>
                   </div>
@@ -629,13 +629,13 @@ const AttendanceTracker: React.FC = () => {
                         <p className="text-sm text-gray-600 mb-1">
                           Months Tracked
                         </p>
-                        <p className="text-3xl font-bold text-slate-900">
+                        <p className="text-3xl font-bold text-[#12294c]">
                           {" "}
                           {overallDetails?.data?.monthsTracked || 0}
                         </p>
                       </div>
                       <div className="p-3 bg-slate-200 rounded-full border border-gray-400">
-                        <Calendar className="w-6 h-6 text-slate-900" />
+                        <Calendar className="w-6 h-6 text-[#12294c]" />
                       </div>
                     </div>
                   </div>
@@ -1022,7 +1022,7 @@ const AttendanceTracker: React.FC = () => {
 
         {!canShowData && (
           <div className="text-center py-12 bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-lg border border-gray-400">
-            <AlertCircle className="w-16 h-16 mx-auto mb-4 text-slate-900" />
+            <AlertCircle className="w-16 h-16 mx-auto mb-4 text-[#12294c]" />
             <h3 className="text-xl font-semibold text-gray-600 mb-2">
               Select All Filters
             </h3>

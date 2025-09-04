@@ -8,7 +8,7 @@ const ContactCard = ({ aboutDetails }: { aboutDetails: any }) => (
     </div>
     <div className="space-y-2">
       <div className="flex items-start space-x-3 p-3 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
-        <div className="h-8 w-8 rounded-full bg-slate-900 p-1 flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full bg-[#12294c] p-1 flex items-center justify-center">
           <IoMdMail className="w-4 h-4 text-white" />
         </div>
         <div>
@@ -16,13 +16,12 @@ const ContactCard = ({ aboutDetails }: { aboutDetails: any }) => (
             Email
           </div>
           <div className="text-sm font-semibold text-slate-900">
-            {aboutDetails?.personal_mail
- || "NA"}
+            {aboutDetails?.personal_mail || "NA"}
           </div>
         </div>
       </div>
       <div className="flex items-start space-x-3 p-3 bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
-        <div className="h-8 w-8 rounded-full bg-slate-900 p-1 flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full bg-[#12294c] p-1 flex items-center justify-center">
           <FaPhoneAlt className="w-4 h-4 text-white" />
         </div>
         <div>
