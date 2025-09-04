@@ -4,17 +4,58 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Image from "next/image";
 
-function LoginContent() {
+interface LoginContentProps {
+  userType: "admin" | "student" | "teacher";
+}
+
+function LoginContent({ userType }: LoginContentProps) {
   const [isLoading, _setIsLoading] = useState(false);
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
+  const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL!;
 
-  const redirectUri = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/student/callback`;
+  const redirectUri = `${frontendUrl}/auth/${userType}/callback`;
 
   const handleLogin = () => {
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?client_id=396945085022-ekr24b520997sv6q6c97obiksp7i7vh0.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fstudent%2Fcallback&response_type=code&scope=openid%20email%20profile%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&access_type=offline&prompt=consent&service=lso&o2v=2&flowName=GeneralOAuthFlow`;
+    const scopes = [
+      "openid",
+      "email",
+      "profile",
+      "https://www.googleapis.com/auth/calendar",
+    ].join(" ");
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: scopes,
+      access_type: "offline",
+      prompt: "consent",
+      service: "lso",
+      o2v: "2",
+      flowName: "GeneralOAuthFlow",
+    });
+
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?${params.toString()}`;
 
     window.location.href = authUrl;
+  };
+
+  const getImageSrc = () => {
+    switch (userType) {
+      case "admin":
+        return "/AdminLogin.png";
+      case "student":
+        return "/StudentLogin.png";
+      case "teacher":
+        return "/TeacherLogin.png";
+      default:
+        return "/AdminLogin.png";
+    }
+  };
+
+  const getTitle = () => {
+    return `${userType.charAt(0).toUpperCase() + userType.slice(1)} Login`;
   };
 
   return (
@@ -37,7 +78,7 @@ function LoginContent() {
       <div className="w-full max-w-md bg-white border border-black/50 rounded-lg shadow-xl p-8">
         <div className="px-12 mb-6">
           <Image
-            src="/StudentLogin.png"
+            src={getImageSrc()}
             width={500}
             height={500}
             className="w-full h-full object-cover"
@@ -45,7 +86,7 @@ function LoginContent() {
           />
         </div>
         <div className="text-center mb-4">
-          <h1 className="text-3xl font-bold text-black">Student Login</h1>
+          <h1 className="text-3xl font-bold text-black">{getTitle()}</h1>
           <p className="text-gray-600 text-sm">
             Sign in to access your dashboard
           </p>
@@ -133,10 +174,10 @@ function LoginPageFallback() {
   );
 }
 
-export default function LoginPage() {
+export default function LoginPage({ userType }: LoginContentProps) {
   return (
     <Suspense fallback={<LoginPageFallback />}>
-      <LoginContent />
+      <LoginContent userType={userType} />
     </Suspense>
   );
 }
