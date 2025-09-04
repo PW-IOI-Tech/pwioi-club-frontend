@@ -49,6 +49,10 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { logout } = useAuth();
 
+  const handleCodingPlatformRedirect = () => {
+    router.push("/codelab");
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -172,24 +176,20 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
     logout("/auth/teacher/login");
   };
 
-  const handleCodingPlatformRedirect = () => {
-    window.open("https://your-coding-platform.com", "_blank");
-  };
-
   if (!userData) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        Loading...
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <div className="text-gray-900">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-white">
       <button
         id="mobile-menu-button"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 right-4 z-50 p-3 bg-slate-900 text-white rounded-xl shadow-2xl hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all duration-200 border border-slate-700/50 cursor-pointer"
+        className="lg:hidden fixed top-4 right-4 z-50 p-3 bg-[#12294c] text-white rounded-xl shadow-lg hover:bg-[#12294c]/90 hover:scale-105 active:scale-95 transition-all duration-200 border border-[#12294c]/20 cursor-pointer"
         aria-label="Toggle menu"
       >
         {isMobileMenuOpen ? (
@@ -201,7 +201,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
 
       {(isMobileMenuOpen || isProfileSidebarOpen) && (
         <div
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 transition-all duration-300 cursor-pointer"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-all duration-300 cursor-pointer"
           onClick={() => {
             setIsMobileMenuOpen(false);
             setIsProfileSidebarOpen(false);
@@ -210,15 +210,15 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
       )}
 
       <div
-        className={`hidden lg:flex sticky top-0 h-screen bg-slate-900 border-r border-slate-700/50 shadow-2xl transition-all duration-300 ease-in-out ${
+        className={`hidden lg:flex sticky top-0 h-screen bg-gradient-to-br from-white to-indigo-50 border-r border-gray-200 shadow-lg transition-all duration-300 ease-in-out ${
           isSidebarExpanded ? "w-64" : "w-20"
         }`}
       >
         <div className="flex flex-col w-full">
-          <div className="p-5 border-b border-slate-700/50 flex items-center space-x-3 bg-slate-800/50">
+          <div className="p-5 border-b border-gray-200 flex items-center space-x-3 bg-gray-50">
             <button
               onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-              className="p-2.5 text-slate-300 hover:bg-slate-700/50 hover:text-white hover:scale-105 active:scale-95 rounded-xl transition-all duration-200 border border-transparent hover:border-slate-600/50 cursor-pointer"
+              className="p-2.5 text-gray-600 hover:bg-[#12294c]/10 hover:text-[#12294c] hover:scale-105 active:scale-95 rounded-xl transition-all duration-200 border border-transparent hover:border-[#12294c]/20 cursor-pointer"
               aria-label="Toggle sidebar"
             >
               <Menu className="w-5 h-5" />
@@ -227,7 +227,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
             {isSidebarExpanded && (
               <div className="flex-1 cursor-pointer hover:opacity-80 transition-opacity duration-200">
                 <Image
-                  src="/PWIOILogo.webp"
+                  src="/PWIOILogoBlack.png"
                   alt="PW IOI Logo"
                   width={130}
                   height={0}
@@ -237,22 +237,22 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
             )}
           </div>
 
-          <div className="p-5 border-b border-slate-700/50 bg-slate-800/30">
+          <div className="p-5 border-b border-gray-200 bg-gray-50">
             <button
               onClick={handleCodingPlatformRedirect}
               className={`w-full flex items-center hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer ${
                 isSidebarExpanded ? "space-x-3" : "justify-center"
               }`}
             >
-              <div className="p-3 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-xl shadow-lg border border-blue-500/20 hover:shadow-xl transition-all duration-200">
+              <div className="p-3 bg-[#12294c] rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
                 <Code className="w-5 h-5 text-white" />
               </div>
               {isSidebarExpanded && (
                 <div className="text-left">
-                  <p className="text-white font-semibold text-sm tracking-wide">
+                  <p className="text-gray-900 font-semibold text-sm tracking-wide">
                     CodeLab Pro
                   </p>
-                  <p className="text-slate-400 text-xs font-medium">
+                  <p className="text-gray-500 text-xs font-medium">
                     Coding Platform
                   </p>
                 </div>
@@ -271,14 +271,14 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
                   href={item.href}
                   className={`flex items-center space-x-3 px-3 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border hover:scale-105 active:scale-95 ${
                     isActive
-                      ? "bg-blue-600/20 text-blue-400 shadow-lg border-blue-500/30 backdrop-blur-sm"
-                      : "text-slate-300 hover:bg-slate-700/50 hover:text-white border-transparent hover:border-slate-600/30"
+                      ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
+                      : "text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] border-transparent hover:border-[#12294c]/10"
                   }`}
                   title={!isSidebarExpanded ? item.label : undefined}
                 >
                   <Icon
                     className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
-                      isActive ? "text-blue-400" : ""
+                      isActive ? "text-[#12294c]" : ""
                     }`}
                   />
                   {isSidebarExpanded && (
@@ -287,9 +287,9 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
                     </span>
                   )}
                   {!isSidebarExpanded && (
-                    <div className="absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-2xl border border-slate-600/50 scale-95 group-hover:scale-100">
+                    <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-xl border border-gray-600/50 scale-95 group-hover:scale-100">
                       {item.label}
-                      <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-slate-800 border-l border-t border-slate-600/50 rotate-45"></div>
+                      <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-600/50 rotate-45"></div>
                     </div>
                   )}
                 </a>
@@ -297,31 +297,31 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
             })}
           </nav>
 
-          <div className="p-4 border-t border-slate-700/50 bg-gradient-to-r from-slate-800/30 to-slate-700/20">
+          <div className="p-4 border-t border-gray-200 bg-gray-50">
             <button
-              className={`w-full flex items-center text-slate-300 hover:bg-slate-700/50 hover:text-white hover:scale-105 active:scale-95 py-2.5 px-3 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border border-transparent hover:border-slate-600/30 ${
+              className={`w-full flex items-center text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] hover:scale-105 active:scale-95 py-2.5 px-3 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border border-transparent hover:border-[#12294c]/10 ${
                 !isSidebarExpanded ? "justify-center" : "space-x-3"
               }`}
               onClick={() => setIsProfileSidebarOpen(true)}
               title={!isSidebarExpanded ? "Profile" : undefined}
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 flex items-center justify-center flex-shrink-0 shadow-lg border border-blue-400/20 hover:shadow-xl transition-all duration-200">
+              <div className="w-9 h-9 rounded-xl bg-[#12294c] flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200">
                 <User className="w-4 h-4 text-white" />
               </div>
               {isSidebarExpanded && (
                 <div className="flex-1 text-left min-w-0">
-                  <p className="font-semibold text-sm text-white tracking-wide truncate">
+                  <p className="font-semibold text-sm text-gray-900 tracking-wide truncate">
                     {userData.name}
                   </p>
-                  <p className="text-xs text-slate-400 truncate font-medium">
+                  <p className="text-xs text-gray-500 truncate font-medium">
                     {userData.role}
                   </p>
                 </div>
               )}
               {!isSidebarExpanded && (
-                <div className="absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-2xl border border-slate-600/50 scale-95 group-hover:scale-100">
+                <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-xl border border-gray-600/50 scale-95 group-hover:scale-100">
                   Profile
-                  <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-slate-800 border-l border-t border-slate-600/50 rotate-45"></div>
+                  <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-600/50 rotate-45"></div>
                 </div>
               )}
             </button>
@@ -331,12 +331,11 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
 
       <div
         id="profile-sidebar"
-        className={`fixed inset-y-0 right-0 z-50 w-80 h-screen bg-white shadow-xl flex flex-col transition-transform duration-400 ease-in-out border-l border-slate-200 overflow-y-auto ${
+        className={`fixed inset-y-0 right-0 z-50 w-80 h-screen bg-white shadow-xl flex flex-col transition-transform duration-400 ease-in-out border-l border-gray-200 overflow-y-auto ${
           isProfileSidebarOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-4 text-white relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent"></div>
+        <div className="bg-[#12294c] p-4 text-white relative">
           <div className="relative z-10">
             <div className="flex items-start justify-between mb-4">
               <h2 className="text-lg font-bold tracking-wide">
@@ -344,25 +343,25 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
               </h2>
               <button
                 onClick={() => setIsProfileSidebarOpen(false)}
-                className="p-1.5 hover:bg-slate-700/50 hover:scale-110 active:scale-95 rounded-lg transition-all duration-200 border border-slate-600/30 flex-shrink-0 cursor-pointer"
+                className="p-1.5 hover:bg-white/10 hover:scale-110 active:scale-95 rounded-lg transition-all duration-200 border border-white/20 flex-shrink-0 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-200">
+            <div className="bg-white/10 rounded-xl p-3 backdrop-blur-sm border border-white/20 hover:bg-white/15 transition-all duration-200">
               <div className="flex items-center space-x-3 mb-3">
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 flex items-center justify-center shadow-lg border border-white/20 hover:shadow-xl transition-all duration-200">
+                <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center shadow-lg border border-white/30 hover:shadow-xl transition-all duration-200">
                   <User className="w-8 h-8 text-white" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-lg tracking-wide">
                     {userData.name}
                   </h3>
-                  <p className="text-blue-200 text-xs font-medium">
+                  <p className="text-blue-100 text-xs font-medium">
                     {userData.course}
                   </p>
-                  <p className="text-slate-300 text-[11px] font-medium mt-1">
+                  <p className="text-blue-50 text-[11px] font-medium mt-1">
                     {userData.role}
                   </p>
                 </div>
@@ -371,44 +370,44 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
 
-        <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-b border-slate-200">
-          <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
+        <div className="p-4 bg-gray-50 border-b border-gray-200">
+          <h3 className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wider">
             Academic Overview
           </h3>
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gradient-to-br from-white to-blue-50 rounded-lg p-3 border border-blue-100 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 ">
+            <div className="bg-white rounded-lg p-3 border border-[#12294c]/20 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200">
               <div className="flex items-center space-x-1.5">
-                <School className="w-3.5 h-3.5 text-blue-600" />
-                <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                <School className="w-3.5 h-3.5 text-[#12294c]" />
+                <span className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider">
                   Batches
                 </span>
               </div>
-              <p className="text-xl font-bold text-slate-800 mt-0.5">
+              <p className="text-xl font-bold text-gray-900 mt-0.5">
                 {userData.ttlBatches}
               </p>
             </div>
-            <div className="bg-gradient-to-br from-white to-indigo-50 rounded-lg p-3 border border-indigo-100 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 ">
+            <div className="bg-white rounded-lg p-3 border border-[#12294c]/20 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200">
               <div className="flex items-center space-x-1.5">
-                <Users className="w-3.5 h-3.5 text-indigo-600" />
-                <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                <Users className="w-3.5 h-3.5 text-[#12294c]" />
+                <span className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider">
                   Students
                 </span>
               </div>
-              <p className="text-xl font-bold text-slate-800 mt-0.5">
+              <p className="text-xl font-bold text-gray-900 mt-0.5">
                 {userData.ttlStudents}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="p-4 py-6 bg-gradient-to-b from-white to-slate-50">
-          <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
+        <div className="p-4 py-6 bg-gray-50">
+          <h3 className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wider">
             Quick Actions
           </h3>
           <nav className="space-y-2">
             <a
               href="/dashboard/teacher/profile"
-              className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-blue-200 shadow-sm hover:shadow-md text-sm cursor-pointer group"
+              className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-gray-700 hover:bg-[#12294c] hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-[#12294c] shadow-sm hover:shadow-md text-sm cursor-pointer group"
             >
               <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
               <span className="font-medium">My Profile</span>
@@ -416,7 +415,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
 
             <button
               onClick={handleCodingPlatformRedirect}
-              className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-slate-700 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-indigo-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-indigo-200 shadow-sm hover:shadow-md text-sm cursor-pointer group"
+              className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-gray-700 hover:bg-[#12294c] hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-[#12294c] shadow-sm hover:shadow-md text-sm cursor-pointer group"
             >
               <Code className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
               <span className="font-medium">Coding Platform</span>
@@ -425,30 +424,30 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
           </nav>
         </div>
 
-        <div className="p-4 py-6 bg-gradient-to-br from-slate-50 to-slate-100 border-t border-slate-200">
-          <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
+        <div className="p-4 py-6 bg-gray-50 border-t border-gray-200">
+          <h3 className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wider">
             Contact Information
           </h3>
           <div className="space-y-2">
-            <div className="flex items-center space-x-2.5 p-2 rounded-lg hover:bg-white/70 transition-all duration-200 cursor-pointer">
-              <Mail className="w-3.5 h-3.5 text-slate-500" />
-              <span className="text-sm text-slate-700 font-medium">
+            <div className="flex items-center space-x-2.5 p-2 rounded-lg hover:bg-white transition-all duration-200 cursor-pointer">
+              <Mail className="w-3.5 h-3.5 text-[#12294c]" />
+              <span className="text-sm text-gray-700 font-medium">
                 {userData.email}
               </span>
             </div>
-            <div className="flex items-center space-x-2.5 p-2 rounded-lg hover:bg-white/70 transition-all duration-200 cursor-pointer">
-              <Phone className="w-3.5 h-3.5 text-slate-500" />
-              <span className="text-sm text-slate-700 font-medium">
+            <div className="flex items-center space-x-2.5 p-2 rounded-lg hover:bg-white transition-all duration-200 cursor-pointer">
+              <Phone className="w-3.5 h-3.5 text-[#12294c]" />
+              <span className="text-sm text-gray-700 font-medium">
                 {userData.phone}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-red-50">
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 px-3 py-2.5 bg-gradient-to-r from-red-50 to-red-100 text-red-700 hover:from-red-500 hover:to-red-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 font-semibold border border-red-200 hover:border-red-300 shadow-sm hover:shadow-md text-sm cursor-pointer group"
+            className="w-full flex items-center justify-center space-x-2 px-3 py-2.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 font-semibold border border-red-200 hover:border-red-600 shadow-sm hover:shadow-md text-sm cursor-pointer group"
           >
             <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-300" />
             <span>Sign Out</span>
@@ -458,11 +457,11 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
 
       <div
         id="mobile-sidebar"
-        className={`lg:hidden fixed inset-y-0 right-0 z-40 w-72 h-screen bg-slate-900 border-l border-slate-700/50 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`lg:hidden fixed inset-y-0 right-0 z-40 w-72 h-screen bg-white border-l border-gray-200 shadow-xl flex flex-col transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="p-6 border-b border-slate-700/50 bg-slate-800/50">
+        <div className="p-6 border-b border-gray-200 bg-gray-50">
           <div className="cursor-pointer hover:opacity-80 transition-opacity duration-200">
             <Image
               src="/PWIOILogo.webp"
@@ -473,19 +472,19 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
 
-        <div className="p-5 border-b border-slate-700/50 bg-slate-800/30">
+        <div className="p-5 border-b border-gray-200 bg-gray-50">
           <button
             onClick={handleCodingPlatformRedirect}
-            className="w-full flex items-center space-x-3 hover:bg-slate-700/30 hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer"
+            className="w-full flex items-center space-x-3 hover:bg-[#12294c]/5 hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer"
           >
-            <div className="p-3 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-xl shadow-lg border border-blue-500/20 hover:shadow-xl transition-all duration-200">
+            <div className="p-3 bg-[#12294c] rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
               <Code className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-white font-semibold text-sm tracking-wide">
+              <p className="text-gray-900 font-semibold text-sm tracking-wide">
                 CodeLab Pro
               </p>
-              <p className="text-slate-400 text-xs font-medium">
+              <p className="text-gray-500 text-xs font-medium">
                 Coding Platform
               </p>
             </div>
@@ -503,13 +502,13 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
                 href={item.href}
                 className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer border hover:scale-105 active:scale-95 ${
                   isActive
-                    ? "bg-blue-600/20 text-blue-400 shadow-lg border-blue-500/30 backdrop-blur-sm"
-                    : "text-slate-300 hover:bg-slate-700/50 hover:text-white border-transparent hover:border-slate-600/30"
+                    ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
+                    : "text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] border-transparent hover:border-[#12294c]/10"
                 }`}
               >
                 <Icon
                   className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
-                    isActive ? "text-blue-400" : ""
+                    isActive ? "text-[#12294c]" : ""
                   }`}
                 />
                 <span className="font-medium tracking-wide">{item.label}</span>
@@ -518,15 +517,15 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-700/50 bg-gradient-to-r from-slate-800/30 to-slate-700/20">
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
           <button
-            className="w-full flex items-center space-x-3 text-slate-300 hover:bg-slate-700/50 hover:text-white hover:scale-105 active:scale-95 py-3.5 px-4 rounded-xl transition-all duration-200 ease-in-out cursor-pointer font-medium border border-transparent hover:border-slate-600/30"
+            className="w-full flex items-center space-x-3 text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] hover:scale-105 active:scale-95 py-3.5 px-4 rounded-xl transition-all duration-200 ease-in-out cursor-pointer font-medium border border-transparent hover:border-[#12294c]/10"
             onClick={() => {
               setIsMobileMenuOpen(false);
               setIsProfileSidebarOpen(true);
             }}
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 flex items-center justify-center flex-shrink-0 shadow-lg border border-blue-400/20 hover:shadow-xl transition-all duration-200">
+            <div className="w-8 h-8 rounded-xl bg-[#12294c] flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200">
               <User className="w-4 h-4 text-white" />
             </div>
             <span>Profile</span>
