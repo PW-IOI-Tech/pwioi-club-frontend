@@ -587,7 +587,13 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out">
-        <div className="p-1 lg:p-8">{children}</div>
+        <div
+          className={`p-1 lg:p-8 ${
+            isSidebarExpanded ? "max-w-5xl" : "max-w-6xl"
+          }`}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

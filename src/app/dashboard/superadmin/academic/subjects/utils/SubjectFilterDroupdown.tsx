@@ -29,7 +29,7 @@ export const SubjectFilterDropdown: React.FC<SubjectFilterDropdownProps> = ({
 }) => {
   return (
     <div>
-      <label className="block font-medium text-gray-700 mb-2">
+      <label className="block font-medium text-gray-200 mb-2">
         {label}
       </label>
       <div className="relative">

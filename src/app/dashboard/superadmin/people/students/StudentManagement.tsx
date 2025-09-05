@@ -264,7 +264,7 @@ export default function StudentManagement() {
           Student Management
         </h2>
 
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-[#12294c] p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-white text-sm font-semibold mb-4">
             Filter Students
           </h3>

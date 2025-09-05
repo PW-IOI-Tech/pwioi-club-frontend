@@ -110,8 +110,8 @@ export default function UploadSection({}: UploadSectionProps) {
   const [selectedDivision, setSelectedDivision] = useState<string>("");
   const [selectedSemester, setSelectedSemester] = useState<string>("");
   const [selectedSubject, setSelectedSubject] = useState<string>("");
-  const [selectedExamType,setSelectedExamType]=useState("");
-  const [selectedExamName,setSelectedExamName]=useState("");
+  const [selectedExamType, setSelectedExamType] = useState("");
+  const [selectedExamName, setSelectedExamName] = useState("");
   const [students, setStudents] = useState<Student[]>([]);
   const [showStudents, setShowStudents] = useState(false);
 
@@ -232,45 +232,46 @@ export default function UploadSection({}: UploadSectionProps) {
       .finally(() => setLoadingSubjects(false));
   }, [selectedSemester]);
 
-useEffect(() => {
-  if (!selectedSubject) return;
+  useEffect(() => {
+    if (!selectedSubject) return;
 
-  setLoadingExams(true);
+    setLoadingExams(true);
 
-  const fetchExams = async () => {
-    try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/subject/${selectedSubject}`,
-        { withCredentials: true }
-      );
+    const fetchExams = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/subject/${selectedSubject}`,
+          { withCredentials: true }
+        );
 
-      const exams = res.data?.data?.exams || [];
+        const exams = res.data?.data?.exams || [];
 
-      // Distinct exam types
-      const types = Array.from(new Set(exams.map((e: any) => e.exam_type))).map((t) => ({
-        value: t,
-        label: t,
-      }));
+        // Distinct exam types
+        const types = Array.from(
+          new Set(exams.map((e: any) => e.exam_type))
+        ).map((t) => ({
+          value: t,
+          label: t,
+        }));
 
-      // All exam names with ids
-      const names = exams.map((e: any) => ({
-        value: e.id,
-        label: e.name,
-        type: e.exam_type,
-      }));
+        // All exam names with ids
+        const names = exams.map((e: any) => ({
+          value: e.id,
+          label: e.name,
+          type: e.exam_type,
+        }));
 
-      setExamType(types);
-      setExamName(names);
-    } catch (error) {
-      console.error("Failed to fetch exams", error);
-    } finally {
-      setLoadingExams(false);
-    }
-  };
+        setExamType(types);
+        setExamName(names);
+      } catch (error) {
+        console.error("Failed to fetch exams", error);
+      } finally {
+        setLoadingExams(false);
+      }
+    };
 
-  fetchExams();
-}, [selectedSubject]);
-
+    fetchExams();
+  }, [selectedSubject]);
 
   const canGetStudents =
     selectedCenter &&
@@ -431,7 +432,7 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-gray-50 p-2">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-lg border border-gray-200 p-4 mb-6 py-6">
+        <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-200 p-4 mb-6 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-2">
             <div className="flex items-center gap-3">
               <div>
@@ -696,7 +697,7 @@ useEffect(() => {
             <button
               onClick={handleGetStudents}
               disabled={!canGetStudents}
-              className="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-sm transition-colors font-medium disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer group"
+              className="flex items-center gap-2 px-6 py-2 bg-[#12294c] text-white rounded-sm transition-colors font-medium disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer group"
             >
               <Users size={16} className="group-hover:scale-110" />
               Get Students List
@@ -913,7 +914,7 @@ useEffect(() => {
               onClick={downloadSampleFile}
               className="text-center p-4 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors border border-gray-100 active:bg-gray-100"
             >
-              <div className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 bg-[#12294c] rounded-lg flex items-center justify-center mx-auto mb-3">
                 <Download className="text-white" size={24} />
               </div>
               <h4 className="font-semibold text-gray-800 mb-2 text-sm sm:text-base">

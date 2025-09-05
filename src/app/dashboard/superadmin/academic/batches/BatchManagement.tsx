@@ -192,7 +192,7 @@ export default function BatchManagement() {
         <h2 className="text-3xl font-bold text-slate-900">Batch Management</h2>
 
         {/* Center Selection */}
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-[#12294c] p-6 rounded-lg shadow-sm border border-gray-200">
           <label
             htmlFor="location"
             className="block text-sm font-medium text-gray-100 mb-2"
