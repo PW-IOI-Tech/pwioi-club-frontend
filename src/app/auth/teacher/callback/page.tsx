@@ -32,7 +32,7 @@ function TeacherCallbackContent() {
 
           setTimeout(()=>{
             router.push("/dashboard/teacher")
-          },10000)
+          },1000)
         })
         .catch((err) => {
           console.error("Login failed:", err.response?.data || err.message);
