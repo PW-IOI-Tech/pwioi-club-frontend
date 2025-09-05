@@ -32,11 +32,11 @@ function StudentCallbackContent() {
 
           setTimeout(()=>{
             router.push("/dashboard/student")
-          },10000)
+          },1000)
         })
         .catch((err) => {
           console.error("Login failed:", err.response?.data || err.message);
-          router.push("/auth");
+          router.push("/");
         });
     }
   }, [code, backendUrl, router, setAccessToken]);
