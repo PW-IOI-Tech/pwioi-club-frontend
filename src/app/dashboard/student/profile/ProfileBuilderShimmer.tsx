@@ -2,7 +2,7 @@ import React from "react";
 
 export const ProfileBuilderShimmer = () => {
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column */}

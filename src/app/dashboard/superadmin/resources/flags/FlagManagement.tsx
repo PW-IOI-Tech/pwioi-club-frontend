@@ -261,7 +261,7 @@ const tableData = useMemo(() => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto space-y-4">
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">Flag Management</h2>
 

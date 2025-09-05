@@ -384,7 +384,7 @@ export default function CPRUploadSection() {
   }, [uploadStatus]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-lg border border-gray-200 p-4 mb-6 py-6">

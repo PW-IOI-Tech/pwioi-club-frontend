@@ -232,7 +232,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         {/* Welcome Section */}
         <div className="bg-[#12294c] rounded-lg shadow-sm border border-gray-400 p-6 py-8 mb-8">

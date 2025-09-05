@@ -181,7 +181,7 @@ const MarksDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-900 rounded-lg shadow-sm border border-slate-700 p-6 py-8 mb-6">

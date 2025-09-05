@@ -430,7 +430,7 @@ export default function UploadSection({}: UploadSectionProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-200 p-4 mb-6 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-2">
