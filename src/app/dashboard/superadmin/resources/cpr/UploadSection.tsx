@@ -387,7 +387,7 @@ export default function CPRUploadSection() {
     <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-lg border border-gray-200 p-4 mb-6 py-6">
+        <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-200 p-4 mb-6 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-2">
             <div className="flex items-center gap-3">
               <div>
@@ -633,7 +633,7 @@ export default function CPRUploadSection() {
                 setShowCPRTable(true);
                 fetchCPR();
               }}
-              className="px-6 py-2 bg-slate-900 text-white rounded-sm flex items-center gap-2"
+              className="px-6 py-2 bg-[#12294c] text-white rounded-sm flex items-center gap-2"
             >
               <ClipboardList size={16} /> View CPR Table
             </button>

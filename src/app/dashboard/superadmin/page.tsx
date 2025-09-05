@@ -69,6 +69,8 @@ export default function AdminDashboard() {
     rooms: "/dashboard/superadmin/resources/rooms",
     policies: "/dashboard/superadmin/resources/policies",
     flags: "/dashboard/superadmin/resources/flags",
+    clubs: "/dashboard/superadmin/resources/clubs",
+    cpr: "/dashboard/superadmin/resources/cpr",
   };
 
   const managementSections = [

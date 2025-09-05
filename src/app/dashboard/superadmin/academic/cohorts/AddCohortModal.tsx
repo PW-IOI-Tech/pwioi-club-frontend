@@ -674,7 +674,7 @@ const AddCohortModal: React.FC<AddCohortModalProps> = ({
             <button
               type="submit"
               disabled={isCreating}
-              className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 cursor-pointer"
+              className="px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 cursor-pointer"
             >
               {isCreating ? (
                 <>

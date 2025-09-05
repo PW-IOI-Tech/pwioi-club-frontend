@@ -277,7 +277,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Desktop Sidebar */}
       <div
-        className={`hidden lg:flex sticky top-0 h-screen bg-gradient-to-br from-white to-indigo-50 border-r border-gray-200 shadow-lg transition-all duration-300 ease-in-out ${
+        className={`hidden lg:flex sticky top-0 h-screen bg-gradient-to-br from-white to-indigo-50 border-r border-gray-200 shadow-lg transition-all duration-300 ease-in-out max-h-screen overflow-y-scroll ${
           isSidebarExpanded ? "w-64" : "w-20"
         }`}
       >

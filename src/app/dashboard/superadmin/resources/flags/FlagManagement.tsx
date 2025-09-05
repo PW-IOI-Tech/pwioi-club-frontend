@@ -214,19 +214,19 @@ const tableData = useMemo(() => {
         <div className="flex space-x-2">
           <button
             onClick={() => handleViewFlaggedBy(post)}
-            className="text-blue-600 hover:text-blue-800 p-1"
+            className="text-blue-600 hover:text-blue-800 p-1 cursor-pointer"
           >
             <Eye size={16} />
           </button>
           <button
             onClick={() => handleApproveFlag(post)}
-            className="text-green-600 hover:text-green-800 p-1"
+            className="text-green-600 hover:text-green-800 p-1 cursor-pointer"
           >
             <CheckCircle size={16} />
           </button>
           <button
             onClick={() => handleRejectFlag(post)}
-            className="text-red-600 hover:text-red-800 p-1"
+            className="text-red-600 hover:text-red-800 p-1 cursor-pointer"
           >
             <X size={16} />
           </button>
