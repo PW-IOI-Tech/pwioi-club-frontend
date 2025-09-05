@@ -232,7 +232,7 @@ const AttendanceTracker: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="bg-[#12294c] rounded-sm shadow-sm border border-gray-200 p-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-2">

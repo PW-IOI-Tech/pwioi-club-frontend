@@ -58,8 +58,8 @@ export const SubjectFiltersSection: React.FC<SubjectFiltersSectionProps> = ({
   };
 
   return (
-    <div className="bg-gradient-to-br from-white to-indigo-50 p-6 rounded-sm border border-gray-400">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+    <div className="bg-[#12294c] p-6 rounded-sm border border-gray-400">
+      <h3 className="text-lg font-semibold text-white mb-4">
         Select Filters
       </h3>
 
@@ -116,7 +116,7 @@ export const SubjectFiltersSection: React.FC<SubjectFiltersSectionProps> = ({
       </div>
 
       {!isFiltersComplete && (
-        <div className="mt-4 p-3 text-slate-900 rounded-sm">
+        <div className="mt-1 p-3 text-gray-100 rounded-sm">
           <p className="text-sm">
             * Please select all filters to view and manage subjects.
           </p>

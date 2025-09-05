@@ -358,14 +358,14 @@ export default function ExamManagement() {
   const showShimmer = !allFiltersSelected || loadingExams;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto space-y-4">
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
           Exam Management
         </h2>
 
-        <div className="bg-gradient-to-br from-white to-indigo-50 p-6 rounded-sm border border-gray-400">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+        <div className="bg-[#12294c] p-6 rounded-sm border border-gray-400">
+          <h3 className="text-lg font-semibold text-white mb-2">
             Select Filters
           </h3>
 
@@ -427,7 +427,7 @@ export default function ExamManagement() {
                     onChange={(e) => filter.setter(e.target.value)}
                     disabled={filter.disabled || filter.loading}
                     className={`
-                      w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none
+                      w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none cursor-pointer
                       ${
                         filter.disabled || filter.loading
                           ? "bg-gray-100 text-gray-500 cursor-not-allowed"
@@ -465,7 +465,7 @@ export default function ExamManagement() {
           </div>
 
           {!allFiltersSelected && (
-            <div className="text-slate-900 rounded-sm">
+            <div className="text-gray-200 rounded-sm">
               <p className="text-sm">
                 * Please select all filters to view and manage exams.
               </p>

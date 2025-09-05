@@ -514,7 +514,7 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 cursor-pointer duration-200 ease-in-out transition-transform"
+              className="px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 cursor-pointer duration-200 ease-in-out transition-transform"
               disabled={isSubmitting}
             >
               {isSubmitting ? (

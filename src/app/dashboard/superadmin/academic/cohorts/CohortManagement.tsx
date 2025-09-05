@@ -66,36 +66,41 @@ export default function CohortManagement() {
   }, []);
 
   // Fetch cohorts - either all cohorts or by center
-  const fetchCohorts = useCallback(async (centerId?: string, centerName?: string) => {
-    setLoading(true);
-    try {
-      const endpoint = centerId 
-        ? `${BACKEND_URL}/api/cohort/center/${centerId}`
-        : `${BACKEND_URL}/api/cohort/`;
+  const fetchCohorts = useCallback(
+    async (centerId?: string, centerName?: string) => {
+      setLoading(true);
+      try {
+        const endpoint = centerId
+          ? `${BACKEND_URL}/api/cohort/center/${centerId}`
+          : `${BACKEND_URL}/api/cohort/`;
 
-      const res = await axios.get(endpoint, {
-        withCredentials: true,
-      });
+        const res = await axios.get(endpoint, {
+          withCredentials: true,
+        });
 
-      const fetchedCohorts: TableCohort[] = res.data.data.map((cohort: any) => ({
-        id: cohort.id,
-        cohortName: cohort.name,
-        startDate: cohort.start_date,
-        endDate: cohort.end_date || "",
-        teacherCount: cohort._count.teacherCohorts,
-        studentCount: cohort._count.students,
-        center: centerName || "", // For center-specific fetch, use provided name
-        school: cohort.school.name,
-      }));
+        const fetchedCohorts: TableCohort[] = res.data.data.map(
+          (cohort: any) => ({
+            id: cohort.id,
+            cohortName: cohort.name,
+            startDate: cohort.start_date,
+            endDate: cohort.end_date || "",
+            teacherCount: cohort._count.teacherCohorts,
+            studentCount: cohort._count.students,
+            center: centerName || "", // For center-specific fetch, use provided name
+            school: cohort.school.name,
+          })
+        );
 
-      setCohorts(fetchedCohorts);
-    } catch (err) {
-      console.error("Error fetching cohorts:", err);
-      setCohorts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        setCohorts(fetchedCohorts);
+      } catch (err) {
+        console.error("Error fetching cohorts:", err);
+        setCohorts([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   // Fetch all cohorts on component mount if no center selected
   useEffect(() => {
@@ -120,24 +125,23 @@ export default function CohortManagement() {
 
   const handleUpdateCohort = useCallback(async (updatedItem: any) => {
     const cohort = updatedItem as TableCohort;
-    
+
     try {
       const updateData: any = {};
-      
+
       // Map the fields for API
       if (cohort.cohortName !== undefined) updateData.name = cohort.cohortName;
-      if (cohort.startDate !== undefined) updateData.start_date = cohort.startDate;
+      if (cohort.startDate !== undefined)
+        updateData.start_date = cohort.startDate;
       if (cohort.endDate !== undefined && cohort.endDate !== "") {
         updateData.end_date = cohort.endDate;
       } else if (cohort.endDate === "") {
         updateData.end_date = null;
       }
 
-      await axios.patch(
-        `${BACKEND_URL}/api/cohort/${cohort.id}`,
-        updateData,
-        { withCredentials: true }
-      );
+      await axios.patch(`${BACKEND_URL}/api/cohort/${cohort.id}`, updateData, {
+        withCredentials: true,
+      });
 
       setCohorts((prev) =>
         prev.map((c) => (c.id === cohort.id ? { ...c, ...cohort } : c))
@@ -150,7 +154,7 @@ export default function CohortManagement() {
 
   const handleDeleteCohort = useCallback(async (id: string | number) => {
     const deleteId = typeof id === "number" ? id.toString() : id;
-    
+
     try {
       await axios.delete(`${BACKEND_URL}/api/cohort/${deleteId}`, {
         withCredentials: true,
@@ -185,32 +189,32 @@ export default function CohortManagement() {
       }
 
       setCreatingCohort(true);
-      
+
       try {
         const formData = new FormData();
-        
+
         // Add cohort data
-        formData.append('name', newCohortData.cohortName);
-        formData.append('school_id', newCohortData.school);
-        formData.append('center_id', selectedCenter.id);
-        formData.append('start_date', newCohortData.startDate);
-        
+        formData.append("name", newCohortData.cohortName);
+        formData.append("school_id", newCohortData.school);
+        formData.append("center_id", selectedCenter.id);
+        formData.append("start_date", newCohortData.startDate);
+
         if (newCohortData.endDate) {
-          formData.append('end_date', newCohortData.endDate);
+          formData.append("end_date", newCohortData.endDate);
         }
-        
+
         // Add teacher IDs as JSON string
-        formData.append('teacher_ids', JSON.stringify(selectedTeachers));
-        
+        formData.append("teacher_ids", JSON.stringify(selectedTeachers));
+
         // Add the uploaded file
-        formData.append('file', uploadedFile);
+        formData.append("file", uploadedFile);
 
         const response = await axios.post(
           `${BACKEND_URL}/api/cohort/`,
           formData,
           {
             headers: {
-              'Content-Type': 'multipart/form-data',
+              "Content-Type": "multipart/form-data",
             },
             withCredentials: true,
           }
@@ -220,16 +224,15 @@ export default function CohortManagement() {
           // Refresh the cohorts list to get the latest data
           await fetchCohorts(selectedCenter.id, selectedCenter.name);
           setIsAddCohortModalOpen(false);
-          
-          // Show success message
-          alert("Cohort created successfully!");
         }
       } catch (err: any) {
         console.error("Error creating cohort:", err);
-        
+
         // Show error message to user
-        const errorMessage = err.response?.data?.message || "Failed to create cohort. Please try again.";
-        alert(errorMessage);
+        const errorMessage =
+          err.response?.data?.message ||
+          "Failed to create cohort. Please try again.";
+        console.log(errorMessage);
       } finally {
         setCreatingCohort(false);
       }
@@ -271,7 +274,7 @@ export default function CohortManagement() {
       <div className="max-w-7xl mx-auto space-y-6">
         <h2 className="text-3xl font-bold text-slate-900">Cohort Management</h2>
 
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-[#12294c] p-6 rounded-lg shadow-sm border border-gray-200">
           <label
             htmlFor="location"
             className="block text-sm font-medium text-gray-100 mb-2"

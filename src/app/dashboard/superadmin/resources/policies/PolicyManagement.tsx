@@ -15,7 +15,6 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-
 interface TablePolicy {
   id: string;
   policyName: string;
@@ -41,7 +40,7 @@ export default function PolicyManagement() {
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/center/all`,
           { withCredentials: true }
         );
-        setCenters(res.data.data); 
+        setCenters(res.data.data);
       } catch (err) {
         console.error("Failed to fetch centers:", err);
       }
@@ -49,33 +48,33 @@ export default function PolicyManagement() {
     fetchCenters();
   }, []);
 
-useEffect(() => {
-  if (!selectedCenterId) return;
-  const fetchPolicies = async () => {
-    try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/policy/center/${selectedCenterId}`,
-        { withCredentials: true }
-      );
+  useEffect(() => {
+    if (!selectedCenterId) return;
+    const fetchPolicies = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/policy/center/${selectedCenterId}`,
+          { withCredentials: true }
+        );
 
-      const mappedPolicies: TablePolicy[] = res.data.data.map((p: any) => ({
-        id: p.id,
-        policyName: p.name,
-        pdfUrl: p.pdf_url,
-         effectiveDate: formatDate(p.effective_date),
-        isActive: String(p.is_active), 
-        version: p.policy_version,
-        centerLocation: centers.find((c) => c.id === p.center_id)?.location || "",
-      }));
+        const mappedPolicies: TablePolicy[] = res.data.data.map((p: any) => ({
+          id: p.id,
+          policyName: p.name,
+          pdfUrl: p.pdf_url,
+          effectiveDate: formatDate(p.effective_date),
+          isActive: String(p.is_active),
+          version: p.policy_version,
+          centerLocation:
+            centers.find((c) => c.id === p.center_id)?.location || "",
+        }));
 
-      setPolicies(mappedPolicies);
-    } catch (err) {
-      console.error("Failed to fetch policies:", err);
-    }
-  };
-  fetchPolicies();
-}, [selectedCenterId, centers]);
-
+        setPolicies(mappedPolicies);
+      } catch (err) {
+        console.error("Failed to fetch policies:", err);
+      }
+    };
+    fetchPolicies();
+  }, [selectedCenterId, centers]);
 
   const filteredPolicies = useMemo(() => {
     if (!selectedLocation) return [];
@@ -83,92 +82,97 @@ useEffect(() => {
   }, [policies, selectedLocation]);
 
   const statistics = useMemo(() => {
-    const filtered = policies.filter((p) => p.centerLocation === selectedLocation);
+    const filtered = policies.filter(
+      (p) => p.centerLocation === selectedLocation
+    );
     return {
       totalPolicies: filtered.length,
       activePolicies: filtered.filter((p) => p.isActive === "true").length,
     };
   }, [policies, selectedLocation]);
 
-const handleAddPolicy = useCallback(
-  async (newPolicyData: {
-    policyName: string;
-    pdfUrl: string;
-    effectiveDate: string;
-    isActive: string;
-    version: string;
-    centerLocation: string;
-  }) => {
-    try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/policy`,
-        {
-          name: newPolicyData.policyName, 
-          pdf_url: newPolicyData.pdfUrl,
-          effective_date: new Date(newPolicyData.effectiveDate).toISOString(), 
-          is_active: newPolicyData.isActive === "true",
-          policy_version: newPolicyData.version,
-          center_id: selectedCenterId,
-        },
-        { withCredentials: true }
-      );
+  const handleAddPolicy = useCallback(
+    async (newPolicyData: {
+      policyName: string;
+      pdfUrl: string;
+      effectiveDate: string;
+      isActive: string;
+      version: string;
+      centerLocation: string;
+    }) => {
+      try {
+        const res = await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/policy`,
+          {
+            name: newPolicyData.policyName,
+            pdf_url: newPolicyData.pdfUrl,
+            effective_date: new Date(newPolicyData.effectiveDate).toISOString(),
+            is_active: newPolicyData.isActive === "true",
+            policy_version: newPolicyData.version,
+            center_id: selectedCenterId,
+          },
+          { withCredentials: true }
+        );
 
-      const p = res.data.data;
-      const mappedPolicy: TablePolicy = {
-        id: p.id,
-        policyName: p.name,
-        pdfUrl: p.pdf_url,
-         effectiveDate: formatDate(p.effective_date),
-        isActive: String(p.is_active),
-        version: p.policy_version,
-        centerLocation:
-          centers.find((c) => c.id === p.center_id)?.location || "",
-      };
+        const p = res.data.data;
+        const mappedPolicy: TablePolicy = {
+          id: p.id,
+          policyName: p.name,
+          pdfUrl: p.pdf_url,
+          effectiveDate: formatDate(p.effective_date),
+          isActive: String(p.is_active),
+          version: p.policy_version,
+          centerLocation:
+            centers.find((c) => c.id === p.center_id)?.location || "",
+        };
 
-      setPolicies((prev) => [...prev, mappedPolicy]);
-      setIsAddPolicyModalOpen(false);
-    } catch (err) {
-      console.error("Failed to create policy:", err);
-    }
-  },
-  [selectedCenterId, centers]
-);
+        setPolicies((prev) => [...prev, mappedPolicy]);
+        setIsAddPolicyModalOpen(false);
+      } catch (err) {
+        console.error("Failed to create policy:", err);
+      }
+    },
+    [selectedCenterId, centers]
+  );
 
-const handleUpdatePolicy = useCallback(async (updatedItem: any) => {
-  try {
-    const res = await axios.put(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/policy/${updatedItem.id}`,
-      {
-        name: updatedItem.policyName,
-        pdf_url: updatedItem.pdfUrl,
-        effective_date: new Date(updatedItem.effectiveDate).toISOString(),
-        is_active: updatedItem.isActive === "true",
-        policy_version: updatedItem.version,
-      },
-      { withCredentials: true }
-    );
+  const handleUpdatePolicy = useCallback(
+    async (updatedItem: any) => {
+      try {
+        const res = await axios.put(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/policy/${updatedItem.id}`,
+          {
+            name: updatedItem.policyName,
+            pdf_url: updatedItem.pdfUrl,
+            effective_date: new Date(updatedItem.effectiveDate).toISOString(),
+            is_active: updatedItem.isActive === "true",
+            policy_version: updatedItem.version,
+          },
+          { withCredentials: true }
+        );
 
-    const p = res.data.data;
-    const mappedPolicy: TablePolicy = {
-      id: p.id,
-      policyName: p.name,
-      pdfUrl: p.pdf_url,
-      effectiveDate: p.effective_date,
-      isActive: String(p.is_active),
-      version: p.policy_version,
-      centerLocation:
-        centers.find((c) => c.id === p.center_id)?.location || "",
-    };
+        const p = res.data.data;
+        const mappedPolicy: TablePolicy = {
+          id: p.id,
+          policyName: p.name,
+          pdfUrl: p.pdf_url,
+          effectiveDate: p.effective_date,
+          isActive: String(p.is_active),
+          version: p.policy_version,
+          centerLocation:
+            centers.find((c) => c.id === p.center_id)?.location || "",
+        };
 
-    setPolicies((prev) =>
-      prev.map((policy) => (policy.id === mappedPolicy.id ? mappedPolicy : policy))
-    );
-  } catch (err) {
-    console.error("Failed to update policy:", err);
-  }
-}, [centers]);
-
-
+        setPolicies((prev) =>
+          prev.map((policy) =>
+            policy.id === mappedPolicy.id ? mappedPolicy : policy
+          )
+        );
+      } catch (err) {
+        console.error("Failed to update policy:", err);
+      }
+    },
+    [centers]
+  );
 
   const handleDeletePolicy = useCallback(async (id: string | number) => {
     try {
@@ -209,7 +213,7 @@ const handleUpdatePolicy = useCallback(async (updatedItem: any) => {
       <div className="max-w-7xl mx-auto space-y-6">
         <h2 className="text-3xl font-bold text-slate-900">Policy Management</h2>
 
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-[#12294c] p-6 rounded-lg shadow-sm border border-gray-200">
           <label
             htmlFor="location"
             className="block text-sm font-medium text-gray-100 mb-2"

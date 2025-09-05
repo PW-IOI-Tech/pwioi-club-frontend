@@ -302,10 +302,8 @@ export default function CPRManagement() {
 
       setOriginalCprData([...cprData]);
       setHasChanges(false);
-      alert("CPR changes saved successfully!");
     } catch (err) {
       console.error("Error saving CPR changes:", err);
-      alert("Failed to save changes. Please try again.");
     } finally {
       setIsSaving(false);
     }

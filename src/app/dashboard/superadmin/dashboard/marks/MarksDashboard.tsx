@@ -181,10 +181,10 @@ const MarksDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-900 rounded-lg shadow-sm border border-slate-700 p-6 py-8 mb-6">
+        <div className="bg-[#12294c] rounded-lg shadow-sm border border-slate-700 p-6 py-8 mb-6">
           <h1 className="text-2xl md:text-3xl text-white font-semibold mb-2">
             Marks Dashboard
           </h1>
@@ -217,7 +217,7 @@ const MarksDashboard: React.FC = () => {
                       e.target.value
                     )
                   }
-                  className="w-full p-2 border border-gray-300 rounded text-sm bg-white"
+                  className="w-full p-2 border border-gray-300 rounded text-sm bg-white cursor-pointer"
                 >
                   <option value="">Select {filter.label}</option>
                   {filter.options.map((opt: any, i: number) => (
