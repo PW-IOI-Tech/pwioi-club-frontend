@@ -120,27 +120,27 @@ export default function SchoolManagement() {
     }
   };
 
-  const handleUpdateSchool = async (updatedItem: any) => {
-    try {
-      await api.patch(
-        `/${updatedItem.id}`,
-        { name: updatedItem.schoolName },
-        { withCredentials: true }
-      );
-      fetchSchools(selectedLocation);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update school");
-    }
-  };
+  // const handleUpdateSchool = async (updatedItem: any) => {
+  //   try {
+  //     await api.patch(
+  //       `/${updatedItem.id}`,
+  //       { name: updatedItem.schoolName },
+  //       { withCredentials: true }
+  //     );
+  //     fetchSchools(selectedLocation);
+  //   } catch (err: any) {
+  //     setError(err.response?.data?.message || "Failed to update school");
+  //   }
+  // };
 
-  const handleDeleteSchool = async (id: string | number) => {
-    try {
-      await api.delete(`/${id}`, { withCredentials: true });
-      fetchSchools(selectedLocation);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to delete school");
-    }
-  };
+  // const handleDeleteSchool = async (id: string | number) => {
+  //   try {
+  //     await api.delete(`/${id}`, { withCredentials: true });
+  //     fetchSchools(selectedLocation);
+  //   } catch (err: any) {
+  //     setError(err.response?.data?.message || "Failed to delete school");
+  //   }
+  // };
 
   const statistics = useMemo(
     () => ({
@@ -276,8 +276,6 @@ export default function SchoolManagement() {
                 "stdCount",
                 "teachersCount",
               ]}
-              onDelete={handleDeleteSchool}
-              onEdit={handleUpdateSchool}
               hiddenColumns={["id"]}
             />
           </>
