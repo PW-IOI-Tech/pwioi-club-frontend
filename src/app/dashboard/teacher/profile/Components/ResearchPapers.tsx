@@ -498,7 +498,10 @@ const DeleteConfirmModal = ({
       Are you sure you want to delete <strong>{paperTitle}</strong>?
     </p>
     <div className="flex space-x-3 pt-2">
-      <button onClick={onClose} className="flex-1 px-4 py-2 border cursor-pointer">
+      <button
+        onClick={onClose}
+        className="flex-1 px-4 py-2 border cursor-pointer"
+      >
         Cancel
       </button>
       <button
@@ -604,7 +607,10 @@ const ResearchPapers: React.FC = () => {
 
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-bold text-gray-900">Research Papers</h3>
-          <button onClick={() => setShowAddModal(true)} className="cursor-pointer">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="cursor-pointer"
+          >
             <Plus className="w-4 h-4" />
           </button>
         </div>
@@ -675,10 +681,10 @@ const ResearchPapers: React.FC = () => {
           {papers.length === 0 && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-blue-500 hover:bg-blue-50 transition-all group cursor-pointer"
+              className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-[#12294c] hover:bg-blue-50 transition-all group cursor-pointer"
             >
-              <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-600 mx-auto mb-1" />
-              <span className="text-sm text-gray-600 group-hover:text-blue-600 font-medium">
+              <Plus className="w-5 h-5 text-gray-400 group-hover:text-[#12294c] mx-auto mb-1" />
+              <span className="text-sm text-gray-600 group-hover:text-[#12294c] font-medium">
                 Add Research Paper
               </span>
             </button>

@@ -337,14 +337,14 @@ export default function CPRManagement() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen px-4 py-6 sm:p-2">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">
             CPR Management
-          </h1>
-          <p className="text-gray-600 text-sm sm:text-base">
+          </h2>
+          <p className="text-gray-600">
             Track and manage course progress for your subjects.
           </p>
         </div>

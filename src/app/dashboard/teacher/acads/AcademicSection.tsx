@@ -71,7 +71,7 @@ type SortOrder = "asc" | "desc";
 
 const DashboardHeader: React.FC = () => {
   return (
-    <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-200 p-4 mb-6 py-6">
+    <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-200 p-4 py-6">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-2">
         <div className="flex items-center gap-3">
           <div>
@@ -188,7 +188,7 @@ const CompletedCoursesTable: React.FC = () => {
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
       <div className="bg-gradient-to-br from-white to-indigo-50 border-b border-b-gray-400 drop-shadow-sm px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex sm:items-center sm:justify-between flex-col sm:flex-row gap-3 sm:gap-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-[#12294c] rounded-sm flex items-center justify-center">
               <GraduationCap className="w-4 h-4 text-white" />
@@ -458,7 +458,7 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
         Select Marks Details
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 mb-4 text-sm">
+      <div className="grid grid-cols-2 lg:grid-cols-7 gap-4 mb-4 text-sm">
         <div>
           <label className="block font-medium text-gray-700 mb-2">School</label>
           <div className="relative">
@@ -733,10 +733,6 @@ const MarksSelectionForm: React.FC<MarksSelectionFormProps> = ({
     </div>
   );
 };
-
-interface PerformanceChartProps {
-  selectedFilters: SelectedFilters;
-}
 
 const PerformanceChart: React.FC<{ selectedFilters: SelectedFilters }> = ({
   selectedFilters,
@@ -1022,17 +1018,19 @@ const TeacherMarksDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen p-2">
-      <div className="max-w-7xl mx-auto space-y-4">
-        <DashboardHeader />
-        <OngoingCoursesTable />
-        <CompletedCoursesTable />
-        <MarksSelectionForm onShowAnalysis={handleShowAnalysis} />
-        {showMarksDetails && selectedFilters && (
-          <PerformanceChart selectedFilters={selectedFilters} />
-        )}
-        {showMarksDetails && selectedFilters && (
-          <StudentMarksTable selectedFilters={selectedFilters} />
-        )}
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 gap-4">
+          <DashboardHeader />
+          <OngoingCoursesTable />
+          <CompletedCoursesTable />
+          <MarksSelectionForm onShowAnalysis={handleShowAnalysis} />
+          {showMarksDetails && selectedFilters && (
+            <PerformanceChart selectedFilters={selectedFilters} />
+          )}
+          {showMarksDetails && selectedFilters && (
+            <StudentMarksTable selectedFilters={selectedFilters} />
+          )}
+        </div>
       </div>
     </div>
   );
