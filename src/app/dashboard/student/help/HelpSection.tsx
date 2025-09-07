@@ -31,7 +31,7 @@ export default function HelpSection() {
   };
 
   return (
-    <div className="min-h-screen p-2">
+    <div className="min-h-screen px-4 py-6 sm:p-2">
       <div className="max-w-7xl mx-auto space-y-4">
         <div>
           <h2 className="text-3xl font-bold text-gray-800 mb-2">
