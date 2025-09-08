@@ -35,6 +35,28 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
       href: "/dashboard/superadmin/home",
     },
     {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: ChartPie,
+      subItems: [
+        {
+          id: "attendance",
+          label: "Attendance Dashboard",
+          href: "/dashboard/superadmin/dashboard/attendance",
+        },
+        {
+          id: "marks",
+          label: "Marks Dashboard",
+          href: "/dashboard/superadmin/dashboard/marks",
+        },
+        {
+          id: "cpr",
+          label: "CPR Dashboard",
+          href: "/dashboard/superadmin/dashboard/cpr",
+        },
+      ],
+    },
+    {
       id: "people",
       label: "People Management",
       icon: Users,
@@ -164,28 +186,6 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
           id: "cpr",
           label: "CPR Management",
           href: "/dashboard/superadmin/resources/cpr",
-        },
-      ],
-    },
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: ChartPie,
-      subItems: [
-        {
-          id: "attendance",
-          label: "Attendance Dashboard",
-          href: "/dashboard/superadmin/dashboard/attendance",
-        },
-        {
-          id: "marks",
-          label: "Marks Dashboard",
-          href: "/dashboard/superadmin/dashboard/marks",
-        },
-        {
-          id: "cpr",
-          label: "CPR Dashboard",
-          href: "/dashboard/superadmin/dashboard/cpr",
         },
       ],
     },

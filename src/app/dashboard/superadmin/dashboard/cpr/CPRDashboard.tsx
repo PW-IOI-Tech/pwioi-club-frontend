@@ -298,8 +298,10 @@ export default function CPRDashboard() {
                 }`}
               >
                 {statistics.avgCompletionLag > 0
-                  ? `+${statistics.avgCompletionLag}`
-                  : statistics.avgCompletionLag}
+                  ? `-${statistics.avgCompletionLag}`
+                  : statistics.avgCompletionLag < 0
+                  ? `+${Math.abs(statistics.avgCompletionLag)}`
+                  : "0"}
               </p>
             </div>
           </div>
@@ -331,8 +333,10 @@ export default function CPRDashboard() {
                   }
                 >
                   {item.completion_lag > 0
-                    ? `+${item.completion_lag}`
-                    : item.completion_lag}
+                    ? `-${item.completion_lag}`
+                    : item.completion_lag < 0
+                    ? `+${Math.abs(item.completion_lag)}`
+                    : "0"}
                 </span>
               ),
             }}
