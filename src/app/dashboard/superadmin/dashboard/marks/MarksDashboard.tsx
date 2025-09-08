@@ -143,30 +143,49 @@ const MarksDashboard: React.FC = () => {
   }, [filters.subject]);
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+   const fetchAnalytics = async () => {
+    if(!filters?.subject) {
+      return
+    }
+  try {
+    setLoading(true);
+    setError(null);
 
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/exam-analytics`,
-          {
-            params: filters,
-            withCredentials: true,
-          }
-        );
+    const queryParams: any = {};
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) queryParams[key] = value;
+    });
 
-        const data = res.data?.data || {};
-        setDashboardStats(data.stats || {});
-        setChartData(data.examScores || []);
-        setExamTypes(data.examTypes || []);
-        setExamNumbers(data.examNumbers || []);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to fetch analytics");
-      } finally {
-        setLoading(false);
+    const res = await axios.get(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/exam-analytics`,
+      {
+        params: queryParams,
+        withCredentials: true,
       }
-    };
+    );
+
+    const data = res.data?.data || {};
+
+    setDashboardStats({
+      totalStudents: data.overview?.totalStudents || 0,
+      averageScore: data.overview?.averageScore || 0,
+      passPercentage: data.overview?.passRate || 0,
+      highestScore: data.overview?.highestScore || 0,
+      totalExams: data.overview?.totalExams || 0,
+      subjectsCount: data.overview?.subjects?.length || 0,
+    });
+
+    setChartData(data.performanceBreakdown || []);
+
+    setExamTypes(data.examTypes || []);
+    setExamNumbers(data.examNumbers || []);
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Failed to fetch analytics");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
     if (Object.values(filters).some((v) => v)) {
       fetchAnalytics();
