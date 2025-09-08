@@ -29,6 +29,7 @@ interface School {
   id: string;
   name: string;
 }
+
 const AddBatchModal: React.FC<AddBatchModalProps> = ({
   isOpen,
   onClose,
@@ -150,9 +151,8 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
 
     if (!formData.batchName.trim()) {
       errors.batchName = "Batch name is required";
-    } else if (formData.batchName.length < 3) {
-      errors.batchName = "Batch name must be at least 3 characters";
     }
+    // Removed: minimum 3-character check
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -254,7 +254,6 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
                     {formData.centerName}
                   </option>
                 </select>
-
                 {!prefillLocation && !isSubmitting && (
                   <ChevronDown
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
@@ -324,9 +323,6 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
                   {formErrors.batchName}
                 </p>
               )}
-              <p className="mt-1 text-xs text-gray-500">
-                Auto-suggested based on center and school selection
-              </p>
             </div>
           </div>
 
@@ -341,7 +337,7 @@ const AddBatchModal: React.FC<AddBatchModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 cursor-pointer"
+              className="px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 cursor-pointer"
               disabled={isSubmitting}
             >
               {isSubmitting ? (

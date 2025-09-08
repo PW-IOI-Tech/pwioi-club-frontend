@@ -69,6 +69,8 @@ export default function AdminDashboard() {
     rooms: "/dashboard/superadmin/resources/rooms",
     policies: "/dashboard/superadmin/resources/policies",
     flags: "/dashboard/superadmin/resources/flags",
+    clubs: "/dashboard/superadmin/resources/clubs",
+    cpr: "/dashboard/superadmin/resources/cpr",
   };
 
   const managementSections = [
@@ -232,10 +234,10 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-lg shadow-sm border border-gray-400 p-6 py-8 mb-8">
+        <div className="bg-[#12294c] rounded-lg shadow-sm border border-gray-400 p-6 py-8 mb-8">
           <h1 className="text-2xl md:text-3xl text-white mb-2">
             Welcome back, <br className="block sm:hidden" />
             <span className="font-bold">{userName || "Admin"}</span>!{" "}
@@ -252,7 +254,7 @@ export default function AdminDashboard() {
           {managementSections.map((section, sectionIndex) => (
             <div key={sectionIndex} className="space-y-4">
               <div className="flex items-center space-x-3">
-                <div className="w-1 h-8 bg-slate-900 rounded-full"></div>
+                <div className="w-1 h-8 bg-[#12294c] rounded-full"></div>
                 <h2 className="text-xl font-bold text-gray-900">
                   {section.category}
                 </h2>
@@ -272,7 +274,7 @@ export default function AdminDashboard() {
                       className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 p-6 shadow-sm cursor-pointer transition-all duration-200 group hover:shadow-md hover:scale-105"
                     >
                       <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-sm bg-slate-900 shadow-sm">
+                        <div className="p-3 rounded-sm bg-[#12294c] shadow-sm">
                           <Icon className="h-6 w-6 text-white" />
                         </div>
                         <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all" />

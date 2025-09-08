@@ -87,7 +87,7 @@ export const AttendanceDetailsShimmer = () => {
 
 export const AttendancePageShimmer = () => {
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto space-y-4">
         {/* Header Section Shimmer */}
         <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 rounded-sm shadow-sm border border-gray-200 p-4">

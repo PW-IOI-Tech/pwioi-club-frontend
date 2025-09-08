@@ -239,10 +239,10 @@ const AttendanceDashboard: React.FC = () => {
     Object.values(filters).some((val) => val !== "");
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-900 rounded-lg shadow-sm border border-slate-700 p-6 py-8 mb-6">
+        <div className="bg-[#12294c] rounded-lg shadow-sm border border-slate-700 p-6 py-8 mb-6">
           <h1 className="text-2xl md:text-3xl text-white font-semibold mb-2">
             Attendance Dashboard
           </h1>
@@ -307,8 +307,8 @@ const AttendanceDashboard: React.FC = () => {
         {/* Filters */}
         <section className="bg-white rounded-lg border border-gray-300 p-5 shadow-sm mb-8">
           <div className="flex items-center space-x-3 mb-4">
-            <MapPin className="h-5 w-5 text-slate-900" />
-            <h2 className="text-lg font-bold text-slate-900">
+            <MapPin className="h-5 w-5 text-[#12294c]" />
+            <h2 className="text-lg font-bold text-[#12294c]">
               Filter Attendance Data
             </h2>
           </div>
@@ -450,8 +450,8 @@ const AttendanceDashboard: React.FC = () => {
         <section className="bg-white rounded-lg border border-gray-300 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <BookOpen className="h-5 w-5 text-slate-900" />
-              <h2 className="text-lg font-bold text-slate-900">
+              <BookOpen className="h-5 w-5 text-[#12294c]" />
+              <h2 className="text-lg font-bold text-[#12294c]">
                 Attendance Trends
               </h2>
             </div>
@@ -460,9 +460,9 @@ const AttendanceDashboard: React.FC = () => {
                 <button
                   key={range}
                   onClick={() => setTimeRange(range)}
-                  className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
+                  className={`px-3 py-1 text-xs font-medium rounded-full transition-all cursor-pointer ${
                     timeRange === range
-                      ? "bg-slate-900 text-white"
+                      ? "bg-[#12294c] text-white"
                       : "bg-slate-100 text-slate-800 hover:bg-slate-200"
                   }`}
                 >

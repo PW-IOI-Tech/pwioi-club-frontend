@@ -198,7 +198,7 @@ export default function AdminManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto space-y-4">
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
           Admin Management
@@ -268,7 +268,7 @@ export default function AdminManagement() {
 
 export const ManagementShimmer = () => {
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-300 rounded w-64 mb-2"></div>
