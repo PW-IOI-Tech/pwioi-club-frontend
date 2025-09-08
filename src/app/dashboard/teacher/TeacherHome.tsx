@@ -611,7 +611,6 @@ const PostActions: React.FC<PostActionsProps> = ({
       setNewComment("");
     } catch (error: any) {
       console.error("Error posting comment:", error.response?.data || error);
-      alert(error.response?.data?.message || "Failed to post comment");
     }
   };
 
@@ -640,7 +639,6 @@ const PostActions: React.FC<PostActionsProps> = ({
       setAllComments(response.data.data);
     } catch (error: any) {
       console.error("Error fetching comment:", error.response?.data || error);
-      alert(error.response?.data?.message || "Failed to fetch comment");
     }
   };
 
@@ -1185,7 +1183,6 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
       );
 
       console.log("Report submitted:", res.data);
-      alert("Report submitted successfully!");
     } catch (err: any) {
       console.error("Error reporting:", err.response?.data || err.message);
       alert(err.response?.data?.message || "Failed to submit report");
@@ -1259,7 +1256,7 @@ const TeacherHome: React.FC<{ userDetails: any }> = ({ userDetails }) => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
           <div className="lg:col-span-7 space-y-4">

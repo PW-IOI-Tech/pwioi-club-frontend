@@ -277,7 +277,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Desktop Sidebar */}
       <div
-        className={`hidden lg:flex sticky top-0 h-screen bg-gradient-to-br from-white to-indigo-50 border-r border-gray-200 shadow-lg transition-all duration-300 ease-in-out ${
+        className={`hidden lg:flex sticky top-0 h-screen bg-gradient-to-br from-white to-indigo-50 border-r border-gray-200 shadow-lg transition-all duration-300 ease-in-out max-h-screen overflow-y-scroll ${
           isSidebarExpanded ? "w-64" : "w-20"
         }`}
       >
@@ -587,7 +587,13 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out">
-        <div className="p-1 lg:p-8">{children}</div>
+        <div
+          className={`p-1 lg:p-8 ${
+            isSidebarExpanded ? "max-w-5xl" : "max-w-6xl"
+          }`}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

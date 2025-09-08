@@ -31,8 +31,8 @@ function AdminCallbackContent() {
           localStorage.setItem("user", JSON.stringify(user));
 
           setTimeout(() => {
-            router.push("/dashboard/superadmin");
-          }, 10000);
+            router.push("/dashboard/superadmin/feed");
+          }, 1000);
         })
         .catch((err) => {
           console.error("Login failed:", err.response?.data || err.message);

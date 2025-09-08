@@ -226,7 +226,7 @@ export default function ClubManagement() {
         </h2>
 
         {/* ✅ Dropdown Fix */}
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-[#12294c] p-6 rounded-lg shadow-sm border border-gray-200">
           <label className="text-sm font-medium text-gray-100 mb-2 flex items-center gap-1">
             Select Center Location
           </label>

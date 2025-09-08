@@ -24,7 +24,7 @@ type ExamType = "Midterm" | "Final" | "Quiz" | "Assignment" | "Practical";
 
 interface FormData {
   examName: string;
-  weightage: number;
+  weightage: string;
   maxMarks: string;
   passingMarks: string;
   examType: ExamType;
@@ -47,7 +47,7 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<FormData>({
     examName: "",
-    weightage: 0,
+    weightage: "",
     maxMarks: "",
     passingMarks: "",
     examType: "Quiz",
@@ -66,7 +66,7 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
     if (isOpen) {
       setFormData({
         examName: "",
-        weightage: 0,
+        weightage: "",
         maxMarks: "",
         passingMarks: "",
         examType: "Quiz",
@@ -82,7 +82,7 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "weightage" ? Number(value) : value,
+      [name]: value,
     }));
 
     if (formErrors[name]) {
@@ -146,6 +146,16 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
       }
     }
 
+    if (!formData.weightage.trim()) {
+      errors.weightage = "Weightage is required";
+    } else if (
+      isNaN(Number(formData.weightage)) ||
+      Number(formData.weightage) < 0.1 ||
+      Number(formData.weightage) > 100
+    ) {
+      errors.weightage = "Weightage must be between 0.1 and 100";
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -168,7 +178,7 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
 
     setFormData({
       examName: "",
-      weightage: 0,
+      weightage: "",
       maxMarks: "",
       passingMarks: "",
       examType: "Quiz",
@@ -182,7 +192,7 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
     if (!isSubmitting) {
       setFormData({
         examName: "",
-        weightage: 0,
+        weightage: "",
         maxMarks: "",
         passingMarks: "",
         examType: "Quiz",
@@ -237,6 +247,9 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
                 value={formData.weightage}
                 onChange={handleInputChange}
                 placeholder="e.g., 30"
+                step="0.1"
+                min="0.1"
+                max="100"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1B3A6A] focus:border-[#1B3A6A] ${
                   formErrors.weightage ? "border-red-500" : "border-gray-300"
                 }`}
@@ -362,7 +375,7 @@ const AddExamModal: React.FC<AddExamModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 cursor-pointer duration-200 ease-in-out transition-transform"
+              className="px-4 py-2 bg-[#12294c] text-white rounded-sm hover:bg-slate-700 flex items-center disabled:opacity-50 cursor-pointer duration-200 ease-in-out transition-transform"
               disabled={isSubmitting}
             >
               {isSubmitting ? (

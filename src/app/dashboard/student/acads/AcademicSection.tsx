@@ -587,7 +587,7 @@ export default function AcademicsSection() {
   const currentSemester = academicData.current_semester;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="bg-[#12294c] rounded-sm border border-gray-400 shadow-sm p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

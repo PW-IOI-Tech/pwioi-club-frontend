@@ -198,7 +198,7 @@ export default function SchoolManagement() {
         <h2 className="text-3xl font-bold text-slate-900">School Management</h2>
 
         {/* Location Dropdown */}
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-[#12294c] p-6 rounded-lg shadow-sm border border-gray-200">
           <label className="block text-sm font-medium text-gray-100 mb-2">
             Select Center Location
           </label>
@@ -206,7 +206,7 @@ export default function SchoolManagement() {
             <select
               value={selectedLocation}
               onChange={handleLocationChange}
-              className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer text-sm"
+              className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer text-sm appearance-none"
             >
               <option value="">Select Location to Proceed</option>
               {centers.map((center: any) => (
@@ -248,7 +248,7 @@ export default function SchoolManagement() {
               <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 flex items-center justify-center p-6">
                 <button
                   onClick={handleOpenAddModal}
-                  className="flex flex-col items-center justify-center w-full h-full text-slate-900 hover:text-slate-700 transition-colors"
+                  className="flex flex-col items-center justify-center w-full h-full text-slate-900 hover:text-slate-700 transition-colors cursor-pointer"
                 >
                   <div className="bg-gray-200 rounded-full p-3 mb-2 hover:bg-gray-300 transition-colors">
                     <Plus size={24} />

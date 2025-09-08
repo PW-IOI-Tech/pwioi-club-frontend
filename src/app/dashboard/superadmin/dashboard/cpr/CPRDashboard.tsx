@@ -166,26 +166,25 @@ export default function CPRDashboard() {
     });
   }, [subjects]);
 
-const handleDeleteSubject = async (id: string | number) => {
-  try {
-    await axios.delete(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/subject/${id}`,
-      { withCredentials: true }
-    );
+  const handleDeleteSubject = async (id: string | number) => {
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cpr/subject/${id}`,
+        { withCredentials: true }
+      );
 
-    setSubjects((prev) => prev.filter((s) => s.id !== id));
-  } catch (err) {
-    console.error("Error deleting subject:", err);
-    alert("Failed to delete subject. Please try again.");
-  }
-};
+      setSubjects((prev) => prev.filter((s) => s.id !== id));
+    } catch (err) {
+      console.error("Error deleting subject:", err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         <h2 className="text-3xl font-bold text-slate-900">CPR Management</h2>
 
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-[#12294c] p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-white text-sm font-semibold mb-4">
             Filter Subjects
           </h3>

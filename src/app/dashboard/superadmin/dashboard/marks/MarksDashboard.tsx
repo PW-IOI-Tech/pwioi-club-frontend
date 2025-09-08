@@ -143,30 +143,49 @@ const MarksDashboard: React.FC = () => {
   }, [filters.subject]);
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+   const fetchAnalytics = async () => {
+    if(!filters?.subject) {
+      return
+    }
+  try {
+    setLoading(true);
+    setError(null);
 
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/exam-analytics`,
-          {
-            params: filters,
-            withCredentials: true,
-          }
-        );
+    const queryParams: any = {};
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) queryParams[key] = value;
+    });
 
-        const data = res.data?.data || {};
-        setDashboardStats(data.stats || {});
-        setChartData(data.examScores || []);
-        setExamTypes(data.examTypes || []);
-        setExamNumbers(data.examNumbers || []);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to fetch analytics");
-      } finally {
-        setLoading(false);
+    const res = await axios.get(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/exam-analytics`,
+      {
+        params: queryParams,
+        withCredentials: true,
       }
-    };
+    );
+
+    const data = res.data?.data || {};
+
+    setDashboardStats({
+      totalStudents: data.overview?.totalStudents || 0,
+      averageScore: data.overview?.averageScore || 0,
+      passPercentage: data.overview?.passRate || 0,
+      highestScore: data.overview?.highestScore || 0,
+      totalExams: data.overview?.totalExams || 0,
+      subjectsCount: data.overview?.subjects?.length || 0,
+    });
+
+    setChartData(data.performanceBreakdown || []);
+
+    setExamTypes(data.examTypes || []);
+    setExamNumbers(data.examNumbers || []);
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Failed to fetch analytics");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
     if (Object.values(filters).some((v) => v)) {
       fetchAnalytics();
@@ -181,10 +200,10 @@ const MarksDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-900 rounded-lg shadow-sm border border-slate-700 p-6 py-8 mb-6">
+        <div className="bg-[#12294c] rounded-lg shadow-sm border border-slate-700 p-6 py-8 mb-6">
           <h1 className="text-2xl md:text-3xl text-white font-semibold mb-2">
             Marks Dashboard
           </h1>
@@ -217,7 +236,7 @@ const MarksDashboard: React.FC = () => {
                       e.target.value
                     )
                   }
-                  className="w-full p-2 border border-gray-300 rounded text-sm bg-white"
+                  className="w-full p-2 border border-gray-300 rounded text-sm bg-white cursor-pointer"
                 >
                   <option value="">Select {filter.label}</option>
                   {filter.options.map((opt: any, i: number) => (
