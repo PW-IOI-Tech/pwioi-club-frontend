@@ -28,7 +28,34 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
   const { logout } = useAuth();
 
   const menuItems = [
-    { id: "home", label: "Home", icon: House, href: "/dashboard/superadmin" },
+    {
+      id: "home",
+      label: "Home",
+      icon: House,
+      href: "/dashboard/superadmin/home",
+    },
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: ChartPie,
+      subItems: [
+        {
+          id: "attendance",
+          label: "Attendance Dashboard",
+          href: "/dashboard/superadmin/dashboard/attendance",
+        },
+        {
+          id: "marks",
+          label: "Marks Dashboard",
+          href: "/dashboard/superadmin/dashboard/marks",
+        },
+        {
+          id: "cpr",
+          label: "CPR Dashboard",
+          href: "/dashboard/superadmin/dashboard/cpr",
+        },
+      ],
+    },
     {
       id: "people",
       label: "People Management",
@@ -162,37 +189,15 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
         },
       ],
     },
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: ChartPie,
-      subItems: [
-        {
-          id: "attendance",
-          label: "Attendance Dashboard",
-          href: "/dashboard/superadmin/dashboard/attendance",
-        },
-        {
-          id: "marks",
-          label: "Marks Dashboard",
-          href: "/dashboard/superadmin/dashboard/marks",
-        },
-        {
-          id: "cpr",
-          label: "CPR Dashboard",
-          href: "/dashboard/superadmin/dashboard/cpr",
-        },
-      ],
-    },
   ];
 
   const getActiveSection = () => {
-    if (pathname === "/dashboard/superadmin") return "home";
+    if (pathname === "/dashboard/superadmin") return "feed";
+    if (pathname === "/dashboard/superadmin/home") return "home";
     if (pathname.includes("/people/")) return "people";
     if (pathname.includes("/academic/")) return "academic";
     if (pathname.includes("/operations/")) return "operations";
     if (pathname.includes("/resources/")) return "resources";
-    if (pathname.includes("/feed")) return null;
     if (pathname.includes("/dashboard/")) return "dashboard";
     return null;
   };
@@ -248,7 +253,25 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
   };
 
   const goToFeed = () => {
-    router.push("/dashboard/superadmin/feed");
+    router.push("/dashboard/superadmin");
+  };
+
+  const goToHome = () => {
+    router.push("/dashboard/superadmin/home");
+  };
+
+  const handleItemClick = (href?: string, itemId?: string) => {
+    if (!isSidebarExpanded) {
+      setIsSidebarExpanded(true);
+    }
+
+    if (itemId && menuItems.find((item) => item.id === itemId)?.subItems) {
+      toggleExpanded(itemId);
+    }
+
+    if (href) {
+      router.push(href);
+    }
   };
 
   return (
@@ -311,6 +334,10 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
               onClick={goToFeed}
               className={`w-full flex items-center hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer ${
                 isSidebarExpanded ? "space-x-3" : "justify-center"
+              } ${
+                activeSection === "feed"
+                  ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
+                  : "text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] border-transparent hover:border-[#12294c]/10"
               }`}
             >
               <div className="p-3 bg-[#12294c] rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
@@ -341,7 +368,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
                 return (
                   <div key={item.id} className="space-y-1">
                     <button
-                      onClick={() => toggleExpanded(item.id)}
+                      onClick={() => handleItemClick(undefined, item.id)}
                       className={`w-full flex items-center justify-between px-3 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border hover:scale-105 active:scale-95 ${
                         isActive
                           ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
@@ -379,17 +406,17 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
                     {isSidebarExpanded && isExpanded && item.subItems && (
                       <div className="ml-6 space-y-1 border-l border-[#12294c]/10 pl-4">
                         {item.subItems.map((subItem) => (
-                          <a
+                          <button
                             key={subItem.id}
-                            href={subItem.href}
-                            className={`block px-3 py-2.5 rounded-lg text-sm transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 ${
+                            onClick={() => handleItemClick(subItem.href)}
+                            className={`block w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 ${
                               isSubItemActive(subItem.href)
                                 ? "bg-[#12294c]/10 text-[#12294c] font-medium border border-[#12294c]/20"
                                 : "text-gray-600 hover:text-[#12294c] hover:bg-[#12294c]/5"
                             }`}
                           >
                             {subItem.label}
-                          </a>
+                          </button>
                         ))}
                       </div>
                     )}
@@ -398,9 +425,9 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
               }
 
               return (
-                <a
+                <button
                   key={item.id}
-                  href={item.href}
+                  onClick={() => handleItemClick(item.href)}
                   className={`flex items-center space-x-3 px-3 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border hover:scale-105 active:scale-95 ${
                     isActive
                       ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
@@ -424,7 +451,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
                       <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-600/50 rotate-45"></div>
                     </div>
                   )}
-                </a>
+                </button>
               );
             })}
           </nav>
@@ -476,10 +503,15 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
 
+        {/* Feed Button - Mobile */}
         <div className="p-5 border-b border-gray-200 bg-gray-50">
           <button
             onClick={goToFeed}
-            className="w-full flex items-center space-x-3 hover:bg-[#12294c]/5 hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer"
+            className={`w-full flex items-center space-x-3 hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer ${
+              activeSection === "feed"
+                ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
+                : "text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] border-transparent hover:border-[#12294c]/10"
+            }`}
           >
             <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
               <MessageCircle className="w-5 h-5 text-white" />
@@ -506,7 +538,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
               return (
                 <div key={item.id} className="space-y-1">
                   <button
-                    onClick={() => toggleExpanded(item.id)}
+                    onClick={() => handleItemClick(undefined, item.id)}
                     className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer border hover:scale-105 active:scale-95 ${
                       isActive
                         ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
@@ -533,17 +565,17 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
                   {isExpanded && item.subItems && (
                     <div className="ml-8 space-y-1 border-l border-[#12294c]/10 pl-4">
                       {item.subItems.map((subItem) => (
-                        <a
+                        <button
                           key={subItem.id}
-                          href={subItem.href}
-                          className={`block px-3 py-2.5 rounded-lg text-sm transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 ${
+                          onClick={() => handleItemClick(subItem.href)}
+                          className={`block w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 ${
                             isSubItemActive(subItem.href)
                               ? "bg-[#12294c]/10 text-[#12294c] font-medium border border-[#12294c]/20"
                               : "text-gray-600 hover:text-[#12294c] hover:bg-[#12294c]/5"
                           }`}
                         >
                           {subItem.label}
-                        </a>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -552,9 +584,9 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
             }
 
             return (
-              <a
+              <button
                 key={item.id}
-                href={item.href}
+                onClick={() => handleItemClick(item.href)}
                 className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer border hover:scale-105 active:scale-95 ${
                   isActive
                     ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
@@ -567,7 +599,7 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
                   }`}
                 />
                 <span className="font-medium tracking-wide">{item.label}</span>
-              </a>
+              </button>
             );
           })}
         </nav>

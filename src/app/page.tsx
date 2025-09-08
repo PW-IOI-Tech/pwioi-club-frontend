@@ -38,9 +38,9 @@ export default function Home() {
           } else if (role === "STUDENT") {
             router.push("/dashboard/student");
           } else if (role === "ADMIN") {
-            router.push("/dashboard/superadmin/feed");
+            router.push("/dashboard/superadmin");
           } else {
-            router.push("/dashboard/superadmin/feed");
+            router.push("/dashboard/superadmin");
           }
         } else {
           router.push("/auth/student/login");
