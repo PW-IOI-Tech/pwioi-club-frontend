@@ -23,6 +23,7 @@ export default function EventManagement() {
   const [events, setEvents] = useState<TableEvent[]>([]);
   const [error, setError] = useState("");
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const typeMappingLocal: Record<string, string> = {
     workshop: "WORKSHOP",
@@ -36,6 +37,7 @@ export default function EventManagement() {
   const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/event`;
 
   const fetchEvents = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${API_BASE}/All`, { withCredentials: true });
       const rawEvents = res.data.data || [];
@@ -67,6 +69,8 @@ export default function EventManagement() {
       setEvents(filteredEvents);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to fetch events");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -205,10 +209,6 @@ export default function EventManagement() {
     );
   }
 
-  if (events.length === 0 && !error) {
-    return <ManagementShimmer />;
-  }
-
   return (
     <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto space-y-4">
@@ -265,26 +265,31 @@ export default function EventManagement() {
           </div>
         </div>
 
-        <Table
-          data={events}
-          title="Events Overview"
-          filterField="type"
-          badgeFields={["type"]}
-          selectFields={{
-            type: [
-              "hackathon",
-              "seminar",
-              "workshop",
-              "activity",
-              "club_event",
-            ],
-            isVisible: ["true", "false"],
-          }}
-          nonEditableFields={["id"]}
-          onDelete={handleDeleteEvent}
-          onEdit={handleUpdateEvent}
-          hiddenColumns={["id", "isVisible", "createdAt", "updatedAt"]}
-        />
+        {/* 👇 ONLY show shimmer for table while loading */}
+        {loading ? (
+          <TableShimmer />
+        ) : (
+          <Table
+            data={events}
+            title="Events Overview"
+            filterField="type"
+            badgeFields={["type"]}
+            selectFields={{
+              type: [
+                "hackathon",
+                "seminar",
+                "workshop",
+                "activity",
+                "club_event",
+              ],
+              isVisible: ["true", "false"],
+            }}
+            nonEditableFields={["id"]}
+            onDelete={handleDeleteEvent}
+            onEdit={handleUpdateEvent}
+            hiddenColumns={["id", "isVisible", "createdAt", "updatedAt"]}
+          />
+        )}
 
         <AddEventModal
           isOpen={isAddEventModalOpen}
@@ -296,60 +301,33 @@ export default function EventManagement() {
   );
 }
 
-export const ManagementShimmer = () => {
+export const TableShimmer = () => {
   return (
-    <div className="min-h-screen p-2">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Page Title Shimmer */}
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-300 rounded w-64 mb-2"></div>
-          <div className="h-4 bg-gray-300 rounded w-80 opacity-70"></div>
-        </div>
-
-        {/* Four Stat Cards Shimmer */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="bg-white border border-gray-300 rounded-sm overflow-hidden animate-pulse"
-            >
-              <div className="p-6 text-center space-y-3">
-                <div className="w-8 h-8 bg-gray-300 rounded-full mx-auto"></div>
-                <div className="h-4 bg-gray-300 rounded w-32 mx-auto"></div>
-                <div className="h-10 bg-gray-300 rounded w-20 mx-auto"></div>
+    <div className="bg-white rounded-sm border border-gray-400 overflow-hidden animate-pulse">
+      <div className="p-6 border-b border-gray-200">
+        <div className="h-6 bg-gray-300 rounded w-48"></div>
+      </div>
+      <div className="p-4">
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="grid grid-cols-12 gap-4 items-center">
+              <div className="col-span-3 h-4 bg-gray-300 rounded"></div>
+              <div className="col-span-3 h-4 bg-gray-300 rounded"></div>
+              <div className="col-span-2 h-4 bg-gray-300 rounded"></div>
+              <div className="col-span-2 h-8 bg-gray-300 rounded-full"></div>
+              <div className="col-span-2 flex justify-end space-x-2">
+                <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                <div className="w-8 h-8 bg-gray-300 rounded"></div>
               </div>
             </div>
           ))}
         </div>
-
-        {/* Table Shimmer */}
-        <div className="bg-white rounded-sm border border-gray-400 overflow-hidden animate-pulse">
-          <div className="p-6 border-b border-gray-200">
-            <div className="h-6 bg-gray-300 rounded w-48"></div>
-          </div>
-          <div className="p-4">
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="grid grid-cols-12 gap-4 items-center">
-                  <div className="col-span-3 h-4 bg-gray-300 rounded"></div>
-                  <div className="col-span-3 h-4 bg-gray-300 rounded"></div>
-                  <div className="col-span-2 h-4 bg-gray-300 rounded"></div>
-                  <div className="col-span-2 h-8 bg-gray-300 rounded-full"></div>
-                  <div className="col-span-2 flex justify-end space-x-2">
-                    <div className="w-8 h-8 bg-gray-300 rounded"></div>
-                    <div className="w-8 h-8 bg-gray-300 rounded"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-            <div className="h-4 bg-gray-300 rounded w-24"></div>
-            <div className="flex space-x-2">
-              <div className="w-8 h-8 bg-gray-300 rounded"></div>
-              <div className="w-8 h-8 bg-gray-300 rounded"></div>
-            </div>
-          </div>
+      </div>
+      <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+        <div className="h-4 bg-gray-300 rounded w-24"></div>
+        <div className="flex space-x-2">
+          <div className="w-8 h-8 bg-gray-300 rounded"></div>
+          <div className="w-8 h-8 bg-gray-300 rounded"></div>
         </div>
       </div>
     </div>

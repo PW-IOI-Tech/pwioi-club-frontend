@@ -31,7 +31,7 @@ function AdminCallbackContent() {
           localStorage.setItem("user", JSON.stringify(user));
 
           setTimeout(() => {
-            router.push("/dashboard/superadmin/feed");
+            router.push("/dashboard/superadmin");
           }, 1000);
         })
         .catch((err) => {

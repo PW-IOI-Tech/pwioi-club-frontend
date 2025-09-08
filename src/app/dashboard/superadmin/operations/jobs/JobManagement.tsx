@@ -5,7 +5,6 @@ import { Briefcase, Plus } from "lucide-react";
 import Table from "../../Table";
 import AddJobModal from "./AddJobModal";
 import axios from "axios";
-import { ManagementShimmer } from "../../people/admins/AdminManagement";
 
 interface TableJob {
   id: string;
@@ -60,10 +59,44 @@ const transformJobResponse = (job: any): TableJob => ({
     : "",
 });
 
+const TableShimmer = () => {
+  return (
+    <div className="bg-white rounded-sm border border-gray-400 overflow-hidden animate-pulse">
+      <div className="p-6 border-b border-gray-200">
+        <div className="h-6 bg-gray-300 rounded w-48"></div>
+      </div>
+      <div className="p-4">
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="grid grid-cols-12 gap-4 items-center">
+              <div className="col-span-3 h-4 bg-gray-300 rounded"></div>
+              <div className="col-span-3 h-4 bg-gray-300 rounded"></div>
+              <div className="col-span-2 h-4 bg-gray-300 rounded"></div>
+              <div className="col-span-2 h-8 bg-gray-300 rounded-full"></div>
+              <div className="col-span-2 flex justify-end space-x-2">
+                <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                <div className="w-8 h-8 bg-gray-300 rounded"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+        <div className="h-4 bg-gray-300 rounded w-24"></div>
+        <div className="flex space-x-2">
+          <div className="w-8 h-8 bg-gray-300 rounded"></div>
+          <div className="w-8 h-8 bg-gray-300 rounded"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function JobManagement() {
   const [jobs, setJobs] = useState<TableJob[]>([]);
   const [error, setError] = useState<string>("");
   const [isAddJobModalOpen, setIsAddJobModalOpen] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const statistics = useMemo(
     () => ({
@@ -74,6 +107,7 @@ export default function JobManagement() {
 
   useEffect(() => {
     const fetchJobs = async () => {
+      setLoading(true);
       try {
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/job/All`,
@@ -82,6 +116,8 @@ export default function JobManagement() {
         setJobs(res.data.data.map(transformJobResponse));
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to fetch jobs");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -161,48 +197,48 @@ export default function JobManagement() {
         </div>
       )}
 
-      {/* Content */}
-      {!error && jobs.length === 0 ? (
-        <ManagementShimmer />
-      ) : (
-        <div className="min-h-screen p-2">
-          <div className="max-w-7xl mx-auto space-y-4">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
-              Job Management
-            </h2>
+      {/* 👇 Always show this UI shell — even if loading or no jobs */}
+      <div className="min-h-screen p-2">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
+            Job Management
+          </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Total Jobs Card */}
-              <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
-                <div className="p-6 text-center">
-                  <Briefcase className="w-8 h-8 text-slate-900 mx-auto mb-2" />
-                  <h4 className="text-lg text-slate-900 mb-1">
-                    Total Jobs Listed
-                  </h4>
-                  <p className="text-5xl font-bold text-[#1B3A6A]">
-                    {statistics.totalJobs}
-                  </p>
-                </div>
-              </div>
-
-              {/* Add Job Button */}
-              <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 flex items-center justify-center p-6">
-                <button
-                  onClick={handleOpenAddModal}
-                  className="flex flex-col items-center justify-center w-full h-full text-slate-900 hover:text-slate-700 transition-colors cursor-pointer"
-                >
-                  <div className="bg-gray-200 rounded-full p-3 mb-2 hover:bg-gray-300 transition-colors">
-                    <Plus size={24} />
-                  </div>
-                  <h3 className="text-lg font-semibold">Add New Job</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Create a new job posting
-                  </p>
-                </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Total Jobs Card */}
+            <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
+              <div className="p-6 text-center">
+                <Briefcase className="w-8 h-8 text-slate-900 mx-auto mb-2" />
+                <h4 className="text-lg text-slate-900 mb-1">
+                  Total Jobs Listed
+                </h4>
+                <p className="text-5xl font-bold text-[#1B3A6A]">
+                  {statistics.totalJobs}
+                </p>
               </div>
             </div>
 
-            {/* Table */}
+            {/* Add Job Button */}
+            <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400 flex items-center justify-center p-6">
+              <button
+                onClick={handleOpenAddModal}
+                className="flex flex-col items-center justify-center w-full h-full text-slate-900 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <div className="bg-gray-200 rounded-full p-3 mb-2 hover:bg-gray-300 transition-colors">
+                  <Plus size={24} />
+                </div>
+                <h3 className="text-lg font-semibold">Add New Job</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Create a new job posting
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* 👇 Show shimmer while loading, else show table (even if empty) */}
+          {loading ? (
+            <TableShimmer />
+          ) : (
             <Table
               data={jobs}
               title="Jobs Overview"
@@ -217,16 +253,16 @@ export default function JobManagement() {
               onEdit={handleUpdateJob}
               hiddenColumns={["id"]}
             />
+          )}
 
-            {/* Add Job Modal */}
-            <AddJobModal
-              isOpen={isAddJobModalOpen}
-              onClose={handleCloseAddModal}
-              onJobCreated={handleAddJob}
-            />
-          </div>
+          {/* Add Job Modal */}
+          <AddJobModal
+            isOpen={isAddJobModalOpen}
+            onClose={handleCloseAddModal}
+            onJobCreated={handleAddJob}
+          />
         </div>
-      )}
+      </div>
     </>
   );
 }
