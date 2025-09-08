@@ -28,7 +28,12 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
   const { logout } = useAuth();
 
   const menuItems = [
-    { id: "home", label: "Home", icon: House, href: "/dashboard/superadmin" },
+    {
+      id: "home",
+      label: "Home",
+      icon: House,
+      href: "/dashboard/superadmin/home",
+    },
     {
       id: "people",
       label: "People Management",
@@ -187,12 +192,12 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
   ];
 
   const getActiveSection = () => {
-    if (pathname === "/dashboard/superadmin") return "home";
+    if (pathname === "/dashboard/superadmin") return "feed";
+    if (pathname === "/dashboard/superadmin/home") return "home";
     if (pathname.includes("/people/")) return "people";
     if (pathname.includes("/academic/")) return "academic";
     if (pathname.includes("/operations/")) return "operations";
     if (pathname.includes("/resources/")) return "resources";
-    if (pathname.includes("/feed")) return null;
     if (pathname.includes("/dashboard/")) return "dashboard";
     return null;
   };
@@ -248,7 +253,11 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
   };
 
   const goToFeed = () => {
-    router.push("/dashboard/superadmin/feed");
+    router.push("/dashboard/superadmin");
+  };
+
+  const goToHome = () => {
+    router.push("/dashboard/superadmin/home");
   };
 
   return (
@@ -311,6 +320,10 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
               onClick={goToFeed}
               className={`w-full flex items-center hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer ${
                 isSidebarExpanded ? "space-x-3" : "justify-center"
+              } ${
+                activeSection === "feed"
+                  ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
+                  : "text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] border-transparent hover:border-[#12294c]/10"
               }`}
             >
               <div className="p-3 bg-[#12294c] rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
@@ -476,10 +489,15 @@ const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
 
+        {/* Feed Button - Mobile */}
         <div className="p-5 border-b border-gray-200 bg-gray-50">
           <button
             onClick={goToFeed}
-            className="w-full flex items-center space-x-3 hover:bg-[#12294c]/5 hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer"
+            className={`w-full flex items-center space-x-3 hover:scale-105 active:scale-95 rounded-xl p-2 transition-all duration-200 cursor-pointer ${
+              activeSection === "feed"
+                ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
+                : "text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] border-transparent hover:border-[#12294c]/10"
+            }`}
           >
             <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
               <MessageCircle className="w-5 h-5 text-white" />

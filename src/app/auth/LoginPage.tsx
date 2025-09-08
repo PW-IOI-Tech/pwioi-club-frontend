@@ -96,7 +96,7 @@ function LoginContent({ userType }: LoginContentProps) {
               );
 
               if (typeFromUrl === "admin") {
-                router.push("/dashboard/superadmin/feed");
+                router.push("/dashboard/superadmin");
               } else {
                 router.push(`/dashboard/${typeFromUrl}`);
               }

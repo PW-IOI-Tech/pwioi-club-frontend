@@ -13,7 +13,7 @@ import {
   FileImage,
 } from "lucide-react";
 
-import { PostShimmer } from "../superadmin/feed/Feed";
+import { PostShimmer } from "../superadmin/Feed";
 
 interface User {
   teacherId: string;
