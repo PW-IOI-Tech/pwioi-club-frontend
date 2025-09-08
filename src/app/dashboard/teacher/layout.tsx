@@ -49,7 +49,17 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { logout } = useAuth();
 
+  const handleNavigationClick = (href: string) => {
+    if (!isSidebarExpanded) {
+      setIsSidebarExpanded(true);
+    }
+    router.push(href);
+  };
+
   const handleCodingPlatformRedirect = () => {
+    if (!isSidebarExpanded) {
+      setIsSidebarExpanded(true);
+    }
     router.push("/codelab");
   };
 
@@ -189,7 +199,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
       <button
         id="mobile-menu-button"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 right-4 z-50 p-3 bg-white text-[#12294c] rounded-xl shadow-lg scale-75 transition-all duration-200 border border-[#12294] cursor-pointer"
+        className="lg:hidden fixed top-4 right-4 z-50 p-3 bg-white text-[#12294c] rounded-xl shadow-lg scale-75 transition-all duration-200 border border-[#12294c]/20 cursor-pointer"
         aria-label="Toggle menu"
       >
         {isMobileMenuOpen ? (
@@ -266,15 +276,14 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
               const isActive = activeSection === item.id;
 
               return (
-                <a
+                <button
                   key={item.id}
-                  href={item.href}
+                  onClick={() => handleNavigationClick(item.href)}
                   className={`flex items-center space-x-3 px-3 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border hover:scale-105 active:scale-95 ${
                     isActive
                       ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
                       : "text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] border-transparent hover:border-[#12294c]/10"
                   }`}
-                  title={!isSidebarExpanded ? item.label : undefined}
                 >
                   <Icon
                     className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
@@ -286,13 +295,8 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
                       {item.label}
                     </span>
                   )}
-                  {!isSidebarExpanded && (
-                    <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-xl border border-gray-600/50 scale-95 group-hover:scale-100">
-                      {item.label}
-                      <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-600/50 rotate-45"></div>
-                    </div>
-                  )}
-                </a>
+                  {/* ✅ TOOLTIP REMOVED — no more floating label */}
+                </button>
               );
             })}
           </nav>
@@ -302,8 +306,12 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
               className={`w-full flex items-center text-gray-600 hover:bg-[#12294c]/5 hover:text-[#12294c] hover:scale-105 active:scale-95 py-2.5 px-3 rounded-xl transition-all duration-200 ease-in-out cursor-pointer group relative border border-transparent hover:border-[#12294c]/10 ${
                 !isSidebarExpanded ? "justify-center" : "space-x-3"
               }`}
-              onClick={() => setIsProfileSidebarOpen(true)}
-              title={!isSidebarExpanded ? "Profile" : undefined}
+              onClick={() => {
+                if (!isSidebarExpanded) {
+                  setIsSidebarExpanded(true);
+                }
+                setIsProfileSidebarOpen(true);
+              }}
             >
               <div className="w-9 h-9 rounded-xl bg-[#12294c] flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200">
                 <User className="w-4 h-4 text-white" />
@@ -318,12 +326,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
                   </p>
                 </div>
               )}
-              {!isSidebarExpanded && (
-                <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-50 shadow-xl border border-gray-600/50 scale-95 group-hover:scale-100">
-                  Profile
-                  <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900 border-l border-t border-gray-600/50 rotate-45"></div>
-                </div>
-              )}
+              {/* ✅ TOOLTIP REMOVED — no more floating label */}
             </button>
           </div>
         </div>
@@ -497,9 +500,12 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
             const isActive = activeSection === item.id;
 
             return (
-              <a
+              <button
                 key={item.id}
-                href={item.href}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleNavigationClick(item.href);
+                }}
                 className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl transition-all duration-200 ease-in-out cursor-pointer border hover:scale-105 active:scale-95 ${
                   isActive
                     ? "bg-[#12294c]/10 text-[#12294c] shadow-md border-[#12294c]/20 backdrop-blur-sm"
@@ -512,7 +518,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
                   }`}
                 />
                 <span className="font-medium tracking-wide">{item.label}</span>
-              </a>
+              </button>
             );
           })}
         </nav>
