@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
 
 const StudentLayout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -346,13 +347,13 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
               Quick Actions
             </h3>
             <nav className="space-y-2">
-              <a
+              <Link
                 href="/dashboard/student/profile"
                 className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-gray-700 hover:bg-[#12294c] hover:text-white hover:scale-105 active:scale-95 rounded-lg transition-all duration-200 border border-transparent hover:border-[#12294c] shadow-sm hover:shadow-md text-sm cursor-pointer group"
               >
                 <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
                 <span className="font-medium">My Profile</span>
-              </a>
+              </Link>
 
               <button
                 onClick={handleCodingPlatformRedirect}
