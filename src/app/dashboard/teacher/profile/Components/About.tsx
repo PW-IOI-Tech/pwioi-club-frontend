@@ -104,10 +104,10 @@ const About: React.FC<any> = ({ aboutDetails }) => {
         ) : (
           <button
             onClick={handleAddAbout}
-            className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-blue-500 hover:bg-blue-50 transition-all group cursor-pointer"
+            className="w-full p-4 border-2 border-dashed border-gray-300 rounded-sm text-center hover:border-[#12294c] hover:bg-blue-50 transition-all group cursor-pointer"
           >
-            <Plus className="w-5 h-5 text-gray-400 group-hover:text-blue-600 mx-auto mb-1" />
-            <span className="text-sm text-gray-600 group-hover:text-blue-600 font-medium">
+            <Plus className="w-5 h-5 text-gray-400 group-hover:text-[#12294c] mx-auto mb-1" />
+            <span className="text-sm text-gray-600 group-hover:text-[#12294c] font-medium">
               Add About Section
             </span>
           </button>

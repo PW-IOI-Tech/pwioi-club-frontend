@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Users, Plus } from "lucide-react";
+import { Users, Plus, ChevronDown } from "lucide-react";
 import Table from "../../Table";
 import AddClubModal from "./AddClubModal";
 import axios from "axios";
@@ -219,7 +219,7 @@ export default function ClubManagement() {
   }, [selectedLocation]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         <h2 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
           Club Management
@@ -247,6 +247,7 @@ export default function ClubManagement() {
                 </option>
               ))}
             </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
 

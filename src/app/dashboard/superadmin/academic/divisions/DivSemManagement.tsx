@@ -466,7 +466,7 @@ export default function DivSemManagement() {
         <p>{error}</p>
         <button
           onClick={() => setError("")}
-          className="mt-2 px-4 py-2 bg-[#1B3A6A] text-white rounded-lg hover:bg-[#122A4E]"
+          className="mt-2 px-4 py-2 bg-[#1B3A6A] text-white rounded-lg hover:bg-[#122A4E] cursor-pointer"
         >
           Dismiss
         </button>
@@ -495,7 +495,7 @@ export default function DivSemManagement() {
                 id="center"
                 value={selectedCenter}
                 onChange={(e) => handleCenterChange(e.target.value)}
-                className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm"
+                className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white appearance-none text-sm cursor-pointer"
               >
                 <option value="">Select Center</option>
                 {centers.map((c) => (
@@ -520,7 +520,7 @@ export default function DivSemManagement() {
                   ${
                     !selectedCenter || loadingSchools
                       ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                      : "bg-white text-gray-900"
+                      : "bg-white text-gray-900 cursor-pointer"
                   }
                 `}
               >
@@ -550,7 +550,7 @@ export default function DivSemManagement() {
                   ${
                     !selectedSchool || loadingBatches
                       ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                      : "bg-white text-gray-900"
+                      : "bg-white text-gray-900 cursor-pointer"
                   }
                 `}
               >
@@ -578,7 +578,7 @@ export default function DivSemManagement() {
             <div className="flex justify-end">
               <button
                 onClick={handleOpenAddDivisionModal}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-sm hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 <Plus size={16} />
                 Add Division
@@ -588,7 +588,6 @@ export default function DivSemManagement() {
             <Table
               data={filteredDivisions}
               title="Divisions"
-              filterField="code"
               nonEditableFields={[
                 "id",
                 "semesterCount",
@@ -623,7 +622,7 @@ export default function DivSemManagement() {
               <div className="flex justify-end mt-6">
                 <button
                   onClick={handleOpenAddSemesterModal}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-sm hover:bg-green-600 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-sm hover:bg-green-600 transition-colors cursor-pointer"
                 >
                   <Plus size={16} />
                   Add Semester
@@ -644,7 +643,6 @@ export default function DivSemManagement() {
                         ?.code || sem.division,
                   }))}
                 title="Semesters"
-                filterField="division"
                 nonEditableFields={["id"]}
                 onDelete={handleDeleteSemester}
                 onEdit={handleUpdateSemester}

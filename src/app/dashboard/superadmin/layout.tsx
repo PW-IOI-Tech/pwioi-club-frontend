@@ -21,7 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 
 const SuperAdminLayout = ({ children }: { children: React.ReactNode }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();

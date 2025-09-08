@@ -496,20 +496,34 @@ export default function UploadSection({}: UploadSectionProps) {
                   onChange={(e) => {
                     setSelectedSchool(e.target.value);
                   }}
-                  disabled={!selectedCenter}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                  disabled={!selectedCenter || loadingSchools}
+                  className={`w-full px-3 py-2 pr-10 border rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none cursor-pointer transition-colors ${
+                    !selectedCenter || loadingSchools
+                      ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
+                      : "bg-white border-gray-300 text-gray-800"
+                  }`}
                 >
-                  <option value="">Select School</option>
-                  {schools?.map((option, index) => (
-                    <option key={index} value={option.id}>
-                      {option.name}
+                  {loadingSchools ? (
+                    <option value="" disabled>
+                      Loading schools...
                     </option>
-                  ))}
+                  ) : (
+                    <>
+                      <option value="">Select School</option>
+                      {schools?.map((option, index) => (
+                        <option key={index} value={option.id}>
+                          {option.name}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedCenter ? "text-gray-300" : "text-gray-400"
+                    !selectedCenter || loadingSchools
+                      ? "text-gray-300"
+                      : "text-gray-400"
                   }`}
                 />
               </div>
@@ -526,20 +540,34 @@ export default function UploadSection({}: UploadSectionProps) {
                   onChange={(e) => {
                     setSelectedBatch(e.target.value);
                   }}
-                  disabled={!selectedSchool}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                  disabled={!selectedSchool || loadingBatches}
+                  className={`w-full px-3 py-2 pr-10 border rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none cursor-pointer transition-colors ${
+                    !selectedSchool || loadingBatches
+                      ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
+                      : "bg-white border-gray-300 text-gray-800"
+                  }`}
                 >
-                  <option value="">Select Batch</option>
-                  {batches?.map((option, index) => (
-                    <option key={index} value={option.id}>
-                      {option.name}
+                  {loadingBatches ? (
+                    <option value="" disabled>
+                      Loading batches...
                     </option>
-                  ))}
+                  ) : (
+                    <>
+                      <option value="">Select Batch</option>
+                      {batches?.map((option, index) => (
+                        <option key={index} value={option.id}>
+                          {option.name}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedSchool ? "text-gray-300" : "text-gray-400"
+                    !selectedSchool || loadingBatches
+                      ? "text-gray-300"
+                      : "text-gray-400"
                   }`}
                 />
               </div>
@@ -556,20 +584,34 @@ export default function UploadSection({}: UploadSectionProps) {
                   onChange={(e) => {
                     setSelectedDivision(e.target.value);
                   }}
-                  disabled={!selectedBatch}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                  disabled={!selectedBatch || loadingDivisions}
+                  className={`w-full px-3 py-2 pr-10 border rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none cursor-pointer transition-colors ${
+                    !selectedBatch || loadingDivisions
+                      ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
+                      : "bg-white border-gray-300 text-gray-800"
+                  }`}
                 >
-                  <option value="">Select Division</option>
-                  {divisions?.map((option, index) => (
-                    <option key={index} value={option.id}>
-                      {option.code}
+                  {loadingDivisions ? (
+                    <option value="" disabled>
+                      Loading divisions...
                     </option>
-                  ))}
+                  ) : (
+                    <>
+                      <option value="">Select Division</option>
+                      {divisions?.map((option, index) => (
+                        <option key={index} value={option.id}>
+                          {option.code}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedBatch ? "text-gray-300" : "text-gray-400"
+                    !selectedBatch || loadingDivisions
+                      ? "text-gray-300"
+                      : "text-gray-400"
                   }`}
                 />
               </div>
@@ -586,20 +628,34 @@ export default function UploadSection({}: UploadSectionProps) {
                   onChange={(e) => {
                     setSelectedSemester(e.target.value);
                   }}
-                  disabled={!selectedDivision}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                  disabled={!selectedDivision || loadingSemesters}
+                  className={`w-full px-3 py-2 pr-10 border rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none cursor-pointer transition-colors ${
+                    !selectedDivision || loadingSemesters
+                      ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
+                      : "bg-white border-gray-300 text-gray-800"
+                  }`}
                 >
-                  <option value="">Select Semester</option>
-                  {semesters?.map((option, index) => (
-                    <option key={index} value={option.id}>
-                      {option.number}
+                  {loadingSemesters ? (
+                    <option value="" disabled>
+                      Loading semesters...
                     </option>
-                  ))}
+                  ) : (
+                    <>
+                      <option value="">Select Semester</option>
+                      {semesters?.map((option, index) => (
+                        <option key={index} value={option.id}>
+                          {option.number}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedDivision ? "text-gray-300" : "text-gray-400"
+                    !selectedDivision || loadingSemesters
+                      ? "text-gray-300"
+                      : "text-gray-400"
                   }`}
                 />
               </div>
@@ -616,20 +672,34 @@ export default function UploadSection({}: UploadSectionProps) {
                   onChange={(e) => {
                     setSelectedSubject(e.target.value);
                   }}
-                  disabled={!selectedSemester}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                  disabled={!selectedSemester || loadingSubjects}
+                  className={`w-full px-3 py-2 pr-10 border rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none cursor-pointer transition-colors ${
+                    !selectedSemester || loadingSubjects
+                      ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
+                      : "bg-white border-gray-300 text-gray-800"
+                  }`}
                 >
-                  <option value="">Select Subject</option>
-                  {subjects?.map((option, index) => (
-                    <option key={index} value={option.id}>
-                      {option.name}
+                  {loadingSubjects ? (
+                    <option value="" disabled>
+                      Loading subjects...
                     </option>
-                  ))}
+                  ) : (
+                    <>
+                      <option value="">Select Subject</option>
+                      {subjects?.map((option, index) => (
+                        <option key={index} value={option.id}>
+                          {option.name}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedSemester ? "text-gray-300" : "text-gray-400"
+                    !selectedSemester || loadingSubjects
+                      ? "text-gray-300"
+                      : "text-gray-400"
                   }`}
                 />
               </div>
@@ -646,25 +716,40 @@ export default function UploadSection({}: UploadSectionProps) {
                   onChange={(e) => {
                     setSelectedExamType(e.target.value);
                   }}
-                  disabled={!selectedSubject}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                  disabled={!selectedSubject || loadingExams}
+                  className={`w-full px-3 py-2 pr-10 border rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none cursor-pointer transition-colors ${
+                    !selectedSubject || loadingExams
+                      ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
+                      : "bg-white border-gray-300 text-gray-800"
+                  }`}
                 >
-                  <option value="">Select Exam Type</option>
-                  {examType?.map((option: any) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                  {loadingExams ? (
+                    <option value="" disabled>
+                      Loading exam types...
                     </option>
-                  ))}
+                  ) : (
+                    <>
+                      <option value="">Select Exam Type</option>
+                      {examType?.map((option: any) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedSubject ? "text-gray-300" : "text-gray-400"
+                    !selectedSubject || loadingExams
+                      ? "text-gray-300"
+                      : "text-gray-400"
                   }`}
                 />
               </div>
             </div>
 
+            {/* Exam Name */}
             <div>
               <label className="block font-medium text-gray-700 mb-2">
                 Exam Name
@@ -673,20 +758,36 @@ export default function UploadSection({}: UploadSectionProps) {
                 <select
                   value={selectedExamName}
                   onChange={(e) => setSelectedExamName(e.target.value)}
-                  disabled={!selectedExamType}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white cursor-pointer"
+                  disabled={!selectedExamType || loadingExams}
+                  className={`w-full px-3 py-2 pr-10 border rounded-sm focus:ring-2 focus:ring-[#1B3A6A] focus:border-transparent appearance-none cursor-pointer transition-colors ${
+                    !selectedExamType || loadingExams
+                      ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
+                      : "bg-white border-gray-300 text-gray-800"
+                  }`}
                 >
-                  <option value="">Select Exam Name</option>
-                  {examName?.map((option: any) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                  {loadingExams ? (
+                    <option value="" disabled>
+                      Loading exams...
                     </option>
-                  ))}
+                  ) : (
+                    <>
+                      <option value="">Select Exam Name</option>
+                      {examName
+                        ?.filter((e: any) => e.type === selectedExamType)
+                        .map((option: any) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                    </>
+                  )}
                 </select>
                 <ChevronDown
                   size={16}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none ${
-                    !selectedExamType ? "text-gray-300" : "text-gray-400"
+                    !selectedExamType || loadingExams
+                      ? "text-gray-300"
+                      : "text-gray-400"
                   }`}
                 />
               </div>

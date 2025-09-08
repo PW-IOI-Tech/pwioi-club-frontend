@@ -39,7 +39,7 @@ interface UserData {
 }
 
 const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
   const [userDetails, setUserDetails] = useState<UserData | null>(null);
@@ -189,7 +189,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
       <button
         id="mobile-menu-button"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 right-4 z-50 p-3 bg-[#12294c] text-white rounded-xl shadow-lg hover:bg-[#12294c]/90 hover:scale-105 active:scale-95 transition-all duration-200 border border-[#12294c]/20 cursor-pointer"
+        className="lg:hidden fixed top-4 right-4 z-50 p-3 bg-white text-[#12294c] rounded-xl shadow-lg scale-75 transition-all duration-200 border border-[#12294] cursor-pointer"
         aria-label="Toggle menu"
       >
         {isMobileMenuOpen ? (
@@ -464,7 +464,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="p-6 border-b border-gray-200 bg-gray-50">
           <div className="cursor-pointer hover:opacity-80 transition-opacity duration-200">
             <Image
-              src="/PWIOILogo.webp"
+              src="/PWIOILogoBlack.png"
               alt="PW IOI Logo"
               width={160}
               height={0}

@@ -95,8 +95,6 @@ interface ReportModalProps {
   onSubmit: () => void;
 }
 
-// --- COMPONENTS ---
-
 const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ userName }) => (
   <div className="bg-[#12294c] rounded-sm shadow-sm border border-gray-400 p-6 py-8">
     <h1 className="text-2xl md:text-3xl text-white mb-2">
@@ -151,7 +149,6 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
       const { uploadUrl, key } = data;
       await fetch(uploadUrl, { method: "PUT", body: file });
 
-      // Calculate duration for videos
       let duration = null;
       if (type === "video") {
         duration = await getVideoDuration(file);
@@ -162,7 +159,7 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
         {
           type: type.toUpperCase(),
           mime_type: file.type,
-          s3_key: key, // Changed from 'key' to 's3_key'
+          s3_key: key,
           thumbnail_url: null,
           duration: duration,
         },
@@ -460,11 +457,6 @@ const PostActions: React.FC<PostActionsProps> = ({
   const isLiked = likedPosts.has(post.id);
   const totalLikes = post.likes + (isLiked ? 1 : 0);
 
-  const mockLikedBy = post.likedBy || [
-    { id: "1", name: "John Doe", avatar: "👤" },
-    { id: "2", name: "Jane Smith", avatar: "👩" },
-  ];
-
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
@@ -634,37 +626,6 @@ const PostActions: React.FC<PostActionsProps> = ({
                 View all {totalComments} comments
               </button>
             )}
-          </div>
-        </div>
-      )}
-
-      {showLikesModal && (
-        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 max-h-96 overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold">Likes</h3>
-              <button
-                onClick={() => setShowLikesModal(false)}
-                className="p-1 hover:bg-gray-100 rounded-full cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="overflow-y-auto max-h-80">
-              {mockLikedBy.slice(0, totalLikes).map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center space-x-3 p-4 hover:bg-gray-50"
-                >
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    {user.avatar || "👤"}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">{user.name}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       )}

@@ -247,7 +247,7 @@ const AttendanceTracker: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-white/25 to-indigo-50/25 p-3 w-1/4 rounded-sm border border-gray-200/25 backdrop-blur-sm">
+            <div className="bg-gradient-to-br from-white/25 to-indigo-50/25 p-3 sm:w-1/4 rounded-sm border border-gray-200/25 backdrop-blur-sm w-full">
               <label className="block text-xs font-medium text-gray-100 mb-2">
                 Academic Term
               </label>
