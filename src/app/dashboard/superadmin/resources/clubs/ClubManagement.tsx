@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Users, Plus } from "lucide-react";
+import { Users, Plus, ChevronDown } from "lucide-react";
 import Table from "../../Table";
 import AddClubModal from "./AddClubModal";
 import axios from "axios";
@@ -247,6 +247,7 @@ export default function ClubManagement() {
                 </option>
               ))}
             </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
 

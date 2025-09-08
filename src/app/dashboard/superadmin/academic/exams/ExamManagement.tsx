@@ -29,6 +29,28 @@ const formatDate = (date: string) => {
   });
 };
 
+const mapExamType = (type: TableExam["examType"]) => {
+  const map: Record<TableExam["examType"], string> = {
+    Midterm: "INTERNAL_ASSESSMENT",
+    Final: "END_SEM",
+    Quiz: "FORTNIGHTLY",
+    Assignment: "PROJECT",
+    Practical: "INTERVIEW",
+  };
+  return map[type];
+};
+
+const reverseMapExamType = (apiType: string): TableExam["examType"] => {
+  const reverseMap: Record<string, TableExam["examType"]> = {
+    INTERNAL_ASSESSMENT: "Midterm",
+    END_SEM: "Final",
+    FORTNIGHTLY: "Quiz",
+    PROJECT: "Assignment",
+    INTERVIEW: "Practical",
+  };
+  return reverseMap[apiType] || "Quiz";
+};
+
 export default function ExamManagement() {
   const [centers, setCenters] = useState<any[]>([]);
   const [schools, setSchools] = useState<any[]>([]);
@@ -190,7 +212,20 @@ export default function ExamManagement() {
           { withCredentials: true }
         );
 
-        const examsData = res.data.data?.exams || [];
+        const examsData = (res.data.data?.exams || []).map((exam: any) => ({
+          id: exam.id,
+          examName: exam.name,
+          weightage: exam.weightage,
+          maxMarks: exam.full_marks || 0,
+          passingMarks: exam.passing_marks || 0,
+          examType: reverseMapExamType(exam.exam_type),
+          date: exam.exam_date || "",
+          school: exam.school?.name || "",
+          batch: exam.batch?.name || "",
+          division: exam.division?.name || "",
+          semester: exam.semester?.number || exam.semester || 0,
+        }));
+
         setExams(examsData);
         setFilteredExams(examsData);
       } catch (err: any) {
@@ -220,17 +255,6 @@ export default function ExamManagement() {
     [filteredExams]
   );
 
-  const mapExamType = (type: TableExam["examType"]) => {
-    const map: Record<TableExam["examType"], string> = {
-      Midterm: "INTERNAL_ASSESSMENT",
-      Final: "END_SEM",
-      Quiz: "FORTNIGHTLY",
-      Assignment: "PROJECT",
-      Practical: "INTERVIEW",
-    };
-    return map[type];
-  };
-
   const handleAddExam = useCallback(
     async (
       newExamData: Omit<
@@ -252,11 +276,6 @@ export default function ExamManagement() {
           exam_type: mapExamType(newExamData.examType),
           exam_date: newExamData.date,
           subject_id: newExamData.subjectId,
-          school: selectedSchool,
-          batch: selectedBatch,
-          division: selectedDivision,
-          semester: parseInt(selectedSemester),
-          subjectId: selectedSubject,
         };
 
         const res = await axios.post(
@@ -265,8 +284,22 @@ export default function ExamManagement() {
           { withCredentials: true }
         );
 
-        setExams((prev) => [...prev, res.data.data]);
-        setFilteredExams((prev) => [...prev, res.data.data]);
+        const createdExam: TableExam = {
+          id: res.data.data.id,
+          examName: res.data.data.name,
+          weightage: res.data.data.weightage,
+          maxMarks: res.data.data.full_marks,
+          passingMarks: res.data.data.passing_marks,
+          examType: reverseMapExamType(res.data.data.exam_type),
+          date: res.data.data.exam_date,
+          school: selectedSchool,
+          batch: selectedBatch,
+          division: selectedDivision,
+          semester: parseInt(selectedSemester),
+        };
+
+        setExams((prev) => [...prev, createdExam]);
+        setFilteredExams((prev) => [...prev, createdExam]);
         setIsAddExamModalOpen(false);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to add exam");
@@ -285,16 +318,36 @@ export default function ExamManagement() {
     const updatedExam = item as TableExam;
     const updateExam = async () => {
       try {
+        const payload = {
+          name: updatedExam.examName,
+          weightage: updatedExam.weightage,
+          full_marks: updatedExam.maxMarks,
+          passing_marks: updatedExam.passingMarks,
+          exam_type: mapExamType(updatedExam.examType),
+          exam_date: updatedExam.date,
+        };
+
         const res = await axios.patch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/exams/${updatedExam.id}`,
-          updatedExam,
+          payload,
           { withCredentials: true }
         );
+
+        const mappedExam: TableExam = {
+          ...updatedExam,
+          examName: res.data.data.name,
+          weightage: res.data.data.weightage,
+          maxMarks: res.data.data.full_marks,
+          passingMarks: res.data.data.passing_marks,
+          examType: reverseMapExamType(res.data.data.exam_type),
+          date: res.data.data.exam_date,
+        };
+
         setExams((prev) =>
-          prev.map((e) => (e.id === updatedExam.id ? res.data.data : e))
+          prev.map((e) => (e.id === updatedExam.id ? mappedExam : e))
         );
         setFilteredExams((prev) =>
-          prev.map((e) => (e.id === updatedExam.id ? res.data.data : e))
+          prev.map((e) => (e.id === updatedExam.id ? mappedExam : e))
         );
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to update exam");
@@ -465,7 +518,7 @@ export default function ExamManagement() {
           </div>
 
           {!allFiltersSelected && (
-            <div className="text-gray-200 rounded-sm">
+            <div className="text-gray-200 rounded-sm mt-2">
               <p className="text-sm">
                 * Please select all filters to view and manage exams.
               </p>
