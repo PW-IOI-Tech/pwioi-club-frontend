@@ -90,20 +90,21 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
       errors.name = "Name must be at least 2 characters";
     }
 
+    const EMAIL_REGEX =
+      /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/;
+
     if (!formData.email.trim()) {
       errors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = "Please enter a valid email address";
+    } else if (!EMAIL_REGEX.test(formData.email)) {
+      errors.email = "Invalid email format";
     }
+
+    const cleanPhone = formData.phoneNumber.replace(/\D/g, "");
 
     if (!formData.phoneNumber.trim()) {
       errors.phoneNumber = "Phone number is required";
-    } else if (
-      !/^[\+]?[1-9][\d]{0,15}$/.test(
-        formData.phoneNumber.replace(/[\s\-\(\)]/g, "")
-      )
-    ) {
-      errors.phoneNumber = "Please enter a valid phone number";
+    } else if (cleanPhone.length < 10) {
+      errors.phoneNumber = "Phone number must be at least 10 digits";
     }
 
     if (!formData.designation.trim()) {
@@ -116,9 +117,12 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
 
     if (
       formData.linkedinLink &&
-      !formData.linkedinLink.includes("linkedin.com")
+      !/^(https?:\/\/)?(www\.)?linkedin\.com\/(in|company|school)\/[a-zA-Z0-9_-]+\/?$/.test(
+        formData.linkedinLink
+      )
     ) {
-      errors.linkedinLink = "Please enter a valid LinkedIn URL";
+      errors.linkedinLink =
+        "Please enter a valid LinkedIn URL (e.g., linkedin.com/in/username)";
     }
 
     setFormErrors(errors);

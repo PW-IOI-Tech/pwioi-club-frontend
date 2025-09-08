@@ -51,7 +51,7 @@ const Table: React.FC<TableProps> = ({
   filterField,
   onEdit,
   onDelete,
-  rowsPerPage = 5,
+  rowsPerPage = 10,
   searchPlaceholder = "Search...",
   filterPlaceholder = "All",
   columnConfig = {},

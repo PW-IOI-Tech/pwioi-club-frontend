@@ -62,18 +62,21 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
       errors.name = "Name must be at least 2 characters";
     }
 
+    const EMAIL_REGEX =
+      /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/;
+
     if (!formData.email.trim()) {
       errors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = "Please enter a valid email address";
+    } else if (!EMAIL_REGEX.test(formData.email)) {
+      errors.email = "A valid email is required";
     }
+
+    const cleanPhone = formData.phone.replace(/\D/g, "");
 
     if (!formData.phone.trim()) {
       errors.phone = "Phone number is required";
-    } else if (
-      !/^[\+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/[\s\-\(\)]/g, ""))
-    ) {
-      errors.phone = "Please enter a valid phone number";
+    } else if (cleanPhone.length < 10) {
+      errors.phone = "Phone number must be at least 10 digits";
     }
 
     if (!formData.designation.trim()) {
@@ -86,8 +89,38 @@ const AddMentorModal: React.FC<AddMentorModalProps> = ({
 
     if (!formData.linkedin.trim()) {
       errors.linkedin = "LinkedIn URL is required";
-    } else if (!formData.linkedin.includes("linkedin.com")) {
-      errors.linkedin = "Please enter a valid LinkedIn URL";
+    } else {
+      let urlToTest = formData.linkedin.trim();
+
+      if (
+        !urlToTest.startsWith("http://") &&
+        !urlToTest.startsWith("https://")
+      ) {
+        urlToTest = "https://" + urlToTest;
+      }
+
+      try {
+        const url = new URL(urlToTest);
+
+        if (
+          !url.hostname.endsWith("linkedin.com") &&
+          !/^linkedin\.[a-z]{2,}$/.test(url.hostname)
+        ) {
+          errors.linkedin =
+            "URL must be from linkedin.com or its regional domains (e.g., linkedin.in)";
+        }
+
+        if (
+          !url.pathname.startsWith("/in/") &&
+          !url.pathname.startsWith("/company/") &&
+          !url.pathname.startsWith("/school/")
+        ) {
+          errors.linkedin =
+            "Please enter a valid LinkedIn profile or page URL (e.g., linkedin.com/in/username)";
+        }
+      } catch {
+        errors.linkedin = "Please enter a valid URL";
+      }
     }
 
     setFormErrors(errors);

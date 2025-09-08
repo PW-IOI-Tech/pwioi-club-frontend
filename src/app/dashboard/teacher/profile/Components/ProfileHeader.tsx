@@ -21,8 +21,8 @@ const TeacherProfileHeader = () => {
     <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-200 p-6 mb-6">
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-6">
-          <div className="w-24 h-24 bg-gradient-to-br from-blue-700 to-blue-800 rounded-xl flex items-center justify-center shadow-lg">
-            <User className="w-12 h-12 text-white" />
+          <div className="w-24 h-24 bg-white/75 text-[#12294c] rounded-xl flex items-center justify-center shadow-lg">
+            <User className="w-12 h-12" />
           </div>
           <div className="flex-1">
             <div className="mb-3">
