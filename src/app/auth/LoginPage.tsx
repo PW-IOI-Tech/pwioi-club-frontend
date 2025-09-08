@@ -1,8 +1,11 @@
 "use client";
-import { useState, Suspense } from "react";
-import { ToastContainer } from "react-toastify";
+
+import { useState, useEffect, Suspense } from "react";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Image from "next/image";
+import axios from "axios";
+import { useRouter, useParams } from "next/navigation";
 
 interface LoginContentProps {
   userType: "admin" | "student" | "teacher";
@@ -10,9 +13,15 @@ interface LoginContentProps {
 
 function LoginContent({ userType }: LoginContentProps) {
   const [isLoading, _setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  const router = useRouter();
+  const params = useParams();
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
   const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL!;
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
   const redirectUri = `${frontendUrl}/auth/${userType}/callback`;
 
@@ -58,6 +67,77 @@ function LoginContent({ userType }: LoginContentProps) {
     return `${userType.charAt(0).toUpperCase() + userType.slice(1)} Login`;
   };
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
+
+      if (!accessToken || !refreshToken) {
+        setIsAuthenticated(false);
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      try {
+        const res = await axios.get(`${backendUrl}/api/auth/me`, {
+          withCredentials: true,
+        });
+
+        if (res.data?.success) {
+          const typeFromUrl =
+            (params?.userType as "admin" | "teacher" | "student") || userType;
+
+          if (res.data?.data?.user?.role === typeFromUrl.toUpperCase()) {
+            try {
+              await axios.post(
+                `${backendUrl}/api/auth/refresh-token`,
+                { token: refreshToken },
+                { withCredentials: true }
+              );
+
+              if (typeFromUrl === "admin") {
+                router.push("/dashboard/superadmin/feed");
+              } else {
+                router.push(`/dashboard/${typeFromUrl}`);
+              }
+
+              setIsAuthenticated(true);
+            } catch (refreshErr) {
+              console.error("Refresh token failed:", refreshErr);
+              toast.error("Session expired. Please login again.");
+              setIsAuthenticated(false);
+            }
+          } else {
+            toast.error(
+              "Unauthorized role. Please login with correct account."
+            );
+            setIsAuthenticated(false);
+          }
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (err) {
+        console.error("Auth check failed:", err);
+        setIsAuthenticated(false);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [backendUrl, params, router, userType]);
+
+  if (isCheckingAuth && !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#fafafa]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[#fafafa]">
       <ToastContainer
@@ -85,6 +165,7 @@ function LoginContent({ userType }: LoginContentProps) {
             alt="Login Image"
           />
         </div>
+
         <div className="text-center mb-4">
           <h1 className="text-3xl font-bold text-black">{getTitle()}</h1>
           <p className="text-gray-600 text-sm">
