@@ -12,7 +12,7 @@ interface ColumnConfig {
   key: string;
   label: string;
   type?: "text" | "number" | "email" | "select" | "badge";
-  options?: string[];
+  options?: string[] | { label: string; value: string }[];
   badgeColors?: { [key: string]: string };
   searchable?: boolean;
   editable?: boolean;
@@ -40,9 +40,10 @@ interface TableProps {
   columnConfig?: Partial<Record<string, Partial<ColumnConfig>>>;
   hiddenColumns?: string[];
   badgeFields?: string[];
-  selectFields?: Record<string, string[]>;
+selectFields?: Record<string, { label: string; value: string }[]>;
   nonEditableFields?: string[];
   customRenderers?: CustomRenderers;
+  selectObjectFields?: Record<string, { label: string; value: string }[]>;
 }
 
 const Table: React.FC<TableProps> = ({
@@ -58,6 +59,7 @@ const Table: React.FC<TableProps> = ({
   hiddenColumns = [],
   badgeFields = [],
   selectFields = {},
+  selectObjectFields = {}, 
   nonEditableFields = ["id"],
   customRenderers,
 }) => {
@@ -112,15 +114,17 @@ const Table: React.FC<TableProps> = ({
         .replace(/^./, (str) => str.toUpperCase())
         .trim();
 
-      const column: ColumnConfig = {
-        key,
-        label,
-        type,
-        searchable: !["id"].includes(key),
-        editable: !nonEditableFields.includes(key),
-        ...(selectFields[key] && { options: selectFields[key] }),
-        ...columnConfig[key],
-      };
+     const column: ColumnConfig = {
+  key,
+  label,
+  searchable: !["id"].includes(key),
+  editable: !nonEditableFields.includes(key),
+  ...(selectFields[key] && { options: selectFields[key], type: "select" }),
+  ...(selectObjectFields?.[key] && { options: selectObjectFields[key], type: "select" }),
+  ...(type !== "select" && { type }),
+  ...columnConfig[key],
+};
+
 
       autoColumns.push(column);
     });
@@ -302,6 +306,10 @@ const Table: React.FC<TableProps> = ({
   const renderCellContent = (item: GenericTableItem, column: ColumnConfig) => {
     const value = item[column.key];
 
+    if (typeof value === "object" && value !== null) {
+      return JSON.stringify(value);
+    }
+
     switch (column.type) {
       case "badge":
         return (
@@ -363,18 +371,30 @@ const Table: React.FC<TableProps> = ({
         return (
           <select
             name={column.key}
-            value={value || ""}
-            onChange={handleEditChange}
+            value={value?.value || value || ""}
+            onChange={(e) => {
+              const selected = column.options?.find(
+                (opt: any) =>
+                  (typeof opt === "object" ? opt.value : opt) === e.target.value
+              );
+              handleEditChange({
+                target: { name: column.key, value: selected || e.target.value },
+              } as any);
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-sm cursor-pointer focus:ring-2 focus:ring-slate-900"
           >
             <option value="">Select {column.label}</option>
-            {column.options?.map((option) => (
-              <option key={option} value={option}>
-                {option}
+            {column.options?.map((option: any) => (
+              <option
+                key={typeof option === "object" ? option.value : option}
+                value={typeof option === "object" ? option.value : option}
+              >
+                {typeof option === "object" ? option.label : option}
               </option>
             ))}
           </select>
         );
+
       default:
         return (
           <input

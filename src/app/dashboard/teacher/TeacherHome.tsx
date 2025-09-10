@@ -1,5 +1,7 @@
 "use client";
 import axios from "axios";
+import { toast } from "react-toastify";
+import imageCompression from "browser-image-compression";
 import React, { useEffect, useState, useRef } from "react";
 import {
   Heart,
@@ -242,6 +244,9 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
     });
   };
 
+  const MAX_IMAGE_SIZE = 1 * 1024 * 1024;
+  const MAX_VIDEO_SIZE = 5 * 1024 * 1024;
+
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
     type: "image" | "video"
@@ -249,28 +254,51 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    let finalFile = file;
+
     try {
+      if (type === "image") {
+        if (file.size > MAX_IMAGE_SIZE) {
+          toast.error("Image must be less than 1MB.");
+          return;
+        }
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        };
+        finalFile = await imageCompression(file, options);
+      } else if (type === "video") {
+        if (file.size > MAX_VIDEO_SIZE) {
+          toast.error("Video must be less than 5MB.");
+          return;
+        }
+        finalFile = file;
+      } else {
+        toast.error("Only images and videos are allowed.");
+        return;
+      }
       const { data } = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/media/signed-url`,
-        { fileName: file.name, fileType: file.type },
+        { fileName: finalFile.name, fileType: finalFile.type },
         { withCredentials: true }
       );
 
       const { uploadUrl, key } = data;
-      await fetch(uploadUrl, { method: "PUT", body: file });
+      await fetch(uploadUrl, { method: "PUT", body: finalFile });
 
       let duration = null;
       if (type === "video") {
-        duration = await getVideoDuration(file);
+        duration = await getVideoDuration(finalFile);
       }
       setMediaList((prev) => [
         ...prev,
         {
           type: type.toUpperCase(),
-          mime_type: file.type,
+          mime_type: finalFile.type,
           s3_key: key,
           thumbnail_url: null,
-          duration: duration,
+          duration,
         },
       ]);
 
@@ -281,14 +309,14 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
           { url: e.target?.result as string, type, key },
         ]);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(finalFile);
 
       setShowModal(true);
     } catch (error) {
       console.error("File upload error:", error);
+      toast.error("Failed to upload file.");
     }
   };
-
   const handleRemoveMedia = async (key: string) => {
     try {
       await axios.delete(
