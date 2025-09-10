@@ -245,8 +245,15 @@ export default function JobManagement() {
               filterField="jobType"
               badgeFields={["workMode", "jobType"]}
               selectFields={{
-                workMode: ["online", "onsite", "hybrid"],
-                jobType: ["internship", "full-time"],
+                workMode: [
+                  { label: "Online", value: "online" },
+                  { label: "Onsite", value: "onsite" },
+                  { label: "Hybrid", value: "hybrid" },
+                ],
+                jobType: [
+                  { label: "Internship", value: "internship" },
+                  { label: "Full-time", value: "full-time" },
+                ],
               }}
               nonEditableFields={["id"]}
               onDelete={handleDeleteJob}

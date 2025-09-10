@@ -256,7 +256,11 @@ export default function BatchManagement() {
               filterField="department"
               badgeFields={["department"]}
               selectFields={{
-                department: ["SOT", "SOM", "SOH"],
+                department: [
+                  { label: "SOT", value: "SOT" },
+                  { label: "SOM", value: "SOM" },
+                  { label: "SOH", value: "SOH" },
+                ],
               }}
               nonEditableFields={["id", "center", "department"]}
               onDelete={handleDeleteBatch}

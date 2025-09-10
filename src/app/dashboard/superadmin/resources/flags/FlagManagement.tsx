@@ -294,7 +294,11 @@ const tableData = useMemo(() => {
           title="Flagged Posts"
           filterField="status"
           badgeFields={["status", "flagCount"]}
-          selectFields={{ status: ["pending", "approved", "rejected"] }}
+          selectFields={{ status: [
+            { label: "Pending", value: "pending" },
+            { label: "Approved", value: "approved" },
+            { label: "Rejected", value: "rejected" }
+          ] }}
           nonEditableFields={["id", "postId", "postContent", "postAuthor", "flagCount", "lastFlaggedAt", "actions"]}
           hiddenColumns={["id"]}
         />
