@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 interface RoleRedirectProps {
-  params: Promise<{role: string}>;
+  params: Promise<{ role: string }>;
 }
 
 export default async function RoleRedirect({ params }: RoleRedirectProps) {
