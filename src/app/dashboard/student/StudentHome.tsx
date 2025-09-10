@@ -523,14 +523,14 @@ const PostActions: React.FC<PostActionsProps> = ({
       <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {totalLikes > 0 && (
+            {/* {totalLikes > 0 && (
               <button
                 onClick={() => setShowLikesModal(true)}
                 className="underline cursor-pointer"
               >
                 {totalLikes} {totalLikes === 1 ? "like" : "likes"}
               </button>
-            )}
+            )} */}
             {comments?.length > 0 && (
               <button
                 onClick={() => handleCommentModal(post?.id)}
@@ -546,7 +546,7 @@ const PostActions: React.FC<PostActionsProps> = ({
       <div className="px-4 py-3 text-xs border-t border-b border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1 gap-6">
-            <button
+            {/* <button
               onClick={() => onLike(post.id)}
               className={`flex items-center space-x-1 py-2 rounded-md transition-all hover:bg-gray-50 cursor-pointer ${
                 isLiked ? "text-slate-900" : "text-gray-600"
@@ -554,7 +554,7 @@ const PostActions: React.FC<PostActionsProps> = ({
             >
               <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
               <span className="font-medium">Like</span>
-            </button>
+            </button> */}
 
             <button
               onClick={() => handleCommentModal(post?.id)}
