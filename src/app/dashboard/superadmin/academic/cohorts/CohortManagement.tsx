@@ -347,7 +347,7 @@ export default function CohortManagement() {
               filterField="cohortName"
               badgeFields={["teacherCount", "studentCount"]}
               selectFields={{
-                school: schoolOptions.map((opt) => opt.value),
+                school: schoolOptions,
               }}
               nonEditableFields={[
                 "id",

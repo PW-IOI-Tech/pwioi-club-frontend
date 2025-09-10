@@ -446,7 +446,11 @@ export default function StudentManagement() {
               filterField="school"
               badgeFields={["school"]}
               selectFields={{
-                school: ["SOT", "SOM", "SOH"],
+                school: [
+                  { label: "SOT", value: "SOT" },
+                  { label: "SOM", value: "SOM" },
+                  { label: "SOH", value: "SOH" },
+                ],
               }}
               nonEditableFields={["id", "center", "batch"]}
               onDelete={handleDeleteStudent}

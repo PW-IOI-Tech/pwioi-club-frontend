@@ -562,11 +562,11 @@ export default function ExamManagement() {
               filterField="examName"
               selectFields={{
                 examType: [
-                  "Midterm",
-                  "Final",
-                  "Quiz",
-                  "Assignment",
-                  "Practical",
+                  { label: "Midterm", value: "Midterm" },
+                  { label: "Final", value: "Final" },
+                  { label: "Quiz", value: "Quiz" },
+                  { label: "Assignment", value: "Assignment" },
+                  { label: "Practical", value: "Practical" },
                 ],
               }}
               nonEditableFields={[

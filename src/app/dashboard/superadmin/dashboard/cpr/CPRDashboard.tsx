@@ -317,7 +317,7 @@ export default function CPRDashboard() {
             selectFields={{
               teacher_name: Array.from(
                 new Set(subjects.map((s) => s.teacher_name))
-              ),
+              ).map((name) => ({ label: name, value: name })),
             }}
             nonEditableFields={["id"]}
             onDelete={handleDeleteSubject}
