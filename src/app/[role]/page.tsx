@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
 
-export default function RoleRedirect({ params }: { params: { role: string } }) {
-  const { role } = params;
+interface RoleRedirectProps {
+  params: Promise<{role: string}>;
+}
+
+export default async function RoleRedirect({ params }: RoleRedirectProps) {
+  const { role } = await params;
   const allowedRoles = ["student", "teacher", "admin"];
   const normalizedRole = role.toLowerCase();
 
