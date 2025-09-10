@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Plus, ChevronDown } from "lucide-react";
 import Table from "../../Table";
 import AddDivisionModal from "./AddDivisionModal";
@@ -15,6 +15,8 @@ interface Division {
   semesterCount: number;
   studentCount: number;
   teacherCount: number;
+  currentSemester: any;
+  semesters: any;
   center: string;
   school: string;
   batch: string;
@@ -157,7 +159,7 @@ export default function DivSemManagement() {
             s.id === sem.id
               ? {
                   ...s,
-                  number: res.data.data.semester_number,
+                  number: res.data.data.number,
                   startDate: new Date(
                     res.data.data.start_date
                   ).toLocaleDateString(),
@@ -173,7 +175,7 @@ export default function DivSemManagement() {
             s.id === sem.id
               ? {
                   ...s,
-                  number: res.data.data.semester_number,
+                  number: res.data.data.number,
                   startDate: new Date(
                     res.data.data.start_date
                   ).toLocaleDateString(),
@@ -254,11 +256,12 @@ export default function DivSemManagement() {
                 batches.find((b) => b.id === div.batch_id)?.name ||
                 div.batch_id,
               currentSemester: div.currentSemester
-                ? div.currentSemester.number
+                ? div.currentSemester.number.toString()
                 : "N/A",
-              semesterCount: 0,
-              studentCount: 0,
-              teacherCount: 0,
+              semesterCount: div.totalSemesters || div.semesters?.length || 0,
+              studentCount: div.totalStudents || div.students?.length || 0,
+              teacherCount: div.totalTeachers || 0,
+              semesters: div?.semesters || [],
             }));
 
             setDivisions(mapped);
@@ -366,26 +369,75 @@ export default function DivSemManagement() {
     fetchBatches();
   }, [selectedSchool]);
 
-  const handleUpdateDivision = useCallback(async (updated: any) => {
-    const div = updated as Division;
-    try {
-      const res = await axios.patch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/${div.id}`,
-        div,
-        { withCredentials: true }
-      );
-      if (res.data.success) {
-        setDivisions((prev) =>
-          prev.map((d) => (d.id === div.id ? { ...d, ...res.data.data } : d))
-        );
-        setFilteredDivisions((prev) =>
-          prev.map((d) => (d.id === div.id ? { ...d, ...res.data.data } : d))
-        );
+  const handleUpdateDivision = useCallback(
+    async (updated: any) => {
+      const div = updated as Division;
+
+      const payload: any = { ...div };
+      if (div.currentSemester) {
+        payload.current_semester =
+          typeof div.currentSemester === "object"
+            ? div.currentSemester.value || div.currentSemester.id
+            : div.currentSemester;
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update division");
-    }
-  }, []);
+      delete payload.currentSemester;
+      delete payload.semesters;
+
+      try {
+        const res = await axios.patch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/${div.id}`,
+          payload,
+          { withCredentials: true }
+        );
+
+        if (res.data.success) {
+          const fetchRes = await axios.get(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/division/${div.id}`,
+            { withCredentials: true }
+          );
+
+          if (fetchRes.data.success) {
+            const updatedDiv = fetchRes.data.data;
+            const mappedDivision: Division = {
+              id: updatedDiv.id,
+              code: updatedDiv.code,
+              startDate: new Date(updatedDiv.start_date).toLocaleDateString(),
+              endDate: new Date(updatedDiv.end_date).toLocaleDateString(),
+              center:
+                centers.find((c) => c.id === updatedDiv.center_id)?.name ||
+                updatedDiv.center_id,
+              school:
+                schools.find((s) => s.id === updatedDiv.school_id)?.name ||
+                updatedDiv.school_id,
+              batch:
+                batches.find((b) => b.id === updatedDiv.batch_id)?.name ||
+                updatedDiv.batch_id,
+              currentSemester: updatedDiv.currentSemester
+                ? updatedDiv.currentSemester.number
+                : "N/A",
+              semesterCount:
+                updatedDiv.counts.total_semesters ||
+                updatedDiv.semesters?.length ||
+                0,
+              studentCount: updatedDiv.counts.students || 0,
+              teacherCount: updatedDiv.counts.teachers || 0,
+              semesters: updatedDiv?.semesters || [],
+            };
+
+            setDivisions((prev) =>
+              prev.map((d) => (d.id === div.id ? mappedDivision : d))
+            );
+            setFilteredDivisions((prev) =>
+              prev.map((d) => (d.id === div.id ? mappedDivision : d))
+            );
+          }
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to update division");
+      }
+    },
+    [centers, schools, batches]
+  );
 
   const handleDeleteDivision = useCallback(async (id: string | number) => {
     const deleteId = typeof id === "number" ? id.toString() : id;
@@ -458,6 +510,17 @@ export default function DivSemManagement() {
   const handleCloseAddSemesterModal = useCallback(() => {
     setIsAddSemesterModalOpen(false);
   }, []);
+
+  const semesterOptions = useMemo(() => {
+    if (!filteredDivisions || filteredDivisions.length === 0) return [];
+    const allSemesters = filteredDivisions.flatMap(
+      (div) => div.semesters || []
+    );
+    return allSemesters.map((s: any) => ({
+      label: s.number,
+      value: s.id,
+    }));
+  }, [filteredDivisions]);
 
   if (error) {
     return (
@@ -605,7 +668,11 @@ export default function DivSemManagement() {
                 "endDate",
                 "createdAt",
                 "updatedAt",
+                "semesters",
               ]}
+              selectFields={{
+                currentSemester: semesterOptions,
+              }}
               columns={[
                 { accessorKey: "code", header: "Code" },
                 { accessorKey: "center", header: "Center" },
@@ -613,7 +680,6 @@ export default function DivSemManagement() {
                 { accessorKey: "batch", header: "Batch" },
                 { accessorKey: "startDate", header: "Start Date" },
                 { accessorKey: "endDate", header: "End Date" },
-                { accessorKey: "currentSemester", header: "Current Semester" },
               ]}
             />
 
