@@ -35,7 +35,7 @@ export default function MentorManagement() {
         if (res.data.success) {
           const mappedMentors: TableMentor[] = res.data.data.map((c: any) => ({
             id: c.id,
-            mentorName: c.name,
+            name: c.name,
             email: c.email,
             phone: c.phone,
             linkedin: c.linkedin,
@@ -122,14 +122,16 @@ export default function MentorManagement() {
     <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto space-y-4">
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
-          Mentor Management
+          Mentor/Guest Faculty Management
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm border border-gray-400">
             <div className="p-6 text-center">
               <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
-              <h4 className="text-lg text-slate-900 mb-1">Total Mentors</h4>
+              <h4 className="text-lg text-slate-900 mb-1">
+                Total Mentors / Guest Faculties
+              </h4>
               <p className="text-5xl font-bold text-[#1B3A6A]">
                 {statistics.totalMentors}
               </p>
@@ -144,7 +146,9 @@ export default function MentorManagement() {
               <div className="bg-gray-200 rounded-full p-3 mb-2 hover:bg-gray-300 transition-colors">
                 <Plus size={24} />
               </div>
-              <h3 className="text-lg font-semibold">Add New Mentor</h3>
+              <h3 className="text-lg font-semibold">
+                Add New Mentor / Guest Faculty
+              </h3>
               <p className="text-sm text-gray-600 mt-1">
                 Create a new mentor record
               </p>
