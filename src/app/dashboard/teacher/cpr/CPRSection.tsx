@@ -420,22 +420,44 @@ export default function CPRManagement() {
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
                 Course Progress Report
               </h3>
-              <button
-                onClick={() => setIsExpanded((v) => !v)}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-blue-50 rounded transition-colors"
-              >
-                <ChevronDown
-                  size={16}
-                  className={`transform transition-transform ${
-                    isExpanded ? "rotate-180" : ""
-                  }`}
-                />
-                {isExpanded ? "Collapse All" : "Expand All"}
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                {/* Only show Save Changes button when data is loaded and there are changes */}
+                {!cprLoading && hasChanges && (
+                  <button
+                    onClick={saveChanges}
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed text-sm font-medium justify-center sm:justify-start"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={16} />
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsExpanded((v) => !v)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-blue-50 rounded transition-colors justify-center sm:justify-start"
+                >
+                  <ChevronDown
+                    size={16}
+                    className={`transform transition-transform ${
+                      isExpanded ? "rotate-180" : ""
+                    }`}
+                  />
+                  {isExpanded ? "Collapse All" : "Expand All"}
+                </button>
+              </div>
             </div>
 
             {/* Loading state for CPR */}
@@ -620,180 +642,162 @@ export default function CPRManagement() {
 
                 {/* Desktop Table View */}
                 <div className="hidden md:block overflow-x-auto">
-                  <table className="min-w-full border border-gray-300 rounded-lg">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-48">
-                          Module
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-52">
-                          Topic
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">
-                          Sub Topic
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-24">
-                          Lectures
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b w-32">
-                          {isExpanded ? "Status (Full)" : "Completed"}
-                        </th>
-                        {isExpanded && (
-                          <>
-                            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">
-                              Planned Start
-                            </th>
-                            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">
-                              Actual Start
-                            </th>
-                            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">
-                              Planned End
-                            </th>
-                            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">
-                              Actual End
-                            </th>
-                          </>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cprData.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={isExpanded ? 9 : 5}
-                            className="px-4 py-8 text-center text-gray-500"
-                          >
-                            No data available for selected subject.
-                          </td>
+                  <div className="min-w-full">
+                    <table className="w-full border border-gray-300 rounded-lg">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-48">
+                            Module
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-52">
+                            Topic
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b min-w-[200px]">
+                            Sub Topic
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-24">
+                            Lectures
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b w-40">
+                            {isExpanded ? "Status (Full)" : "Completed"}
+                          </th>
+                          {isExpanded && (
+                            <>
+                              <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-36">
+                                Planned Start
+                              </th>
+                              <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-36">
+                                Actual Start
+                              </th>
+                              <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-36">
+                                Planned End
+                              </th>
+                              <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b w-36">
+                                Actual End
+                              </th>
+                            </>
+                          )}
                         </tr>
-                      ) : (
-                        cprData.map((row) => {
-                          const isDelayed = isRowDelayed(row);
-                          return (
-                            <tr
-                              key={row.id}
-                              className={`${
-                                isDelayed ? "bg-red-50" : "hover:bg-gray-50"
-                              } transition-colors`}
+                      </thead>
+                      <tbody>
+                        {cprData.length === 0 ? (
+                          <tr>
+                            <td
+                              colSpan={isExpanded ? 9 : 5}
+                              className="px-4 py-8 text-center text-gray-500"
                             >
-                              {row.showModuleCell && (
-                                <td
-                                  rowSpan={row.moduleRowSpan}
-                                  className="px-3 py-3 border-b text-sm font-medium text-blue-900 bg-blue-50 align-top"
-                                >
-                                  {row.module}
-                                </td>
-                              )}
-                              {row.showTopicCell && (
-                                <td
-                                  rowSpan={row.topicRowSpan}
-                                  className="px-3 py-3 border-b text-sm font-medium text-green-800 bg-green-50 align-top"
-                                >
-                                  {row.topic}
-                                </td>
-                              )}
-                              <td className="px-4 py-3 border-b text-sm text-gray-800 truncate max-w-xs">
-                                {row.subTopic}
-                              </td>
-                              <td className="px-3 py-3 border-b text-sm text-center text-gray-600">
-                                {row.lectureCount}
-                              </td>
-
-                              {!isExpanded ? (
-                                <td className="px-4 py-3 border-b text-center">
-                                  <label className="inline-flex items-center cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={row.status === "Completed"}
-                                      onChange={() => {
-                                        const newStatus: NiceStatus =
-                                          row.status === "Completed"
-                                            ? "Pending"
-                                            : "Completed";
-                                        handleStatusChange(row.id, newStatus);
-                                      }}
-                                      className="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
-                                    />
-                                  </label>
-                                </td>
-                              ) : (
-                                <td className="px-4 py-3 border-b">
-                                  <select
-                                    value={row.status}
-                                    onChange={(e) =>
-                                      handleStatusChange(
-                                        row.id,
-                                        e.target.value as NiceStatus
-                                      )
-                                    }
-                                    className={`w-full px-2 py-1.5 text-xs border rounded focus:ring-1 focus:ring-blue-500 ${
-                                      isDelayed
-                                        ? "border-red-500 bg-red-50 text-red-900"
-                                        : "border-gray-300"
-                                    }`}
+                              No data available for selected subject.
+                            </td>
+                          </tr>
+                        ) : (
+                          cprData.map((row) => {
+                            const isDelayed = isRowDelayed(row);
+                            return (
+                              <tr
+                                key={row.id}
+                                className={`${
+                                  isDelayed ? "bg-red-50" : "hover:bg-gray-50"
+                                } transition-colors`}
+                              >
+                                {row.showModuleCell && (
+                                  <td
+                                    rowSpan={row.moduleRowSpan}
+                                    className="px-3 py-3 border-b text-sm font-medium text-blue-900 bg-blue-50 align-top"
                                   >
-                                    <option value="Pending">Pending</option>
-                                    <option value="In Progress">
-                                      In Progress
-                                    </option>
-                                    <option value="Completed">Completed</option>
-                                  </select>
+                                    {row.module}
+                                  </td>
+                                )}
+                                {row.showTopicCell && (
+                                  <td
+                                    rowSpan={row.topicRowSpan}
+                                    className="px-3 py-3 border-b text-sm font-medium text-green-800 bg-green-50 align-top"
+                                  >
+                                    {row.topic}
+                                  </td>
+                                )}
+                                <td className="px-4 py-3 border-b text-sm text-gray-800">
+                                  {row.subTopic}
                                 </td>
-                              )}
+                                <td className="px-3 py-3 border-b text-sm text-center text-gray-600">
+                                  {row.lectureCount}
+                                </td>
 
-                              {isExpanded && (
-                                <>
-                                  <td className="px-4 py-3 border-b text-xs text-gray-600">
-                                    {row.startDate}
+                                {!isExpanded ? (
+                                  <td className="px-4 py-3 border-b text-center">
+                                    <label className="inline-flex items-center cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={row.status === "Completed"}
+                                        onChange={() => {
+                                          const newStatus: NiceStatus =
+                                            row.status === "Completed"
+                                              ? "Pending"
+                                              : "Completed";
+                                          handleStatusChange(row.id, newStatus);
+                                        }}
+                                        className="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                                      />
+                                    </label>
                                   </td>
-                                  <td className="px-4 py-3 border-b text-xs">
-                                    {row.actualStartDate
-                                      ? new Date(
-                                          row.actualStartDate
-                                        ).toLocaleDateString("en-IN")
-                                      : "-"}
+                                ) : (
+                                  <td className="px-4 py-3 border-b">
+                                    <select
+                                      value={row.status}
+                                      onChange={(e) =>
+                                        handleStatusChange(
+                                          row.id,
+                                          e.target.value as NiceStatus
+                                        )
+                                      }
+                                      className={`w-full px-3 py-2 text-sm border rounded focus:ring-2 focus:ring-blue-500 ${
+                                        isDelayed
+                                          ? "border-red-500 bg-red-50 text-red-900"
+                                          : "border-gray-300"
+                                      }`}
+                                    >
+                                      <option value="Pending">Pending</option>
+                                      <option value="In Progress">
+                                        In Progress
+                                      </option>
+                                      <option value="Completed">
+                                        Completed
+                                      </option>
+                                    </select>
                                   </td>
-                                  <td className="px-4 py-3 border-b text-xs text-gray-600">
-                                    {row.completionDate}
-                                  </td>
-                                  <td className="px-4 py-3 border-b text-xs">
-                                    {row.actualCompletionDate
-                                      ? new Date(
-                                          row.actualCompletionDate
-                                        ).toLocaleDateString("en-IN")
-                                      : "-"}
-                                  </td>
-                                </>
-                              )}
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                                )}
 
-                {hasChanges && (
-                  <div className="mt-6 flex justify-center">
-                    <button
-                      onClick={saveChanges}
-                      disabled={isSaving}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-70 text-sm sm:text-base"
-                    >
-                      {isSaving ? (
-                        <>
-                          <Loader2 size={18} className="animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <Save size={16} />
-                          Save Changes
-                        </>
-                      )}
-                    </button>
+                                {isExpanded && (
+                                  <>
+                                    <td className="px-3 py-3 border-b text-sm text-gray-600 whitespace-nowrap">
+                                      {row.startDate}
+                                    </td>
+                                    <td className="px-3 py-3 border-b text-sm whitespace-nowrap">
+                                      {row.actualStartDate
+                                        ? new Date(
+                                            row.actualStartDate
+                                          ).toLocaleDateString("en-IN")
+                                        : "-"}
+                                    </td>
+                                    <td className="px-3 py-3 border-b text-sm text-gray-600 whitespace-nowrap">
+                                      {row.completionDate}
+                                    </td>
+                                    <td className="px-3 py-3 border-b text-sm whitespace-nowrap">
+                                      {row.actualCompletionDate
+                                        ? new Date(
+                                            row.actualCompletionDate
+                                          ).toLocaleDateString("en-IN")
+                                        : "-"}
+                                    </td>
+                                  </>
+                                )}
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
                   </div>
-                )}
+                </div>
               </>
             )}
           </div>
