@@ -285,8 +285,17 @@ export default function PolicyManagement() {
               filterField="policyName"
               badgeFields={["isActive", "version", "centerLocation"]}
               selectFields={{
-                isActive: ["true", "false"],
-                version: ["1.0", "1.5", "2.0", "2.2", "3.0"],
+                isActive: [
+                  { label: "Active", value: "true" },
+                  { label: "Inactive", value: "false" },
+                ],
+                version: [
+                  { label: "1.0", value: "1.0" },
+                  { label: "1.5", value: "1.5" },
+                  { label: "2.0", value: "2.0" },
+                  { label: "2.2", value: "2.2" },
+                  { label: "3.0", value: "3.0" },
+                ],
                 centerLocation: centers.map((c) => c.location),
               }}
               nonEditableFields={["id", "centerLocation"]}

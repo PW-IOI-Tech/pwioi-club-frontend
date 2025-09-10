@@ -276,13 +276,16 @@ export default function EventManagement() {
             badgeFields={["type"]}
             selectFields={{
               type: [
-                "hackathon",
-                "seminar",
-                "workshop",
-                "activity",
-                "club_event",
+                { label: "Hackathon", value: "hackathon" },
+                { label: "Seminar", value: "seminar" },
+                { label: "Workshop", value: "workshop" },
+                { label: "Activity", value: "activity" },
+                { label: "Club Event", value: "club_event" },
               ],
-              isVisible: ["true", "false"],
+              isVisible: [
+                { label: "True", value: "true" },
+                { label: "False", value: "false" },
+              ],
             }}
             nonEditableFields={["id"]}
             onDelete={handleDeleteEvent}

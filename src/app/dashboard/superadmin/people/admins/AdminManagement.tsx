@@ -237,14 +237,19 @@ export default function AdminManagement() {
           filterField="role"
           badgeFields={["role"]}
           selectFields={{
-            role: ["ADMIN", "OPS", "BATCHOPS", "SUPER_ADMIN"],
+            role: [
+              { label: "Admin", value: "ADMIN" },
+              { label: "Ops", value: "OPS" },
+              { label: "Batch Ops", value: "BATCHOPS" },
+              { label: "Super Admin", value: "SUPER_ADMIN" },
+            ],
             designation: [
-              "System Administrator",
-              "Operations Lead",
-              "Senior Instructor",
-              "IT Manager",
-              "Lead Developer",
-              "Academic Coordinator",
+              { label: "System Administrator", value: "System Administrator" },
+              { label: "Operations Lead", value: "Operations Lead" },
+              { label: "Senior Instructor", value: "Senior Instructor" },
+              { label: "IT Manager", value: "IT Manager" },
+              { label: "Lead Developer", value: "Lead Developer" },
+              { label: "Academic Coordinator", value: "Academic Coordinator" },
             ],
           }}
           nonEditableFields={["id"]}

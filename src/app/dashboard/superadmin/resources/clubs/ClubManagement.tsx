@@ -287,8 +287,11 @@ export default function ClubManagement() {
               filterField="clubName"
               badgeFields={["category", "leaderId"]}
               selectFields={{
-                category: categories,
-                leaderId: mockStudents[selectedLocation?.name] || [],
+                category: categories.map((cat) => ({ label: cat, value: cat })),
+                leaderId: (mockStudents[selectedLocation?.name] || []).map((student) => ({
+                  label: student,
+                  value: student,
+                })),
               }}
               nonEditableFields={["id", "centerLocation"]}
               onDelete={handleDeleteClub}
