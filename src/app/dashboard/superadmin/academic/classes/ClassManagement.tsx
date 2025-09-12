@@ -270,45 +270,91 @@ export default function ClassManagement() {
               batchId: selectedBatch,
               divisionId: selectedDivision,
               semesterId: selectedSemester,
+              start_date: weekObj.start.toISOString(),
+              end_date: weekObj.end.toISOString(),
             },
             withCredentials: true,
           }
         );
 
         if (res.data.success) {
+          const days = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ];
+
           const mapped = res.data.data
             .map((cls: any) => {
               const start = new Date(cls.start_date);
               const end = new Date(cls.end_date);
 
-              const days = [
-                "Sunday",
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-              ];
-
               return {
+                // core
                 id: cls.id,
-                subjectId: cls.subject_id,
-                roomId: cls.room_id,
-                day: days[start.getDay()],
-                startTime: start.toTimeString().slice(0, 5),
-                endTime: end.toTimeString().slice(0, 5),
                 lectureNumber: cls.lecture_number,
-                subjectName: cls.subject?.name || "",
-                roomName: cls.room?.name || "",
                 startDate: start,
                 endDate: end,
+                day: days[start.getDay()],
+                startTime: start.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+                endTime: end.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+
+                // subject
+                subjectId: cls.subject_id,
+                subjectName: cls.subject?.name ?? "",
+                subjectCode: cls.subject?.code ?? "",
+                credits: cls.subject?.credits ?? 0,
+                semesterId: cls.subject?.semester?.id ?? "",
+                semesterNumber: cls.subject?.semester?.number ?? 0,
+
+                // teacher
+                teacherId: cls.teacher?.id ?? "",
+                teacherName: cls.teacher?.name ?? "",
+                teacherEmail: cls.teacher?.email ?? "",
+
+                // room
+                roomId: cls.room_id,
+                roomName: cls.room?.name ?? "",
+
+                // division
+                divisionId: cls.division?.id ?? "",
+                divisionCode: cls.division?.code ?? "",
+
+                // batch
+                batchId: cls.division?.batch?.id ?? "",
+                batchName: cls.division?.batch?.name ?? "",
+
+                // school
+                schoolId: cls.division?.school?.id ?? "",
+                schoolName: cls.division?.school?.name ?? "",
+
+                // center
+                centerId: cls.division?.center?.id ?? "",
+                centerName: cls.division?.center?.name ?? "",
               } as SavedClass & { startDate: Date; endDate: Date };
             })
-            .filter(
-              (cls: any) =>
-                cls.startDate >= weekObj.start && cls.startDate <= weekObj.end
-            );
+            .filter((cls: any) => {
+              const classDate = new Date(cls.startDate);
+              classDate.setHours(0, 0, 0, 0);
+
+              const weekStart = new Date(weekObj.start);
+              weekStart.setHours(0, 0, 0, 0);
+
+              const weekEnd = new Date(weekObj.end);
+              weekEnd.setHours(23, 59, 59, 999);
+
+              return classDate >= weekStart && classDate <= weekEnd;
+            });
 
           setSavedClasses(mapped);
         }
@@ -320,7 +366,16 @@ export default function ClassManagement() {
     };
 
     fetchClasses();
-  }, [allFiltersSelected, selectedWeek, weeks]);
+  }, [
+    allFiltersSelected,
+    selectedWeek,
+    weeks,
+    selectedCenter,
+    selectedSchool,
+    selectedBatch,
+    selectedDivision,
+    selectedSemester,
+  ]);
 
   const handleSubmit = async () => {
     try {
