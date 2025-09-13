@@ -407,7 +407,7 @@ const AttendanceTracker: React.FC = () => {
   return (
     <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-400 mb-8 p-8">
+        <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-400 mb-6 p-8">
           <h1 className="text-3xl font-bold text-white mb-2">
             Class Attendance Insights
           </h1>

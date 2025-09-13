@@ -20,6 +20,7 @@ import {
   Users,
   School,
   CircleCheckBig,
+  CalendarCheck,
 } from "lucide-react";
 import Image from "next/image";
 import axios from "axios";
@@ -114,9 +115,15 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
     },
     {
       id: "attendance",
-      label: "Attendance",
+      label: "Attendance Dashboard",
       icon: Calendar,
       href: "/dashboard/teacher/attendance",
+    },
+    {
+      id: "mark-attendance",
+      label: "Mark Attendance",
+      icon: CalendarCheck,
+      href: "/dashboard/teacher/mark-attendance",
     },
     {
       id: "cpr",
@@ -135,6 +142,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
   const getActiveSection = () => {
     if (pathname.includes("/acads")) return "academics";
     if (pathname.includes("/attendance")) return "attendance";
+    if (pathname.includes("/mark-attendance")) return "mark-attendance";
     if (pathname.includes("/cpr")) return "cpr";
     if (pathname.includes("/help")) return "help";
     return "home";
