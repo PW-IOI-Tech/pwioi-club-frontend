@@ -1,3 +1,4 @@
+import ClientToast from "@/components/ClientToast";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 
@@ -17,7 +18,10 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.png" sizes="any" />
       </head>
       <body className="antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <ClientToast />
+        </AuthProvider>
       </body>
     </html>
   );
