@@ -13,6 +13,8 @@ import {
   Check,
   User,
   FileImage,
+  Trash2,
+  Edit,
 } from "lucide-react";
 
 interface User {
@@ -84,6 +86,8 @@ interface FeedProps {
   onFlag: (postId: string) => void;
   getRoleBadgeColor: (role: string) => string;
   loading: boolean;
+  fetchPosts: (cursor?: string) => void;
+  setPosts: any;
 }
 
 interface ReportModalProps {
@@ -110,7 +114,7 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({ userName }) => (
   </div>
 );
 
-const CreatePost: React.FC<any> = ({ userInitial }) => {
+const CreatePost: React.FC<any> = ({ userInitial, onCreated }) => {
   const [showModal, setShowModal] = useState(false);
   const [postText, setPostText] = useState("");
   const [mediaList, setMediaList] = useState<any[]>([]);
@@ -236,6 +240,8 @@ const CreatePost: React.FC<any> = ({ userInitial }) => {
       handleCancel();
       setShowToast(true);
       setTimeout(() => setShowToast(false), 2000);
+
+      onCreated();
     } catch (error) {
       console.error("Post creation error:", error);
     }
@@ -789,8 +795,16 @@ const Post: React.FC<any> = ({
   onLike,
   onFlag,
   getRoleBadgeColor,
+  fetchPosts,
+  setPosts,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [loadingEdit, setLoadingEdit] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const contentLines = post.content.split("\n");
   const shouldTruncate = contentLines.length > 2 || post.content.length > 200;
@@ -807,35 +821,136 @@ const Post: React.FC<any> = ({
 
   const displayContent = isExpanded ? post.content : getTruncatedContent();
 
+  const handleDelete = async () => {
+    setLoadingDelete(true);
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/post/delete/${post.id}`,
+        { withCredentials: true }
+      );
+      setPosts((prev: any) => prev.filter((p: any) => p.id !== post.id));
+      toast.success("Post deleted successfully");
+      fetchPosts();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete post");
+    } finally {
+      setLoadingDelete(false);
+    }
+  };
+
+  const handleEditSave = async () => {
+    setLoadingEdit(true);
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/post/update/${post.id}`,
+        { content: editContent },
+        { withCredentials: true }
+      );
+      setPosts((prev: any) =>
+        prev.map((p: any) =>
+          p.id === post.id ? { ...p, content: editContent } : p
+        )
+      );
+      toast.success("Post updated successfully");
+      setIsEditing(false);
+      fetchPosts();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update post");
+    } finally {
+      setLoadingEdit(false);
+    }
+  };
+
   return (
     <div className="bg-gradient-to-br from-white to-indigo-50 rounded-sm shadow-sm border border-gray-400 overflow-hidden">
-      <PostHeader post={post} getRoleBadgeColor={getRoleBadgeColor} />
+      <div className="flex justify-between items-start p-2">
+        <PostHeader post={post} getRoleBadgeColor={getRoleBadgeColor} />
+
+        {user?.id === post.author_id && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="p-1 rounded hover:bg-gray-200"
+              disabled={loadingDelete}
+            >
+              <Edit className="w-4 h-4 text-blue-600" />
+            </button>
+            <button
+              onClick={handleDelete}
+              className="p-1 rounded hover:bg-gray-200"
+              disabled={loadingDelete}
+            >
+              {loadingDelete ? (
+                <span className="inline-block w-5 h-5 border-4 border-red-600 border-t-red-200 rounded-full animate-spin"></span>
+              ) : (
+                <Trash2 className="w-5 h-5 text-red-600 hover:text-red-800 transition-colors duration-200" />
+              )}
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="px-4 py-3">
-        <div className="text-gray-800 text-sm">
-          <pre className="whitespace-pre-wrap font-inherit">
-            {displayContent}
-            {shouldTruncate && !isExpanded && "..."}
-          </pre>
+        {isEditing ? (
+          <div className="flex flex-col gap-2">
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full border rounded p-2 text-sm"
+              rows={3}
+              disabled={loadingEdit}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleEditSave}
+                disabled={loadingEdit}
+                className="bg-blue-600 text-white px-3 py-1 rounded text-sm flex items-center gap-2 disabled:opacity-60"
+              >
+                {loadingEdit && (
+                  <span className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full"></span>
+                )}
+                Save
+              </button>
+              <button
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditContent(post.content);
+                }}
+                disabled={loadingEdit}
+                className="bg-gray-200 px-3 py-1 rounded text-sm disabled:opacity-60"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="text-gray-800 text-sm">
+            <pre className="whitespace-pre-wrap font-inherit">
+              {displayContent}
+              {shouldTruncate && !isExpanded && "..."}
+            </pre>
 
-          {shouldTruncate && !isExpanded && (
-            <button
-              onClick={() => setIsExpanded(true)}
-              className="text-blue-600 hover:text-blue-900 font-medium ml-1 cursor-pointer text-xs underline"
-            >
-              more
-            </button>
-          )}
+            {shouldTruncate && !isExpanded && (
+              <button
+                onClick={() => setIsExpanded(true)}
+                className="text-blue-600 hover:text-blue-900 font-medium ml-1 cursor-pointer text-xs underline"
+              >
+                more
+              </button>
+            )}
 
-          {isExpanded && shouldTruncate && (
-            <button
-              onClick={() => setIsExpanded(false)}
-              className="text-blue-600 hover:text-blue-900 font-medium cursor-pointer block mt-1 text-xs underline"
-            >
-              Show less
-            </button>
-          )}
-        </div>
+            {isExpanded && shouldTruncate && (
+              <button
+                onClick={() => setIsExpanded(false)}
+                className="text-blue-600 hover:text-blue-900 font-medium cursor-pointer block mt-1 text-xs underline"
+              >
+                Show less
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {post?.media?.length > 0 && (
@@ -877,6 +992,8 @@ const Feed: React.FC<FeedProps> = ({
   onFlag,
   getRoleBadgeColor,
   loading,
+  fetchPosts,
+  setPosts,
 }) => {
   if (loading) {
     return (
@@ -898,6 +1015,8 @@ const Feed: React.FC<FeedProps> = ({
           onLike={onLike}
           onFlag={onFlag}
           getRoleBadgeColor={getRoleBadgeColor}
+          fetchPosts={fetchPosts}
+          setPosts={setPosts}
         />
       ))}
     </div>
@@ -1050,7 +1169,14 @@ const AdminFeed: React.FC<any> = () => {
     setLoading(true);
     try {
       const data = await getPosts(cursor, 10);
-      setPosts((prev) => [...prev, ...data.data]);
+      setPosts((prev) => {
+        const merged = [...prev, ...data.data];
+        const unique = merged.filter(
+          (post, index, self) =>
+            index === self.findIndex((p) => p.id === post.id)
+        );
+        return unique;
+      });
       setNextCursor(data.nextCursor);
     } catch (error) {
       console.error("Failed to fetch posts:", error);
@@ -1151,7 +1277,10 @@ const AdminFeed: React.FC<any> = () => {
           <div className="lg:col-span-7 space-y-4">
             <WelcomeMessage userName={user?.name || "User"} />
             <div className="block sm:hidden">
-              <CreatePost userInitial={user?.name?.charAt(0).toUpperCase()} />
+              <CreatePost
+                userInitial={user?.name?.charAt(0).toUpperCase()}
+                onCreated={fetchPosts}
+              />
             </div>
             <Feed
               posts={posts}
@@ -1160,12 +1289,17 @@ const AdminFeed: React.FC<any> = () => {
               onFlag={handleFlag}
               getRoleBadgeColor={getRoleBadgeColor}
               loading={loading}
+              fetchPosts={fetchPosts}
+              setPosts={setPosts}
             />
           </div>
 
           <div className="lg:col-span-3 space-y-4 hidden sm:block">
             <ProfileHeader user={user} />
-            <CreatePost userInitial={user?.name?.charAt(0).toUpperCase()} />
+            <CreatePost
+              userInitial={user?.name?.charAt(0).toUpperCase()}
+              onCreated={fetchPosts}
+            />
           </div>
         </div>
       </div>
