@@ -141,7 +141,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
     if (!isSidebarExpanded) {
       setIsSidebarExpanded(true);
     }
-    router.push("/codelab");
+    window.open("https://lab.pwioi.club", "_blank");
   };
 
   const handleNavigationClick = (href: string) => {

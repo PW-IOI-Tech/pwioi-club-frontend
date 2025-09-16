@@ -95,6 +95,7 @@ function mapStatusFromApi(status: SubTopic["status"]): NiceStatus {
       return "Pending";
   }
 }
+
 function mapStatusToApi(status: NiceStatus): SubTopic["status"] {
   switch (status) {
     case "Completed":
@@ -169,24 +170,27 @@ export default function CPRManagement() {
   const [dateDetailRows, setDateDetailRows] = useState<Set<string>>(new Set());
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // fetch subjects
+  // Fetch ongoing subjects for the authenticated teacher
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
         setSubjectsLoading(true);
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teachers/subjects`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subjects/my-ongoing`,
           { withCredentials: true }
         );
+
         if (res.data?.success) {
           setSubjects(res.data.data as Subject[]);
         }
       } catch (err) {
-        console.error("Error fetching subjects:", err);
+        console.error("Error fetching ongoing subjects:", err);
+        setSubjects([]);
       } finally {
         setSubjectsLoading(false);
       }
     };
+
     fetchSubjects();
   }, []);
 
@@ -276,13 +280,6 @@ export default function CPRManagement() {
     return diffs;
   }, [cprData, originalCprData]);
 
-  type UpdateItem = {
-    id: string;
-    status: SubTopic["status"];
-    actual_start_date: string | null;
-    actual_end_date: string | null;
-  };
-
   const saveChanges = async () => {
     try {
       if (!selectedSubject || changedRows.length === 0) return;
@@ -345,7 +342,7 @@ export default function CPRManagement() {
             CPR Management
           </h2>
           <p className="text-gray-600">
-            Track and manage course progress for your subjects.
+            Track and manage course progress for your ongoing subjects.
           </p>
         </div>
 
@@ -366,7 +363,11 @@ export default function CPRManagement() {
               className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer appearance-none text-sm disabled:opacity-60"
             >
               <option value="">
-                {subjectsLoading ? "Loading..." : "Select a Subject to Proceed"}
+                {subjectsLoading
+                  ? "Loading..."
+                  : subjects.length === 0
+                  ? "No ongoing subjects found"
+                  : "Select a Subject to Proceed"}
               </option>
               {subjects.map((subj) => (
                 <option key={subj.id} value={subj.id}>
