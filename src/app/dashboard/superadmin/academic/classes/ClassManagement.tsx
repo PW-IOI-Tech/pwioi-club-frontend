@@ -19,19 +19,26 @@ interface SavedClass {
 function getUpcomingWeeks() {
   const weeks = [];
   const today = new Date();
+
+  const currentDayOfWeek = today.getDay();
+  const daysToMonday = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek;
+
   for (let i = 0; i < 4; i++) {
     const startDate = new Date(today);
-    startDate.setDate(today.getDate() + i * 7 - today.getDay());
+    startDate.setDate(today.getDate() + daysToMonday + i * 7);
+    startDate.setHours(0, 0, 0, 0);
+
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + 4);
+    endDate.setHours(23, 59, 59, 999);
 
     weeks.push({
       id: i + 1,
-      start: new Date(startDate),
-      end: new Date(endDate),
-      label: `${startDate.getDate()}-${endDate.getDate()}/${
-        endDate.getMonth() + 1
-      }`,
+      start: startDate,
+      end: endDate,
+      label: `${startDate.getDate()}/${
+        startDate.getMonth() + 1
+      } - ${endDate.getDate()}/${endDate.getMonth() + 1}`,
     });
   }
   return weeks;
@@ -94,6 +101,15 @@ export default function ClassManagement() {
 
   const weeks = useMemo(() => getUpcomingWeeks(), []);
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const allDaysForGetDay = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
 
   const availableRooms = selectedCenter ? rooms : [];
 
@@ -252,119 +268,66 @@ export default function ClassManagement() {
     fetchRooms();
   }, [selectedCenter]);
 
-  useEffect(() => {
+  const fetchClasses = async () => {
     if (!allFiltersSelected || !selectedWeek) return;
 
-    const fetchClasses = async () => {
-      setLoadingClasses(true);
-      try {
-        const weekObj = weeks.find((w) => w.id === selectedWeek);
-        if (!weekObj) return;
+    setLoadingClasses(true);
+    setSavedClasses([]);
+    try {
+      const weekObj = weeks.find((w) => w.id === selectedWeek);
+      if (!weekObj) return;
 
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class`,
-          {
-            params: {
-              centerId: selectedCenter,
-              schoolId: selectedSchool,
-              batchId: selectedBatch,
-              divisionId: selectedDivision,
-              semesterId: selectedSemester,
-              start_date: weekObj.start.toISOString(),
-              end_date: weekObj.end.toISOString(),
-            },
-            withCredentials: true,
-          }
-        );
-
-        if (res.data.success) {
-          const days = [
-            "Sunday",
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-          ];
-
-          const mapped = res.data.data
-            .map((cls: any) => {
-              const start = new Date(cls.start_date);
-              const end = new Date(cls.end_date);
-
-              return {
-                // core
-                id: cls.id,
-                lectureNumber: cls.lecture_number,
-                startDate: start,
-                endDate: end,
-                day: days[start.getDay()],
-                startTime: start.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-                endTime: end.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-
-                // subject
-                subjectId: cls.subject_id,
-                subjectName: cls.subject?.name ?? "",
-                subjectCode: cls.subject?.code ?? "",
-                credits: cls.subject?.credits ?? 0,
-                semesterId: cls.subject?.semester?.id ?? "",
-                semesterNumber: cls.subject?.semester?.number ?? 0,
-
-                // teacher
-                teacherId: cls.teacher?.id ?? "",
-                teacherName: cls.teacher?.name ?? "",
-                teacherEmail: cls.teacher?.email ?? "",
-
-                // room
-                roomId: cls.room_id,
-                roomName: cls.room?.name ?? "",
-
-                // division
-                divisionId: cls.division?.id ?? "",
-                divisionCode: cls.division?.code ?? "",
-
-                // batch
-                batchId: cls.division?.batch?.id ?? "",
-                batchName: cls.division?.batch?.name ?? "",
-
-                // school
-                schoolId: cls.division?.school?.id ?? "",
-                schoolName: cls.division?.school?.name ?? "",
-
-                // center
-                centerId: cls.division?.center?.id ?? "",
-                centerName: cls.division?.center?.name ?? "",
-              } as SavedClass & { startDate: Date; endDate: Date };
-            })
-            .filter((cls: any) => {
-              const classDate = new Date(cls.startDate);
-              classDate.setHours(0, 0, 0, 0);
-
-              const weekStart = new Date(weekObj.start);
-              weekStart.setHours(0, 0, 0, 0);
-
-              const weekEnd = new Date(weekObj.end);
-              weekEnd.setHours(23, 59, 59, 999);
-
-              return classDate >= weekStart && classDate <= weekEnd;
-            });
-
-          setSavedClasses(mapped);
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class`,
+        {
+          params: {
+            centerId: selectedCenter,
+            schoolId: selectedSchool,
+            batchId: selectedBatch,
+            divisionId: selectedDivision,
+            semesterId: selectedSemester,
+            start_date: weekObj.start.toISOString(),
+            end_date: weekObj.end.toISOString(),
+          },
+          withCredentials: true,
         }
-      } catch (err) {
-        console.error("Failed to fetch classes", err);
-      } finally {
-        setLoadingClasses(false);
-      }
-    };
+      );
 
+      if (res.data.success) {
+        const mapped = res.data.data.map((cls: any) => {
+          const start = new Date(cls.start_date);
+          const end = new Date(cls.end_date);
+
+          return {
+            id: cls.id,
+            lectureNumber: cls.lecture_number,
+            day: allDaysForGetDay[start.getDay()],
+            startTime: start.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            }),
+            endTime: end.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            }),
+            subjectId: cls.subject_id,
+            subjectName: cls.subject?.name ?? "",
+            roomId: cls.room_id,
+            roomName: cls.room?.name ?? "",
+          } as SavedClass;
+        });
+        setSavedClasses(mapped);
+      }
+    } catch (err) {
+      console.error("Failed to fetch classes", err);
+    } finally {
+      setLoadingClasses(false);
+    }
+  };
+
+  useEffect(() => {
     fetchClasses();
   }, [
     allFiltersSelected,
@@ -380,7 +343,7 @@ export default function ClassManagement() {
   const handleSubmit = async () => {
     try {
       const weekObj = weeks.find((w) => w.id === selectedWeek);
-      if (!weekObj) return;
+      if (!weekObj || !selectedSubjectObj || !selectedRoomObj) return;
 
       const payload = {
         subject_id: selectedSubjectObj.id,
@@ -397,13 +360,15 @@ export default function ClassManagement() {
         ],
       };
 
-      const res = await axios.post(
+      await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/schedule`,
         payload,
         { withCredentials: true }
       );
+
+      fetchClasses();
     } catch (err) {
-      console.error("❌ API Error:", err);
+      console.error("❌ API Error creating class:", err);
     }
   };
 
@@ -426,16 +391,26 @@ export default function ClassManagement() {
     updatedData: Partial<SavedClass>
   ) => {
     try {
-      const res = await axios.patch(
+      if (
+        !updatedData.startTime ||
+        !updatedData.endTime ||
+        !updatedData.lectureNumber
+      )
+        return;
+
+      const payload = {
+        start_time: updatedData.startTime,
+        end_time: updatedData.endTime,
+        lecture_number: Number(updatedData.lectureNumber),
+      };
+
+      await axios.patch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/class/${classId}`,
-        updatedData,
+        payload,
         { withCredentials: true }
       );
-      if (res.data.success) {
-        setSavedClasses((prev) =>
-          prev.map((c) => (c.id === classId ? res.data.data : c))
-        );
-      }
+
+      fetchClasses();
     } catch (err) {
       console.error("Failed to update class", err);
     }
@@ -507,12 +482,9 @@ export default function ClassManagement() {
               },
               {
                 label: "Room",
-                value: selectedRoomObj?.name || "",
-                options: availableRooms.map((r) => r.name),
-                setter: (name: string) => {
-                  const room = availableRooms.find((r) => r.name === name);
-                  setSelectedRoom(room?.id || "");
-                },
+                value: selectedRoom,
+                options: availableRooms,
+                setter: setSelectedRoom,
                 disabled: !selectedSubject || !selectedCenter,
                 loading: loadingRooms,
               },
@@ -527,13 +499,13 @@ export default function ClassManagement() {
                     onChange={(e) => filter.setter(e.target.value)}
                     disabled={filter.disabled || filter.loading}
                     className={`
-                    w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none
-                    ${
-                      filter.disabled || filter.loading
-                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                        : "bg-white text-gray-900 cursor-pointer"
-                    }
-                  `}
+                   w-full p-2 pr-8 border border-gray-300 rounded text-xs appearance-none
+                   ${
+                     filter.disabled || filter.loading
+                       ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                       : "bg-white text-gray-900 cursor-pointer"
+                   }
+                 `}
                   >
                     <option value="">
                       {filter.loading ? "Loading..." : `Select ${filter.label}`}
@@ -622,6 +594,12 @@ export default function ClassManagement() {
                       <button
                         onClick={() => {
                           setCurrentDay(day);
+                          setFormData({
+                            startTime: "09:00",
+                            endTime: "10:30",
+                            lectureNumber: "1",
+                          });
+                          setEditingClass(null);
                           setIsModalOpen(true);
                         }}
                         className="flex items-center gap-1 text-slate-900 hover:underline text-sm font-medium cursor-pointer duration-200 ease-in-out"
@@ -783,7 +761,7 @@ export default function ClassManagement() {
                         startTime: formData.startTime,
                         endTime: formData.endTime,
                         lectureNumber: formData.lectureNumber,
-                      });
+                      } as SavedClass);
                       setEditingClass(null);
                     } else {
                       handleSubmit();
