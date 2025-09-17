@@ -45,14 +45,12 @@ const getLastThreeWeekdays = (): { date: string; day: string }[] => {
   const today = new Date();
   const days = [];
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  let currentDate = new Date(today);
+  const currentDate = new Date(today);
   let count = 0;
 
-  // Go back day by day until we find 3 weekdays
   while (count < 3) {
-    const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+    const dayOfWeek = currentDate.getDay();
 
-    // Only include weekdays (Monday = 1, Friday = 5)
     if (dayOfWeek >= 1 && dayOfWeek <= 5) {
       const dateString = currentDate.toISOString().split("T")[0];
       days.unshift({
@@ -62,7 +60,6 @@ const getLastThreeWeekdays = (): { date: string; day: string }[] => {
       count++;
     }
 
-    // Move to the previous day
     currentDate.setDate(currentDate.getDate() - 1);
   }
 
@@ -97,17 +94,15 @@ const AttendancePortal: React.FC = () => {
 
   const lastThreeWeekdays = getLastThreeWeekdays();
 
-  // Set today as default selected date if it's a weekday and enable editing by default
   useEffect(() => {
     if (!selectedDate) {
       const today = new Date();
-      const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+      const dayOfWeek = today.getDay();
 
-      // Only set today as default if it's a weekday
       if (dayOfWeek >= 1 && dayOfWeek <= 5) {
         const todayString = today.toISOString().split("T")[0];
         setSelectedDate(todayString);
-        setIsEditing(true); // Enable editing by default for today
+        setIsEditing(true);
       }
     }
   }, [selectedDate]);
@@ -174,7 +169,6 @@ const AttendancePortal: React.FC = () => {
     setSortField("enrollment_id");
     setSortDirection("asc");
 
-    // Enable editing by default only if the selected date is today
     const today = new Date().toISOString().split("T")[0];
     setIsEditing(date === today);
   };
@@ -213,7 +207,7 @@ const AttendancePortal: React.FC = () => {
         Object.entries(student.statuses).map(([class_id, status]) => ({
           student_id: student.student_id,
           class_id,
-          status: status, // Removed LATE conversion
+          status: status,
         }))
       );
 
@@ -223,7 +217,7 @@ const AttendancePortal: React.FC = () => {
         { withCredentials: true }
       );
       setOriginalData([...attendanceData.data]);
-      setIsEditing(false); // Exit edit mode after successful save
+      setIsEditing(false);
       toast.success("Attendance saved successfully!");
     } catch (err: any) {
       toast.error(
@@ -347,13 +341,11 @@ const AttendancePortal: React.FC = () => {
               ...student,
               statuses:
                 isToday && multipleClassesSelected
-                  ? // If it's today and multiple classes are selected, update all selected classes
-                    selectedClasses.reduce(
+                  ? selectedClasses.reduce(
                       (acc, cId) => ({ ...acc, [cId]: newStatus }),
                       student.statuses
                     )
-                  : // Otherwise, update only the specific class
-                    { ...student.statuses, [classId]: newStatus },
+                  : { ...student.statuses, [classId]: newStatus },
             }
           : student
       ),
