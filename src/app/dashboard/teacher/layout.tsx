@@ -62,7 +62,7 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
     if (!isSidebarExpanded) {
       setIsSidebarExpanded(true);
     }
-    window.open("https://lab.pwioi.club", "_blank");
+    router.push("/codelab");
   };
 
   useEffect(() => {
@@ -444,13 +444,13 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="flex items-center space-x-2.5 p-2 rounded-lg hover:bg-white transition-all duration-200 cursor-pointer">
               <Mail className="w-3.5 h-3.5 text-[#12294c]" />
               <span className="text-sm text-gray-700 font-medium">
-                {userData.email}
+                {userData?.email}
               </span>
             </div>
             <div className="flex items-center space-x-2.5 p-2 rounded-lg hover:bg-white transition-all duration-200 cursor-pointer">
               <Phone className="w-3.5 h-3.5 text-[#12294c]" />
               <span className="text-sm text-gray-700 font-medium">
-                {userData.phone}
+                {userData?.phone}
               </span>
             </div>
           </div>
@@ -556,3 +556,4 @@ const TeacherLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default TeacherLayout;
+

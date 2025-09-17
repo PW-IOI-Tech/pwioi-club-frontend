@@ -4,6 +4,7 @@ import { Building, User, UserCheck, Briefcase } from "lucide-react";
 interface TeacherProfileData {
   name: string;
   centerId: string;
+  centerName: string;
   designation: string;
 }
 
@@ -11,10 +12,14 @@ const TeacherProfileHeader = () => {
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
 
+  const storeduserDetails = localStorage.getItem("userDetails");
+  const userData = storeduserDetails ? JSON.parse(storeduserDetails) : null;
+
   const [profileData] = useState<TeacherProfileData>({
     name: user?.name,
-    centerId: "CTR-2024-001",
-    designation: user?.designation,
+    centerId: userData?.pwId,
+    centerName: userData?.center?.name,
+    designation: user?.role,
   });
 
   return (
@@ -27,26 +32,26 @@ const TeacherProfileHeader = () => {
           <div className="flex-1">
             <div className="mb-3">
               <h1 className="text-3xl font-bold text-white">
-                {profileData.name}
+                {profileData?.name}
               </h1>
             </div>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <Briefcase className="w-4 h-4 text-blue-400" />
                 <span className="text-blue-200 font-medium">
-                  {profileData.designation}
+                  {profileData?.designation}
                 </span>
               </div>
               <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">
                   <UserCheck className="w-4 h-4 text-gray-400" />
                   <span className="text-gray-300 font-medium">ID:</span>
-                  <span className="text-gray-200">{profileData.centerId}</span>
+                  <span className="text-gray-200">{profileData?.centerId}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Building className="w-4 h-4 text-gray-400" />
                   <span className="text-gray-300 font-medium">Center:</span>
-                  <span className="text-gray-200">Main Campus</span>
+                  <span className="text-gray-200">{profileData?.centerName}</span>
                 </div>
               </div>
             </div>

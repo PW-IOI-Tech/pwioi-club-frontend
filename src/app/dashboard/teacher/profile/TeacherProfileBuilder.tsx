@@ -51,7 +51,7 @@ const TeacherProfileBuilder = () => {
 
           <div className="space-y-6">
             <SocialLinksCard aboutDetails={aboutDetails} />
-            <ContactCard aboutDetails={aboutDetails} />
+            <ContactCard />
           </div>
         </div>
       </div>
