@@ -510,50 +510,16 @@ const AttendancePortal: React.FC = () => {
               )}
             </div>
 
-            {/* Search and Bulk Actions */}
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search by ID or name..."
-                  value={searchTerm}
-                  onChange={handleSearch}
-                  className="pl-10 pr-4 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#12294c] focus:border-transparent text-sm cursor-text"
-                />
-              </div>
-              <div className="relative">
-                <button
-                  onClick={() => setShowBulkActions(!showBulkActions)}
-                  className="px-3 py-1.5 bg-purple-600 text-white rounded-md text-sm font-medium hover:bg-purple-700 transition-colors flex items-center gap-1.5 cursor-pointer"
-                  disabled={isLoading || !isEditing}
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                  Bulk
-                </button>
-                {showBulkActions && (
-                  <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-md shadow-lg p-2 z-10 min-w-48">
-                    <div className="py-1">
-                      <button
-                        onClick={() => handleBulkAction("PRESENT")}
-                        className="flex items-center w-full px-3 py-2 text-left text-green-700 hover:bg-green-50 cursor-pointer text-sm rounded"
-                        disabled={isLoading}
-                      >
-                        <UserCheck className="w-4 h-4 mr-2" />
-                        Mark All Present
-                      </button>
-                      <button
-                        onClick={() => handleBulkAction("ABSENT")}
-                        className="flex items-center w-full px-3 py-2 text-left text-red-700 hover:bg-red-50 cursor-pointer text-sm rounded"
-                        disabled={isLoading}
-                      >
-                        <UserX className="w-4 h-4 mr-2" />
-                        Mark All Absent
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {/* Search Only */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search by ID or name..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="pl-10 pr-4 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#12294c] focus:border-transparent text-sm cursor-text"
+              />
             </div>
           </div>
         )}
@@ -601,21 +567,70 @@ const AttendancePortal: React.FC = () => {
           selectedClasses.length > 0 &&
           attendanceData && (
             <div className="bg-white rounded-sm shadow-lg border border-gray-400 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Attendance for{" "}
-                  {new Date(selectedDate).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {selectedClasses.length} class
-                  {selectedClasses.length !== 1 ? "es" : ""}:{" "}
-                  {getClassDisplayNames().join(", ")}
-                </p>
+              {/* Table Header Info with Bulk Button */}
+              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Attendance for{" "}
+                    {new Date(selectedDate).toLocaleDateString("en-US", {
+                      weekday: "long",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </h3>
+                  <div className="text-sm text-gray-600 mt-1">
+                    <span className="font-medium">
+                      {selectedClasses.length} class
+                      {selectedClasses.length !== 1 ? "es" : ""}:
+                    </span>
+                    <ul className="mt-1 space-y-1 list-disc list-inside pl-4">
+                      {getClassDisplayNames().map((className, index) => (
+                        <li key={index} className="break-words">
+                          {className}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Bulk Actions Button - Top Right */}
+                {isEditing && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowBulkActions(!showBulkActions)}
+                      className="px-3 py-1.5 bg-purple-600 text-white rounded-md text-sm font-medium hover:bg-purple-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+                      disabled={isLoading}
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                      Bulk Actions
+                    </button>
+                    {showBulkActions && (
+                      <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-md shadow-lg p-2 z-10 min-w-48">
+                        <div className="py-1">
+                          <button
+                            onClick={() => handleBulkAction("PRESENT")}
+                            className="flex items-center w-full px-3 py-2 text-left text-green-700 hover:bg-green-50 cursor-pointer text-sm rounded"
+                            disabled={isLoading}
+                          >
+                            <UserCheck className="w-4 h-4 mr-2" />
+                            Mark All Present
+                          </button>
+                          <button
+                            onClick={() => handleBulkAction("ABSENT")}
+                            className="flex items-center w-full px-3 py-2 text-left text-red-700 hover:bg-red-50 cursor-pointer text-sm rounded"
+                            disabled={isLoading}
+                          >
+                            <UserX className="w-4 h-4 mr-2" />
+                            Mark All Absent
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
+
+              {/* Table Body */}
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-blue-50">
@@ -731,14 +746,6 @@ const AttendancePortal: React.FC = () => {
               </div>
             </div>
           )}
-
-        {/* Footer */}
-        <div className="mt-6 text-center text-sm text-gray-500">
-          <p>
-            Attendance Portal v1.0 • Select a date and class to begin marking
-            attendance
-          </p>
-        </div>
       </div>
     </div>
   );
