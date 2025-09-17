@@ -5,7 +5,6 @@ import {
   Search,
   UserCheck,
   UserX,
-  Clock,
   AlertCircle,
   Save,
   Edit,
@@ -24,8 +23,7 @@ interface ClassOption {
   displayName: string;
 }
 
-type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "";
-
+type AttendanceStatus = "PRESENT" | "ABSENT" | "";
 
 interface BaseStudentAttendance {
   student_id: string;
@@ -43,30 +41,39 @@ interface AttendanceData {
   data: StudentAttendance[];
 }
 
-const getCurrentWeekDates = (): { date: string; day: string }[] => {
+const getLastThreeWeekdays = (): { date: string; day: string }[] => {
   const today = new Date();
-  const dayOfWeek = today.getDay();
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - dayOfWeek + 1);
-  const weekDates: { date: string; day: string }[] = [];
-  const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-  for (let i = 0; i < 5; i++) {
-    const date = new Date(monday);
-    date.setDate(monday.getDate() + i);
-    const dateString = date.toISOString().split("T")[0];
-    weekDates.push({ date: dateString, day: dayNames[i] });
+  const days = [];
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  let currentDate = new Date(today);
+  let count = 0;
+
+  // Go back day by day until we find 3 weekdays
+  while (count < 3) {
+    const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+
+    // Only include weekdays (Monday = 1, Friday = 5)
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      const dateString = currentDate.toISOString().split("T")[0];
+      days.unshift({
+        date: dateString,
+        day: dayNames[dayOfWeek],
+      });
+      count++;
+    }
+
+    // Move to the previous day
+    currentDate.setDate(currentDate.getDate() - 1);
   }
-  return weekDates;
+
+  return days;
 };
 
 const handleApiError = (err: any, fallbackMessage: string) => {
   const message =
-    err?.response?.data?.message ||
-    err?.message ||
-    fallbackMessage;
+    err?.response?.data?.message || err?.message || fallbackMessage;
   toast.error(message);
 };
-
 
 const AttendancePortal: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -88,7 +95,22 @@ const AttendancePortal: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [showBulkActions, setShowBulkActions] = useState(false);
 
-  const weekDates = getCurrentWeekDates();
+  const lastThreeWeekdays = getLastThreeWeekdays();
+
+  // Set today as default selected date if it's a weekday and enable editing by default
+  useEffect(() => {
+    if (!selectedDate) {
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+
+      // Only set today as default if it's a weekday
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        const todayString = today.toISOString().split("T")[0];
+        setSelectedDate(todayString);
+        setIsEditing(true); // Enable editing by default for today
+      }
+    }
+  }, [selectedDate]);
 
   useEffect(() => {
     if (!selectedDate) {
@@ -151,7 +173,10 @@ const AttendancePortal: React.FC = () => {
     setSearchTerm("");
     setSortField("enrollment_id");
     setSortDirection("asc");
-    setIsEditing(false);
+
+    // Enable editing by default only if the selected date is today
+    const today = new Date().toISOString().split("T")[0];
+    setIsEditing(date === today);
   };
 
   const handleClassToggle = (classId: string) => {
@@ -160,7 +185,6 @@ const AttendancePortal: React.FC = () => {
         ? prev.filter((id) => id !== classId)
         : [...prev, classId]
     );
-    setIsEditing(false);
   };
 
   const hasChanges = () => {
@@ -189,7 +213,7 @@ const AttendancePortal: React.FC = () => {
         Object.entries(student.statuses).map(([class_id, status]) => ({
           student_id: student.student_id,
           class_id,
-          status: status === "LATE" ? "PRESENT" : status, 
+          status: status, // Removed LATE conversion
         }))
       );
 
@@ -199,9 +223,14 @@ const AttendancePortal: React.FC = () => {
         { withCredentials: true }
       );
       setOriginalData([...attendanceData.data]);
+      setIsEditing(false); // Exit edit mode after successful save
       toast.success("Attendance saved successfully!");
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message|| "Failed to save attendance");
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to save attendance"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -238,7 +267,7 @@ const AttendancePortal: React.FC = () => {
       lastThreeDaysStatus.length === 0
     ) {
       return (
-        <div className="flex gap-1 justify-center text-gray-400 text-xs italic">
+        <div className="flex gap-1 justify-center text-gray-400 text-xs">
           N/A
         </div>
       );
@@ -263,8 +292,6 @@ const AttendancePortal: React.FC = () => {
     if (status === "PRESENT")
       return "bg-green-100 text-green-800 border-green-300";
     if (status === "ABSENT") return "bg-red-100 text-red-800 border-red-300";
-    if (status === "LATE")
-      return "bg-yellow-100 text-yellow-800 border-yellow-300";
     return "bg-gray-100 text-gray-800 border-gray-300";
   };
 
@@ -307,13 +334,26 @@ const AttendancePortal: React.FC = () => {
     newStatus: AttendanceStatus
   ) => {
     if (!attendanceData) return;
+
+    const today = new Date().toISOString().split("T")[0];
+    const isToday = selectedDate === today;
+    const multipleClassesSelected = selectedClasses.length > 1;
+
     setAttendanceData({
       ...attendanceData,
       data: attendanceData.data.map((student) =>
         student.student_id === studentId
           ? {
               ...student,
-              statuses: { ...student.statuses, [classId]: newStatus },
+              statuses:
+                isToday && multipleClassesSelected
+                  ? // If it's today and multiple classes are selected, update all selected classes
+                    selectedClasses.reduce(
+                      (acc, cId) => ({ ...acc, [cId]: newStatus }),
+                      student.statuses
+                    )
+                  : // Otherwise, update only the specific class
+                    { ...student.statuses, [classId]: newStatus },
             }
           : student
       ),
@@ -336,7 +376,7 @@ const AttendancePortal: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-[#12294c] rounded-sm shadow-lg border border-gray-400 mb-6 p-6">
@@ -367,7 +407,7 @@ const AttendancePortal: React.FC = () => {
                   disabled={isLoading}
                 >
                   <option value="">Select a date</option>
-                  {weekDates.map(({ date, day }) => (
+                  {lastThreeWeekdays.map(({ date, day }) => (
                     <option key={date} value={date}>
                       {day},{" "}
                       {new Date(date).toLocaleDateString("en-US", {
@@ -382,17 +422,6 @@ const AttendancePortal: React.FC = () => {
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
                 />
               </div>
-              {selectedDate && (
-                <p className="mt-2 text-sm text-gray-600">
-                  Selected:{" "}
-                  {new Date(selectedDate).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              )}
             </div>
 
             {/* Class Selection */}
@@ -422,31 +451,16 @@ const AttendancePortal: React.FC = () => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-500 italic">
+                    <p className="text-sm text-gray-500">
                       No classes found for this date
                     </p>
                   )
                 ) : (
-                  <p className="text-sm text-gray-500 italic">
+                  <p className="text-sm text-gray-500">
                     Select a date to see classes
                   </p>
                 )}
               </div>
-              {selectedClasses.length > 0 && (
-                <div className="mt-3 p-3 bg-blue-50 rounded-sm border border-blue-200">
-                  <p className="text-sm font-medium text-blue-800">
-                    {selectedClasses.length} class
-                    {selectedClasses.length !== 1 ? "es" : ""} selected:
-                  </p>
-                  <ul className="mt-1 text-sm text-blue-700">
-                    {classOptions
-                      .filter((cls) => selectedClasses.includes(cls.id))
-                      .map((cls) => (
-                        <li key={cls.id}>{cls.displayName}</li>
-                      ))}
-                  </ul>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -544,14 +558,6 @@ const AttendancePortal: React.FC = () => {
                         <UserX className="w-4 h-4 mr-2" />
                         Mark All Absent
                       </button>
-                      <button
-                        onClick={() => handleBulkAction("LATE")}
-                        className="flex items-center w-full px-3 py-2 text-left text-yellow-700 hover:bg-yellow-50 cursor-pointer text-sm rounded"
-                        disabled={isLoading}
-                      >
-                        <Clock className="w-4 h-4 mr-2" />
-                        Mark All Late
-                      </button>
                     </div>
                   </div>
                 )}
@@ -576,7 +582,8 @@ const AttendancePortal: React.FC = () => {
               Select a Date
             </h3>
             <p className="text-gray-500">
-              Choose a date from the current week to view and mark attendance.
+              Choose a date from the last 3 weekdays to view and mark
+              attendance.
             </p>
           </div>
         )}
@@ -649,7 +656,7 @@ const AttendancePortal: React.FC = () => {
                       ))}
                       {/* Last Three Days Status */}
                       <th className="text-center py-3 px-6 font-medium text-gray-700">
-                        Last 3 Days
+                        Last 3 Weekdays
                       </th>
                     </tr>
                   </thead>
@@ -676,51 +683,35 @@ const AttendancePortal: React.FC = () => {
                                 <button
                                   onClick={() => {
                                     const currentStatus =
-                                      student.statuses[classId] || "";
-                                    let nextStatus: AttendanceStatus;
-                                    if (currentStatus === "") {
-                                      nextStatus = "PRESENT";
-                                    } else if (currentStatus === "PRESENT") {
-                                      nextStatus = "ABSENT";
-                                    } else if (currentStatus === "ABSENT") {
-                                      nextStatus = "LATE";
-                                    } else {
-                                      nextStatus = "";
-                                    }
+                                      student.statuses[classId] || "ABSENT";
+                                    const nextStatus =
+                                      currentStatus === "PRESENT"
+                                        ? "ABSENT"
+                                        : "PRESENT";
                                     updateStudentStatus(
                                       student.student_id,
                                       classId,
                                       nextStatus
                                     );
                                   }}
-                                  className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium transition-colors border-2 cursor-pointer ${
+                                  className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors cursor-pointer ${
                                     student.statuses[classId] === "PRESENT"
-                                      ? "bg-green-500 text-white border-green-500 hover:bg-green-600"
-                                      : student.statuses[classId] === "ABSENT"
-                                      ? "bg-red-500 text-white border-red-500 hover:bg-red-600"
-                                      : student.statuses[classId] === "LATE"
-                                      ? "bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600"
-                                      : "bg-gray-100 text-gray-400 border-gray-300 hover:bg-gray-200"
+                                      ? "bg-green-500 border-green-500 hover:bg-green-600"
+                                      : "bg-red-500 border-red-500 hover:bg-red-600"
                                   }`}
                                 >
-                                  {student.statuses[classId] === "PRESENT" ? (
-                                    <Check className="w-4 h-4" />
-                                  ) : student.statuses[classId] === "ABSENT" ? (
-                                    <X className="w-4 h-4" />
-                                  ) : student.statuses[classId] === "LATE" ? (
-                                    <Clock className="w-4 h-4" />
-                                  ) : (
-                                    ""
+                                  {student.statuses[classId] === "PRESENT" && (
+                                    <Check className="w-4 h-4 text-white" />
                                   )}
                                 </button>
                               </div>
                             ) : (
                               <span
                                 className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                                  student.statuses[classId] || ""
+                                  student.statuses[classId] || "ABSENT"
                                 )}`}
                               >
-                                {student.statuses[classId] || ""}
+                                {student.statuses[classId] || "ABSENT"}
                               </span>
                             )}
                           </td>
