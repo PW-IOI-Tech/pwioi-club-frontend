@@ -40,7 +40,7 @@ interface TableProps {
   columnConfig?: Partial<Record<string, Partial<ColumnConfig>>>;
   hiddenColumns?: string[];
   badgeFields?: string[];
-selectFields?: Record<string, { label: string; value: string }[]>;
+  selectFields?: Record<string, { label: string; value: string }[]>;
   nonEditableFields?: string[];
   customRenderers?: CustomRenderers;
   selectObjectFields?: Record<string, { label: string; value: string }[]>;
@@ -59,7 +59,7 @@ const Table: React.FC<TableProps> = ({
   hiddenColumns = [],
   badgeFields = [],
   selectFields = {},
-  selectObjectFields = {}, 
+  selectObjectFields = {},
   nonEditableFields = ["id"],
   customRenderers,
 }) => {
@@ -114,17 +114,22 @@ const Table: React.FC<TableProps> = ({
         .replace(/^./, (str) => str.toUpperCase())
         .trim();
 
-     const column: ColumnConfig = {
-  key,
-  label,
-  searchable: !["id"].includes(key),
-  editable: !nonEditableFields.includes(key),
-  ...(selectFields[key] && { options: selectFields[key], type: "select" }),
-  ...(selectObjectFields?.[key] && { options: selectObjectFields[key], type: "select" }),
-  ...(type !== "select" && { type }),
-  ...columnConfig[key],
-};
-
+      const column: ColumnConfig = {
+        key,
+        label,
+        searchable: !["id"].includes(key),
+        editable: !nonEditableFields.includes(key),
+        ...(selectFields[key] && {
+          options: selectFields[key],
+          type: "select",
+        }),
+        ...(selectObjectFields?.[key] && {
+          options: selectObjectFields[key],
+          type: "select",
+        }),
+        ...(type !== "select" && { type }),
+        ...columnConfig[key],
+      };
 
       autoColumns.push(column);
     });

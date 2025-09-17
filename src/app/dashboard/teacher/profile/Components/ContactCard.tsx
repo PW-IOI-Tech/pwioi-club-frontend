@@ -1,7 +1,10 @@
 import { FaPhoneAlt } from "react-icons/fa";
 import { IoMdMail } from "react-icons/io";
 
-const ContactCard = ({ aboutDetails }: { aboutDetails: any }) => (
+const ContactCard = () => {
+    const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+ return (
   <div className="bg-white rounded-sm shadow-lg border border-gray-400 p-6">
     <div className="flex items-center justify-between mb-2">
       <h3 className="text-lg font-bold text-gray-900">Contact Information</h3>
@@ -16,7 +19,7 @@ const ContactCard = ({ aboutDetails }: { aboutDetails: any }) => (
             Email
           </div>
           <div className="text-sm font-semibold text-slate-900">
-            {aboutDetails?.personal_mail || "NA"}
+            {user?.email || "NA"}
           </div>
         </div>
       </div>
@@ -29,12 +32,12 @@ const ContactCard = ({ aboutDetails }: { aboutDetails: any }) => (
             Phone
           </div>
           <div className="text-sm font-semibold text-slate-900">
-            {aboutDetails?.phone || "NA"}
+            {user?.phone || "NA"}
           </div>
         </div>
       </div>
     </div>
   </div>
-);
-
+ )
+};
 export default ContactCard;

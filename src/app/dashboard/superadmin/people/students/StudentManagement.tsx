@@ -234,12 +234,12 @@ export default function StudentManagement() {
 
   const handleDeleteStudent = useCallback(
     async (id: string | number) => {
-      if (!confirm("Are you sure you want to delete this student permanently?"))
+      if (!confirm("Are you sure you want to delete this student ?"))
         return;
 
       try {
-        const res = await axios.delete(
-          `${backendUrl}/api/students/${id}/permanent`,
+        const res = await axios.patch(
+          `${backendUrl}/api/students/${id}/deactivate`,
           { withCredentials: true }
         );
 
