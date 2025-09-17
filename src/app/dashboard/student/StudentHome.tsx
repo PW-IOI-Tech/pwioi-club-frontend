@@ -630,7 +630,7 @@ const PostActions: React.FC<PostActionsProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="bg-gray-50 border border-gray-200 rounded-sm px-3 py-2">
                     <div className="font-medium text-sm text-gray-900">
-                      {comment?.userInfo?.username}
+                      {comment?.userInfo?.name}
                     </div>
                     <div className="text-sm text-gray-700">
                       {comment.content}
@@ -681,14 +681,14 @@ const PostActions: React.FC<PostActionsProps> = ({
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-[#12294c] rounded-full flex items-center justify-center text-sm text-white">
                       {comment?.avatar ||
-                        comment?.userInfo?.name?.charAt(0) ||
+                        comment?.userInfo?.username?.charAt(0) ||
                         "👤"}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
                       <div className="font-medium text-sm text-gray-900">
-                        {comment?.userInfo?.name}
+                        {comment?.userInfo?.username}
                       </div>
                       <div className="text-sm text-gray-700">
                         {comment.content}

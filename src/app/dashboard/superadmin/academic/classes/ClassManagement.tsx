@@ -44,6 +44,17 @@ function getUpcomingWeeks() {
   return weeks;
 }
 
+function formatLocalDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
+
 function isToday(day: string) {
   const today = new Date();
   const days = [
@@ -286,8 +297,8 @@ export default function ClassManagement() {
             batchId: selectedBatch,
             divisionId: selectedDivision,
             semesterId: selectedSemester,
-            start_date: weekObj.start.toISOString(),
-            end_date: weekObj.end.toISOString(),
+            start_date: formatLocalDate(weekObj.start),
+            end_date: formatLocalDate(weekObj.end),
           },
           withCredentials: true,
         }
@@ -401,7 +412,7 @@ export default function ClassManagement() {
       const payload = {
         start_time: updatedData.startTime,
         end_time: updatedData.endTime,
-        lecture_number: Number(updatedData.lectureNumber),
+        lecture_number: updatedData.lectureNumber,
       };
 
       await axios.patch(
