@@ -2,27 +2,16 @@ import { useEffect, useState } from "react";
 import { Plus, Edit3, X, Trash2, GraduationCap } from "lucide-react";
 import axios from "axios";
 
-const mapEducationToBackend = (edu: AcademicHistory) => ({
-  degree: edu.degree,
-  institution: edu.institution,
-  field_of_study: edu.fieldOfStudy,
-  grade: edu.grade,
-  start_date: edu.startDate,
-  end_date: edu.endDate,
-});
-
-const mapDegreeLabel = (degree: string) => {
-  switch (degree) {
-    case "undergraduate":
-      return "Undergraduation";
-    case "x_education":
-      return "10th Education";
-    case "xii_education":
-      return "12th Education";
-    default:
-      return degree;
-  }
-};
+// Types
+interface EducationData {
+  id?: string;
+  institution: string;
+  degree: string;
+  field_of_study: string;
+  grade: number;
+  start_date: string;
+  end_date: string;
+}
 
 interface AcademicHistory {
   id?: string;
@@ -41,6 +30,40 @@ interface ModalProps {
   children: React.ReactNode;
 }
 
+// Helper functions
+const mapDegreeLabel = (degree: string) => {
+  switch (degree) {
+    case "undergraduate":
+      return "Undergraduation";
+    case "x_education":
+      return "10th Education";
+    case "xii_education":
+      return "12th Education";
+    default:
+      return degree;
+  }
+};
+
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validateUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const validateDate = (date: string | Date): boolean => {
+  const parsedDate = new Date(date);
+  return !isNaN(parsedDate.getTime());
+};
+
+// Modal Components
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
@@ -605,7 +628,7 @@ const AcademicHistoryCard: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEducation, setSelectedEducation] =
     useState<AcademicHistory | null>(null);
-  const [_editIndex, setEditIndex] = useState<number | null>(null);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
 
   const fetchAcademicHistory = async () => {
     try {
@@ -613,43 +636,47 @@ const AcademicHistoryCard: React.FC = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history`,
         { withCredentials: true }
       );
+      
       if (res.data?.data) {
-        const { undergrad, xEducation, xiiEducation } = res.data.data;
-
         const formatted: AcademicHistory[] = [];
-        if (undergrad) {
+        
+        // Map backend data to frontend format
+        if (res.data.data.undergrad) {
           formatted.push({
-            id: undergrad.id,
-            degree: mapDegreeLabel(undergrad.degree),
-            institution: undergrad.institution,
-            fieldOfStudy: undergrad.field_of_study,
-            grade: undergrad.grade,
-            startDate: undergrad.start_date,
-            endDate: undergrad.end_date,
+            id: res.data.data.undergrad.id,
+            degree: "undergraduate",
+            institution: res.data.data.undergrad.institution,
+            fieldOfStudy: res.data.data.undergrad.field_of_study,
+            grade: res.data.data.undergrad.grade,
+            startDate: res.data.data.undergrad.start_date,
+            endDate: res.data.data.undergrad.end_date,
           });
         }
-        if (xEducation) {
+        
+        if (res.data.data.xEducation) {
           formatted.push({
-            id: xEducation.id,
-            degree: mapDegreeLabel(xEducation.degree),
-            institution: xEducation.institution,
-            fieldOfStudy: xEducation.field_of_study,
-            grade: xEducation.grade,
-            startDate: xEducation.start_date,
-            endDate: xEducation.end_date,
+            id: res.data.data.xEducation.id,
+            degree: "x_education",
+            institution: res.data.data.xEducation.institution,
+            fieldOfStudy: res.data.data.xEducation.field_of_study,
+            grade: res.data.data.xEducation.grade,
+            startDate: res.data.data.xEducation.start_date,
+            endDate: res.data.data.xEducation.end_date,
           });
         }
-        if (xiiEducation) {
+        
+        if (res.data.data.xiiEducation) {
           formatted.push({
-            id: xiiEducation.id,
-            degree: mapDegreeLabel(xiiEducation.degree),
-            institution: xiiEducation.institution,
-            fieldOfStudy: xiiEducation.field_of_study,
-            grade: xiiEducation.grade,
-            startDate: xiiEducation.start_date,
-            endDate: xiiEducation.end_date,
+            id: res.data.data.xiiEducation.id,
+            degree: "xii_education",
+            institution: res.data.data.xiiEducation.institution,
+            fieldOfStudy: res.data.data.xiiEducation.field_of_study,
+            grade: res.data.data.xiiEducation.grade,
+            startDate: res.data.data.xiiEducation.start_date,
+            endDate: res.data.data.xiiEducation.end_date,
           });
         }
+        
         setAcademicHistory(formatted);
       }
     } catch (error) {
@@ -658,20 +685,23 @@ const AcademicHistoryCard: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchAcademicHistory();
+    if (studentId) {
+      fetchAcademicHistory();
+    }
   }, [studentId]);
 
   const handleAddEducation = async (newEducation: AcademicHistory) => {
     try {
-      const payload: any = {};
-
-      if (newEducation.degree === "undergraduate") {
-        payload.undergraduate = mapEducationToBackend(newEducation);
-      } else if (newEducation.degree === "x_education") {
-        payload.x_education = mapEducationToBackend(newEducation);
-      } else if (newEducation.degree === "xii_education") {
-        payload.xii_education = mapEducationToBackend(newEducation);
-      }
+      const payload = {
+        [newEducation.degree]: {
+          institution: newEducation.institution,
+          degree: newEducation.degree,
+          field_of_study: newEducation.fieldOfStudy,
+          grade: newEducation.grade,
+          start_date: newEducation.startDate,
+          end_date: newEducation.endDate,
+        },
+      };
 
       await axios.patch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history`,
@@ -688,15 +718,17 @@ const AcademicHistoryCard: React.FC = () => {
 
   const handleEditEducation = async (updatedEducation: AcademicHistory) => {
     try {
-      const payload: any = {};
-
-      if (updatedEducation.degree === "undergraduate") {
-        payload.undergraduate = mapEducationToBackend(updatedEducation);
-      } else if (updatedEducation.degree === "x_education") {
-        payload.x_education = mapEducationToBackend(updatedEducation);
-      } else if (updatedEducation.degree === "xii_education") {
-        payload.xii_education = mapEducationToBackend(updatedEducation);
-      }
+      const payload = {
+        [updatedEducation.degree]: {
+          id: updatedEducation.id,
+          institution: updatedEducation.institution,
+          degree: updatedEducation.degree,
+          field_of_study: updatedEducation.fieldOfStudy,
+          grade: updatedEducation.grade,
+          start_date: updatedEducation.startDate,
+          end_date: updatedEducation.endDate,
+        },
+      };
 
       await axios.patch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/students-profile/${studentId}/academic-history`,
@@ -764,7 +796,7 @@ const AcademicHistoryCard: React.FC = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1 pr-4">
                     <h4 className="font-bold text-slate-900 mb-1">
-                      {edu.degree}
+                      {mapDegreeLabel(edu.degree)}
                     </h4>
                     <p className="text-sm text-slate-800">{edu.institution}</p>
                     <p className="text-sm text-slate-700 font-medium mb-3">
@@ -829,7 +861,7 @@ const AcademicHistoryCard: React.FC = () => {
         onConfirm={handleDeleteEducation}
         educationTitle={
           selectedEducation
-            ? `${selectedEducation.degree} at ${selectedEducation.institution}`
+            ? `${mapDegreeLabel(selectedEducation.degree)} at ${selectedEducation.institution}`
             : undefined
         }
       />
