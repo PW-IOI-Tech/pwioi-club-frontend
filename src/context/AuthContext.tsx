@@ -41,12 +41,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       const data = await res.json();
 
-      setAccessToken(data.accessToken);
-      localStorage.setItem("accessToken", data.accessToken);
+      setAccessToken(data?.tokens?.accessToken);
+      localStorage.setItem("accessToken", data?.tokens?.accessToken);
 
       if (data.refreshToken) {
-        setRefreshToken(data.refreshToken);
-        localStorage.setItem("refreshToken", data.refreshToken);
+        setRefreshToken(data?.tokens?.refreshToken);
+        localStorage.setItem("refreshToken", data?.tokens?.refreshToken);
       }
     } catch (err) {
       console.error("Token refresh failed", err);
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!refreshToken) return;
 
-    const intervalId = setInterval(refreshTokenFn, 55 * 60 * 1000);
+    const intervalId = setInterval(refreshTokenFn, 1 * 60 * 1000);
 
     return () => clearInterval(intervalId);
   }, [refreshToken]);

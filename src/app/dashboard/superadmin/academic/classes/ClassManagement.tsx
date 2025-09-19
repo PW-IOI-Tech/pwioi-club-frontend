@@ -356,11 +356,17 @@ export default function ClassManagement() {
       const weekObj = weeks.find((w) => w.id === selectedWeek);
       if (!weekObj || !selectedSubjectObj || !selectedRoomObj) return;
 
+      const startDate = new Date(weekObj.start);
+      startDate.setUTCHours(0, 0, 0, 0);
+
+      const endDate = new Date(weekObj.end);
+      endDate.setUTCHours(23, 59, 59, 999);
+
       const payload = {
         subject_id: selectedSubjectObj.id,
         room_id: selectedRoomObj.id,
-        start_date: weekObj.start.toISOString(),
-        end_date: weekObj.end.toISOString(),
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
         schedule_items: [
           {
             day_of_week: currentDay,
