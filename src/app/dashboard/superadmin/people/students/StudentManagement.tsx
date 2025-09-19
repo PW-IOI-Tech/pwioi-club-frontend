@@ -416,7 +416,7 @@ export default function StudentManagement() {
                 <Users className="w-8 h-8 text-slate-900 mx-auto mb-2" />
                 <h4 className="text-lg text-slate-900 mb-1">
                   Students in{" "}
-                  <span className="font-bold">{selectedCenterName}</span> |{" "}
+                  <span className="font-bold"></span>{" "}
                   <span className="font-bold">
                     {selectedSchoolName +
                       selectedBatchName +
@@ -442,7 +442,7 @@ export default function StudentManagement() {
 
             <Table
               data={students}
-              title={`Students - Batch ${selectedBatch}`}
+              title={`Students - Batch ${selectedDivisionName}`}
               filterField="school"
               badgeFields={["school"]}
               selectFields={{
