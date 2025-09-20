@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!refreshToken) return;
 
-    const intervalId = setInterval(refreshTokenFn, 1 * 60 * 1000);
+    const intervalId = setInterval(refreshTokenFn, 55 * 60 * 1000);
 
     return () => clearInterval(intervalId);
   }, [refreshToken]);
