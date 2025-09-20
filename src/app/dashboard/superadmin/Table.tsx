@@ -12,7 +12,7 @@ interface ColumnConfig {
   key: string;
   label: string;
   type?: "text" | "number" | "email" | "select" | "badge";
-  options?: string[] | { label: string; value: string }[];
+  options?: string[] | { label: string; value: string }[] | ((item: GenericTableItem | null) => string[] | { label: string; value: string }[]);
   badgeColors?: { [key: string]: string };
   searchable?: boolean;
   editable?: boolean;
@@ -336,83 +336,87 @@ const Table: React.FC<TableProps> = ({
     }
   };
 
-  const renderEditField = (column: ColumnConfig, value: any) => {
-    if (column.editable === false) {
+const renderEditField = (column: ColumnConfig, value: any, item?: GenericTableItem) => {
+  if (column.editable === false) {
+    return (
+      <input
+        type="text"
+        value={value || ""}
+        disabled
+        className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-gray-100 focus:ring-2 focus:ring-slate-900"
+      />
+    );
+  }
+
+  switch (column.type) {
+    case "email":
+      return (
+        <input
+          type="email"
+          name={column.key}
+          value={value || ""}
+          onChange={handleEditChange}
+          placeholder={column.label}
+          className="w-full px-3 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900"
+        />
+      );
+    case "number":
+      return (
+        <input
+          type="number"
+          name={column.key}
+          value={value || ""}
+          onChange={handleEditChange}
+          placeholder={column.label}
+          step={column.key.toLowerCase().includes("cgpa") ? "0.1" : "1"}
+          className="w-full px-3 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900"
+        />
+      );
+    case "select":
+      const options = typeof column.options === 'function' 
+        ? column.options(item || editingField) 
+        : column.options;
+      
+      return (
+        <select
+          name={column.key}
+          value={value?.value || value || ""}
+          onChange={(e) => {
+            const selected = options?.find(
+              (opt: any) =>
+                (typeof opt === "object" ? opt.value : opt) === e.target.value
+            );
+            handleEditChange({
+              target: { name: column.key, value: selected || e.target.value },
+            } as any);
+          }}
+          className="w-full px-3 py-2 border border-gray-300 rounded-sm cursor-pointer focus:ring-2 focus:ring-slate-900"
+        >
+          <option value="">Select {column.label}</option>
+          {options?.map((option: any) => (
+            <option
+              key={typeof option === "object" ? option.value : option}
+              value={typeof option === "object" ? option.value : option}
+            >
+              {typeof option === "object" ? option.label : option}
+            </option>
+          ))}
+        </select>
+      );
+
+    default:
       return (
         <input
           type="text"
+          name={column.key}
           value={value || ""}
-          disabled
-          className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-gray-100 focus:ring-2 focus:ring-slate-900"
+          onChange={handleEditChange}
+          placeholder={column.label}
+          className="w-full px-3 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900"
         />
       );
-    }
-
-    switch (column.type) {
-      case "email":
-        return (
-          <input
-            type="email"
-            name={column.key}
-            value={value || ""}
-            onChange={handleEditChange}
-            placeholder={column.label}
-            className="w-full px-3 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900"
-          />
-        );
-      case "number":
-        return (
-          <input
-            type="number"
-            name={column.key}
-            value={value || ""}
-            onChange={handleEditChange}
-            placeholder={column.label}
-            step={column.key.toLowerCase().includes("cgpa") ? "0.1" : "1"}
-            className="w-full px-3 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900"
-          />
-        );
-      case "select":
-        return (
-          <select
-            name={column.key}
-            value={value?.value || value || ""}
-            onChange={(e) => {
-              const selected = column.options?.find(
-                (opt: any) =>
-                  (typeof opt === "object" ? opt.value : opt) === e.target.value
-              );
-              handleEditChange({
-                target: { name: column.key, value: selected || e.target.value },
-              } as any);
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-sm cursor-pointer focus:ring-2 focus:ring-slate-900"
-          >
-            <option value="">Select {column.label}</option>
-            {column.options?.map((option: any) => (
-              <option
-                key={typeof option === "object" ? option.value : option}
-                value={typeof option === "object" ? option.value : option}
-              >
-                {typeof option === "object" ? option.label : option}
-              </option>
-            ))}
-          </select>
-        );
-
-      default:
-        return (
-          <input
-            type="text"
-            name={column.key}
-            value={value || ""}
-            onChange={handleEditChange}
-            placeholder={column.label}
-            className="w-full px-3 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-slate-900"
-          />
-        );
-    }
-  };
+  }
+};
 
   if (!data || data.length === 0) {
     return (
@@ -450,14 +454,14 @@ const Table: React.FC<TableProps> = ({
             >
               <div className="flex-1 overflow-y-auto p-6">
                 <div className="space-y-4">
-                  {columns.map((column) => (
-                    <div key={column.key}>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {column.label}
-                      </label>
-                      {renderEditField(column, editingField[column.key])}
-                    </div>
-                  ))}
+                 {columns.map((column) => (
+  <div key={column.key}>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {column.label}
+    </label>
+    {renderEditField(column, editingField[column.key], editingField)}
+  </div>
+))}
                 </div>
               </div>
 

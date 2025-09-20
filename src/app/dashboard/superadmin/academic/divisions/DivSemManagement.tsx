@@ -670,8 +670,21 @@ export default function DivSemManagement() {
                 "updatedAt",
                 "semesters",
               ]}
-              selectFields={{
-                currentSemester: semesterOptions,
+              columnConfig={{
+                currentSemester: {
+                  type: "select",
+                  options: (item: any) => {
+                    const division = filteredDivisions.find(
+                      (d) => d.id === item.id
+                    );
+                    if (!division || !division.semesters) return [];
+
+                    return division.semesters.map((s: any) => ({
+                      label: `Semester ${s.number}`,
+                      value: s.id,
+                    }));
+                  },
+                },
               }}
               columns={[
                 { accessorKey: "code", header: "Code" },
